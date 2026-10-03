@@ -59,11 +59,11 @@ npm run format:check
 
 ## Lộ trình
 
-| Giai đoạn | Nội dung | Trạng thái |
-|---|---|---|
-| 1 | UI đầy đủ + mock server, chạy local | gần xong, còn kiểm thử tay |
-| 2 | Lên AWS: S3 + CloudFront, API Gateway, Lambda, DynamoDB, SQS, Cognito (qua CDK) | chưa bắt đầu |
-| 3 | Nối AI Grader thật thay cho response giả lập | chưa bắt đầu |
+| Giai đoạn | Nội dung                                                                        | Trạng thái                 |
+| --------- | ------------------------------------------------------------------------------- | -------------------------- |
+| 1         | UI đầy đủ + mock server, chạy local                                             | gần xong, còn kiểm thử tay |
+| 2         | Lên AWS: S3 + CloudFront, API Gateway, Lambda, DynamoDB, SQS, Cognito (qua CDK) | chưa bắt đầu               |
+| 3         | Nối AI Grader thật thay cho response giả lập                                    | chưa bắt đầu               |
 
 ## Giấy phép
 

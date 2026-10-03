@@ -1,0 +1,66 @@
+# Kiểm tra chất lượng code trên mọi push và pull request.
+#
+# Chạy đúng các lệnh có trong package.json gốc, không thêm công cụ mới, để
+# những gì CI báo đỏ luôn tái hiện được bằng một lệnh trên máy.
+#
+# Thứ tự các bước đi từ nhanh/rẻ tới chậm: format và lint fail trong vài giây,
+# không phải chờ hết bộ test mới biết thiếu dấu chấm phẩy.
+name: CI
+
+on:
+  push:
+    branches: [main, production]
+  pull_request:
+    branches: [main, production]
+
+# Chỉ cần đọc source để chạy test. Không cấp quyền ghi.
+permissions:
+  contents: read
+
+# Push liên tiếp vào cùng một nhánh thì huỷ lượt chạy cũ, đỡ tốn phút CI.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Format, lint, typecheck, test, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Cài Node
+        uses: actions/setup-node@v7
+        with:
+          # package.json yêu cầu >=18; dùng bản LTS chẵn gần nhất.
+          node-version: '20'
+          cache: npm
+
+      # `npm ci` thay vì `npm install`: cài đúng theo package-lock.json và
+      # fail nếu lock file lệch với package.json, thay vì âm thầm sửa lock.
+      - name: Cài dependencies
+        run: npm ci
+
+      - name: Kiểm tra format
+        run: npm run format:check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      # Build cả 2 app để bắt lỗi chỉ xuất hiện khi build production
+      # (ví dụ import vòng, biến môi trường thiếu) — những lỗi mà dev server
+      # và test không phát hiện.
+      - name: Build web-submitter
+        run: npm run build --workspace @quick-grading/web-submitter
+
+      - name: Build web-admin
+        run: npm run build --workspace @quick-grading/web-admin

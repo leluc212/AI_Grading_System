@@ -27,7 +27,14 @@ export default defineConfig({
      * test dựng rồi đọc lại file `.xlsx` thật bằng `exceljs`, và test poll
      * lượt chấm bằng fake timers. Đặt ở config (thay vì truyền `--testTimeout`
      * ở dòng lệnh) để `npm test` chạy đúng mà không cần nhớ thêm cờ.
+     *
+     * Vì sao 60s chứ không phải 20s: ở mức 20s, `test/excelExport.test.ts`
+     * fail ngẫu nhiên khi máy đang tải (đo được 27,7s cho riêng file đó, trong
+     * khi chạy một mình chỉ mất vài giây). Runner CI dùng chung chỉ có 2-4
+     * core nên còn chậm hơn nữa. Đây là biên an toàn cho test ĐÚNG mà chạy
+     * chậm, không phải để che một test treo: test treo thật vẫn fail, chỉ
+     * muộn hơn.
      */
-    testTimeout: 20000,
+    testTimeout: 60000,
   },
 });
