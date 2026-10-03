@@ -1,0 +1,21 @@
+{
+  "name": "@quick-grading/api-client",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@quick-grading/shared-types": "*"
+  },
+  "devDependencies": {
+    "@quick-grading/mock-server": "*",
+    "msw": "2.15.0",
+    "vitest": "4.1.11"
+  }
+}

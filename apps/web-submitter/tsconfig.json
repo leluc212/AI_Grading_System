@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // App (không phải library) -> không emit gì, chỉ dùng tsc để typecheck.
+    "noEmit": true,
+    "declaration": false,
+    // `vite/client` cung cấp type cho `import.meta.env` và việc import asset
+    // (ví dụ file CSS của Cloudscape global-styles).
+    "types": ["vite/client"]
+  },
+  "include": ["src", "test", "vite.config.ts"]
+}

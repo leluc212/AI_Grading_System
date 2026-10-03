@@ -1,0 +1,56 @@
+# ---- Dependencies & build output ----
+node_modules/
+dist/
+build/
+coverage/
+.vite/
+*.tsbuildinfo
+
+# ---- Logs ----
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ---- Biến môi trường (KHÔNG BAO GIỜ commit) ----
+.env
+.env.*
+!.env.example
+
+# ---- Thông tin xác thực & khoá bí mật ----
+# Chặn sẵn cho Giai đoạn 2 khi bắt đầu có AWS credential / CDK output.
+.aws/
+aws.json
+credentials
+credentials.json
+secrets.json
+*.pem
+*.key
+*.pfx
+*.p12
+*.ppk
+*.jks
+*.keystore
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+.npmrc
+.yarnrc
+.netrc
+
+# ---- AWS CDK (Giai đoạn 2) ----
+cdk.out/
+cdk.context.json
+.cdk.staging/
+
+# ---- Kiro IDE ----
+.kiro/
+
+# ---- Editor & OS ----
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+*.swp
+*.swo
