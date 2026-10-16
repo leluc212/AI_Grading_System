@@ -3,6 +3,7 @@
  *
  * See design.md > Data Models for the source-of-truth shape of these types.
  */
+import type { Team, TeamMember } from './team.js';
 
 export type FileType = 'md' | 'xml';
 
@@ -16,3 +17,43 @@ export interface SubmissionFile {
   submittedAt: string;
   isLatest: boolean;
 }
+
+/**
+ * Nộp bài 2 bước (infra-plan mục 5): tạo phiên upload -> upload thẳng lên S3
+ * bằng presigned POST -> finalize.
+ */
+export interface UploadFileMeta {
+  /** phải kết thúc `.md` / `.xml` */
+  fileName: string;
+  /** 1..MAX_FILE_SIZE_BYTES */
+  size: number;
+}
+
+/** Body `POST /api/submissions`. */
+export interface CreateSubmissionRequest {
+  assignmentId: string;
+  teamName: string;
+  members: Omit<TeamMember, 'memberId'>[];
+  files: { md: UploadFileMeta; xml: UploadFileMeta };
+}
+
+export interface PresignedPost {
+  url: string;
+  /** Gửi nguyên các field này, field `file` đặt cuối cùng. */
+  fields: Record<string, string>;
+}
+
+/** Response 201 của `POST /api/submissions`. */
+export interface CreateSubmissionResponse {
+  submissionId: string;
+  uploads: { md: PresignedPost; xml: PresignedPost };
+  /** ISO8601, presigned POST hết hạn */
+  expiresAt: string;
+}
+
+/** Response 201 (nhóm mới) / 200 (nộp vào nhóm có sẵn) của finalize. */
+export type FinalizeSubmissionResponse = {
+  team: Team;
+  files: SubmissionFile[];
+  resubmitted: boolean;
+};
