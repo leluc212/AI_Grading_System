@@ -1,0 +1,29 @@
+{
+  "name": "@quick-grading/api-service",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "seed:dev": "tsx scripts/seed-dev.ts",
+    "smoke:dev": "tsx scripts/smoke-submit.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "3.1152.0",
+    "@aws-sdk/client-s3": "3.1152.0",
+    "@aws-sdk/lib-dynamodb": "3.1152.0",
+    "@aws-sdk/s3-presigned-post": "3.1152.0",
+    "@quick-grading/shared-types": "*",
+    "ulid": "3.0.2"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-cloudformation": "3.1152.0",
+    "@types/aws-lambda": "8.10.164",
+    "@types/node": "22.20.5",
+    "aws-sdk-client-mock": "4.1.0",
+    "tsx": "4.23.15",
+    "vitest": "4.1.11"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "app": "npx tsx bin/app.ts",
+  "watch": {
+    "include": ["bin/**", "lib/**"],
+    "exclude": ["cdk.out", "test", "node_modules"]
+  },
+  "context": {
+    "stage": "dev",
+    "account": "497320113384",
+    "region": "ap-southeast-1",
+    "alarmEmails": "swat.lucle@gmail.com",
+    "allowedOrigins": "http://localhost:5173,http://localhost:5174",
+    "budgetLimitUsd": 10
+  }
+}

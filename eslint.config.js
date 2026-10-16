@@ -14,6 +14,9 @@ export default tseslint.config(
       '**/build/**',
       '**/node_modules/**',
       '**/coverage/**',
+      // Output của `cdk synth` (template + Lambda đã bundle).
+      '**/cdk.out/**',
+      '**/.cdk.staging/**',
       // File service worker do CLI của MSW sinh ra (`npx msw init <public> --save`)
       // — code generated, không sửa tay nên không lint.
       '**/public/mockServiceWorker.js',

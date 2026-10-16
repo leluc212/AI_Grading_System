@@ -6,7 +6,9 @@
   "description": "Web cham bai sinh vien bang AI - monorepo (Giai doan 1: UI local voi mock server)",
   "workspaces": [
     "apps/*",
-    "packages/*"
+    "packages/*",
+    "services/*",
+    "infra"
   ],
   "engines": {
     "node": ">=18"

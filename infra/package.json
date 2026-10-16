@@ -1,0 +1,24 @@
+{
+  "name": "@quick-grading/infra",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "synth": "cdk synth -c stage=dev --profile quick-grading --quiet",
+    "diff:dev": "cdk diff QuickGrading-dev -c stage=dev --profile quick-grading",
+    "deploy:dev": "cdk deploy QuickGrading-dev -c stage=dev --profile quick-grading"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "2.273.0",
+    "constructs": "10.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "aws-cdk": "2.1145.0",
+    "esbuild": "0.28.2",
+    "tsx": "4.23.15",
+    "vitest": "4.1.11"
+  }
+}
