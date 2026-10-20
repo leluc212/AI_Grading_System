@@ -51,11 +51,59 @@ Hai lệnh `dev` chạy ở hai terminal riêng. MSW tự khởi động ở ch�
 ## Kiểm thử & chất lượng code
 
 ```bash
-npm test          # 352 test, chạy toàn bộ workspace
+npm test          # chạy toàn bộ test workspace
 npm run typecheck
 npm run lint
 npm run format:check
 ```
+
+## Chạy với backend thật (dev stack)
+
+Hạ tầng serverless chạy trên AWS (`ap-southeast-1`): DynamoDB, S3, Lambda `public-api`, HTTP API Gateway, CloudWatch Alarms, SNS topic, Budgets.
+
+### 1. Điều kiện tiên quyết
+
+- AWS CLI đã cấu hình profile `quick-grading` (account `497320113384`).
+- Bootstrap CDK một lần cho môi trường (dùng profile `default`):
+  ```bash
+  npx cdk bootstrap aws://497320113384/ap-southeast-1 --profile default
+  ```
+
+### 2. Triển khai stack dev
+
+```bash
+npm run deploy:dev --workspace @quick-grading/infra
+```
+
+- **SNS Email**: Sau khi deploy, kiểm tra hộp thư email (mặc định `swat.lucle@gmail.com`) và nhấn link xác nhận đăng ký SNS topic cảnh báo.
+- **Tùy chỉnh email cảnh báo**: Thêm `-c alarmEmails=email1@domain.com,email2@domain.com` hoặc chỉnh trong `infra/cdk.json` rồi deploy lại.
+- **Ngân sách (Budget)**: Mặc định cảnh báo ở các mốc 50%/80%/100% của 10 USD/tháng (ngân sách tính ở cấp tài khoản).
+- **Lưu ý Phase 1**: Khóa OpenAI key chưa dùng ở Phase 1 (sẽ dùng ở Phase 2 khi nối chấm tự động).
+
+### 3. Nạp dữ liệu mẫu (Seed)
+
+```bash
+npm run seed:dev --workspace @quick-grading/api-service
+```
+
+Lệnh này sẽ nạp 2 đợt chấm mẫu vào DynamoDB:
+
+- `a1111111-1111-4111-8111-111111111111` (OPEN - Đợt 1 Lập trình Web)
+- `a2222222-2222-4222-8222-222222222222` (CLOSED - Đợt 2 Cấu trúc dữ liệu)
+
+### 4. Kết nối `web-submitter` với backend thật
+
+1. Lấy giá trị `ApiUrl` từ output của lệnh deploy CDK (ví dụ: `https://abcxyz.execute-api.ap-southeast-1.amazonaws.com`).
+2. Tạo file `apps/web-submitter/.env.local` (không có dấu gạch chéo `/` ở cuối):
+   ```env
+   VITE_API_BASE_URL=https://abcxyz.execute-api.ap-southeast-1.amazonaws.com
+   ```
+3. Khởi động ứng dụng nộp bài:
+   ```bash
+   npm run dev --workspace @quick-grading/web-submitter
+   ```
+4. Truy cập `http://localhost:5173/submit/a1111111-1111-4111-8111-111111111111` để thử nộp bài thật lên S3 + DynamoDB.
+   _(Nếu không có file `.env.local`, ứng dụng sẽ tự động fallback sang chế độ mock MSW offline)._
 
 ## Lộ trình
 
