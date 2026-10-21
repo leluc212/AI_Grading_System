@@ -47,6 +47,9 @@ import {
   markObjectFinal,
   readObjectHead,
 } from '../storage/s3.js';
+import { getActiveGradingConfig } from '../repositories/configRepo.js';
+import { triggerGrading } from './gradingService.js';
+import { log } from '../lib/logger.js';
 
 const FILE_TYPES: readonly FileType[] = ['md', 'xml'];
 const FIELD_BY_TYPE: Record<FileType, string> = { md: 'mdFile', xml: 'xmlFile' };
@@ -207,6 +210,19 @@ export async function finalizeSubmission(
     submittedAt,
     isLatest: true,
   }));
+
+  // 5) Tự động chấm nếu autoGradeOnSubmit được bật trong cấu hình
+  try {
+    const gradingConfig = await getActiveGradingConfig();
+    if (gradingConfig?.autoGradeOnSubmit) {
+      await triggerGrading({ teamId: team.teamId, triggeredBy: 'SYSTEM' });
+    }
+  } catch (autoGradeErr) {
+    log('error', `Lỗi khi kích hoạt autoGradeOnSubmit cho nhóm ${team.teamId}`, {
+      teamId: team.teamId,
+      errorName: autoGradeErr instanceof Error ? autoGradeErr.name : 'AutoGradeError',
+    });
+  }
 
   return { status, team, files, resubmitted: status === 200 };
 }

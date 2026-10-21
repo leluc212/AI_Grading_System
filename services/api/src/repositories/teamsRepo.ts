@@ -89,6 +89,35 @@ export async function findTeamByName(
   return team.Item === undefined ? undefined : toPublicTeam(team.Item);
 }
 
+/** Lấy thông tin nhóm theo teamId. */
+export async function getTeam(teamId: string): Promise<Team | undefined> {
+  const record = await getTeamRecord(teamId);
+  return record;
+}
+
+export interface TeamRecord extends Team {
+  latestSubmissionId?: string;
+  activeGradingAttemptId?: string;
+  activeGradingStartedAt?: string;
+}
+
+/** Lấy bản ghi đầy đủ của Team từ DynamoDB (gồm cả latestSubmissionId và activeGrading). */
+export async function getTeamRecord(teamId: string): Promise<TeamRecord | undefined> {
+  const result = await ddb().send(
+    new GetCommand({ TableName: tableName(), Key: teamKey(teamId), ConsistentRead: true }),
+  );
+  if (!result.Item) {
+    return undefined;
+  }
+  const publicTeam = toPublicTeam(result.Item);
+  return {
+    ...publicTeam,
+    latestSubmissionId: optionalString(result.Item.latestSubmissionId),
+    activeGradingAttemptId: optionalString(result.Item.activeGradingAttemptId),
+    activeGradingStartedAt: optionalString(result.Item.activeGradingStartedAt),
+  };
+}
+
 export interface StoredFileMeta {
   fileName: string;
   s3Key: string;

@@ -6,6 +6,7 @@ export interface RuntimeEnv {
   tableName: string;
   bucketName: string;
   stage: string;
+  gradingQueueUrl?: string;
 }
 
 function required(name: string): string {
@@ -21,5 +22,6 @@ export function readEnv(): RuntimeEnv {
     tableName: required('TABLE_NAME'),
     bucketName: required('BUCKET_NAME'),
     stage: required('STAGE'),
+    gradingQueueUrl: process.env.GRADING_QUEUE_URL,
   };
 }

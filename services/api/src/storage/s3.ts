@@ -123,3 +123,12 @@ export async function markObjectFinal(key: string): Promise<void> {
     }),
   );
 }
+
+/** Đọc toàn bộ nội dung text UTF-8 của object từ S3 (dùng cho worker chấm bài). */
+export async function readObjectText(key: string): Promise<string> {
+  const result = await s3().send(new GetObjectCommand({ Bucket: bucketName(), Key: key }));
+  if (result.Body === undefined) {
+    return '';
+  }
+  return await result.Body.transformToString('utf-8');
+}

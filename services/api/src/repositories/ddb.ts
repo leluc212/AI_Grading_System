@@ -17,6 +17,8 @@ export function ddb(): DynamoDBDocumentClient {
   return client;
 }
 
+export const getDdbDocClient = ddb;
+
 export function tableName(): string {
   return readEnv().tableName;
 }
