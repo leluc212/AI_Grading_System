@@ -165,15 +165,40 @@ async function throwTypedError(response: Response): Promise<never> {
   throw mapErrorBodyToTypedError(response.status, body);
 }
 
+const ADMIN_SESSION_KEY = 'quick-grading-admin-session';
+
+function resolveAuthHeaders(customHeaders?: HeadersInit): Headers {
+  const headers = new Headers(customHeaders);
+  if (typeof localStorage !== 'undefined' && !headers.has('Authorization')) {
+    const raw = localStorage.getItem(ADMIN_SESSION_KEY);
+    if (raw) {
+      try {
+        const session = JSON.parse(raw) as { token?: string };
+        if (session && typeof session.token === 'string' && session.token.length > 0) {
+          headers.set('Authorization', `Bearer ${session.token}`);
+        }
+      } catch {
+        // ignore invalid json
+      }
+    }
+  }
+  return headers;
+}
+
 /**
  * Gửi 1 request và parse response JSON thành `T`.
  *
  * - Ghép `path` sau `apiBaseUrl`.
+ * - Tự động đính kèm `Authorization: Bearer <token>` nếu có phiên đăng nhập Admin trong `localStorage`.
  * - Nếu `!response.ok`: đọc `{ code, message }` và ném typed error.
  * - Nếu OK: parse và trả về JSON body dưới dạng `T`.
  */
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${apiBaseUrl}${path}`, init);
+  const headers = resolveAuthHeaders(init?.headers);
+  const response = await fetch(`${apiBaseUrl}${path}`, {
+    ...init,
+    headers,
+  });
   if (!response.ok) {
     await throwTypedError(response);
   }
@@ -192,7 +217,11 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
  * đổi hành vi.
  */
 export async function apiFetchVoid(path: string, init?: RequestInit): Promise<void> {
-  const response = await fetch(`${apiBaseUrl}${path}`, init);
+  const headers = resolveAuthHeaders(init?.headers);
+  const response = await fetch(`${apiBaseUrl}${path}`, {
+    ...init,
+    headers,
+  });
 
   if (!response.ok) {
     await throwTypedError(response);

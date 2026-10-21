@@ -42,4 +42,34 @@ describe('http - setApiBaseUrl & getApiBaseUrl', () => {
   it('từ chối chuỗi không phải URL hợp lệ', () => {
     expect(() => setApiBaseUrl('not-a-valid-url')).toThrow(/API Base URL không hợp lệ/);
   });
+
+  it('apiFetch tự động đính kèm Authorization header nếu có session', async () => {
+    const originalFetch = globalThis.fetch;
+    let capturedHeaders: HeadersInit | undefined;
+
+    localStorage.setItem(
+      'quick-grading-admin-session',
+      JSON.stringify({ token: 'test-admin-jwt-token', username: 'admin' }),
+    );
+
+    globalThis.fetch = async (_input, init) => {
+      capturedHeaders = init?.headers;
+      return new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    };
+
+    try {
+      const { apiFetch } = await import('../src/index.js');
+      await apiFetch('/api/test-auth');
+
+      const headers = new Headers(capturedHeaders);
+      expect(headers.get('Authorization')).toBe('Bearer test-admin-jwt-token');
+    } finally {
+      globalThis.fetch = originalFetch;
+      localStorage.clear();
+    }
+  });
 });
+

@@ -20,4 +20,8 @@ export {
   gradingApi,
   rubricsApi,
   teamsApi,
+  setApiBaseUrl,
+  getApiBaseUrl,
+  setCognitoConfig,
+  getCognitoConfig,
 } from '@quick-grading/api-client';

@@ -15,6 +15,7 @@
  *
  * _Requirements: 12.1, 12.2, 12.3_
  */
+import { UnauthorizedError, ValidationError } from '@quick-grading/shared-types';
 import { apiFetchJson, apiFetchVoid } from './http.js';
 
 /**
@@ -22,6 +23,21 @@ import { apiFetchJson, apiFetchVoid } from './http.js';
  * `login`/`logout`/`getCurrentAdmin` dùng chung, tránh lệch key.
  */
 const ADMIN_SESSION_KEY = 'quick-grading-admin-session';
+
+export interface CognitoConfig {
+  userPoolClientId: string;
+  region?: string;
+}
+
+let cognitoConfig: CognitoConfig | null = null;
+
+export function setCognitoConfig(config: CognitoConfig | null): void {
+  cognitoConfig = config;
+}
+
+export function getCognitoConfig(): CognitoConfig | null {
+  return cognitoConfig;
+}
 
 /** Shape session lưu ở client sau khi đăng nhập thành công */
 interface StoredAdminSession {
@@ -48,16 +64,78 @@ function hasLocalStorage(): boolean {
 }
 
 export const authApi = {
+  setCognitoConfig,
+  getCognitoConfig,
+
   /**
    * Đăng nhập Admin (Requirement 4.1). Trả `{ token }` theo design contract.
    *
-   * Handler trả `{ token, adminId, username }` (HTTP 200); ta lưu
-   * `{ token, username }` vào `localStorage` để `getCurrentAdmin` đọc lại
-   * (mock server stateless — client tự giữ session). Ném `UnauthorizedError`
-   * nếu sai thông tin, `ValidationError` nếu thiếu field (đã map ở
-   * `http.ts`).
+   * Nếu có cấu hình Cognito: gọi trực tiếp Cognito InitiateAuth USER_PASSWORD_AUTH.
+   * Ngược lại: fallback gọi mock server /api/auth/login.
    */
   async login(username: string, password: string): Promise<{ token: string }> {
+    if (!username || username.trim().length === 0 || !password) {
+      throw new ValidationError('Tên đăng nhập và mật khẩu không được để trống.');
+    }
+
+    if (cognitoConfig?.userPoolClientId) {
+      const region = cognitoConfig.region ?? 'ap-southeast-1';
+      const endpoint = `https://cognito-idp.${region}.amazonaws.com/`;
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-amz-json-1.1',
+          'X-Amz-Target': 'AWSCognitoIdentityProviderService.InitiateAuth',
+        },
+        body: JSON.stringify({
+          AuthFlow: 'USER_PASSWORD_AUTH',
+          ClientId: cognitoConfig.userPoolClientId,
+          AuthParameters: {
+            USERNAME: username.trim(),
+            PASSWORD: password,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        let errJson: { __type?: string; message?: string } = {};
+        try {
+          errJson = (await response.json()) as { __type?: string; message?: string };
+        } catch {
+          // ignore
+        }
+        const errType = errJson.__type ?? '';
+        if (
+          errType.includes('NotAuthorizedException') ||
+          errType.includes('UserNotFoundException') ||
+          errType.includes('InvalidPasswordException') ||
+          errType.includes('InvalidParameterException')
+        ) {
+          throw new UnauthorizedError('Tài khoản hoặc mật khẩu không chính xác.');
+        }
+        throw new Error(errJson.message ?? 'Đăng nhập thất bại.');
+      }
+
+      const data = (await response.json()) as {
+        AuthenticationResult?: {
+          IdToken?: string;
+          AccessToken?: string;
+        };
+      };
+      const idToken = data.AuthenticationResult?.IdToken;
+      if (!idToken) {
+        throw new Error('Không nhận được IdToken từ dịch vụ xác thực Cognito.');
+      }
+
+      if (hasLocalStorage()) {
+        const session: StoredAdminSession = { token: idToken, username: username.trim() };
+        localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(session));
+      }
+
+      return { token: idToken };
+    }
+
     const result = await apiFetchJson<LoginResponse>('/api/auth/login', 'POST', {
       username,
       password,
@@ -68,24 +146,20 @@ export const authApi = {
       localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(session));
     }
 
-    // Chỉ trả đúng phần design contract cam kết.
     return { token: result.token };
   },
 
   /**
    * Đăng xuất Admin (Requirement 4.1). Xoá session client + gọi endpoint
-   * xác nhận.
-   *
-   * Handler trả `204 No Content` (không body) — dùng `apiFetchVoid` để
-   * KHÔNG parse JSON (tránh lỗi parse body rỗng). Xoá session localStorage
-   * TRƯỚC khi gọi mạng để dù request có lỗi thì client vẫn ở trạng thái đã
-   * đăng xuất.
+   * xác nhận (nếu chạy mock).
    */
   async logout(): Promise<void> {
     if (hasLocalStorage()) {
       localStorage.removeItem(ADMIN_SESSION_KEY);
     }
-    await apiFetchVoid('/api/auth/logout', { method: 'POST' });
+    if (!cognitoConfig?.userPoolClientId) {
+      await apiFetchVoid('/api/auth/logout', { method: 'POST' });
+    }
   },
 
   /**
