@@ -39,7 +39,7 @@ export class Storage extends Construct {
       ],
       cors: [
         {
-          allowedMethods: [s3.HttpMethods.POST],
+          allowedMethods: [s3.HttpMethods.POST, s3.HttpMethods.GET],
           allowedOrigins: config.allowedOrigins,
           allowedHeaders: ['*'],
           maxAge: 3000,

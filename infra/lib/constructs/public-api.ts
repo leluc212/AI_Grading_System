@@ -134,9 +134,10 @@ export class PublicApi extends Construct {
         allowMethods: [
           apigwv2.CorsHttpMethod.GET,
           apigwv2.CorsHttpMethod.POST,
+          apigwv2.CorsHttpMethod.PATCH,
           apigwv2.CorsHttpMethod.OPTIONS,
         ],
-        allowHeaders: ['content-type'],
+        allowHeaders: ['content-type', 'authorization'],
         maxAge: Duration.days(1),
       },
     });

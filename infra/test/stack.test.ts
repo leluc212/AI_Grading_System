@@ -78,7 +78,7 @@ describe('S3 bucket', () => {
     expect(p.CorsConfiguration).toEqual({
       CorsRules: [
         {
-          AllowedMethods: ['POST'],
+          AllowedMethods: ['POST', 'GET'],
           AllowedOrigins: ['http://localhost:5173', 'http://localhost:5174'],
           AllowedHeaders: ['*'],
           MaxAge: 3000,
@@ -275,9 +275,9 @@ describe('Phase 2 Grading Pipeline (SQS, Worker, DLQ, Alarms)', () => {
     });
   });
 
-  it('tạo Lambda grading-worker và grading-dlq-handler với cấu hình chuẩn', () => {
+  it('tạo Lambda grading-worker, grading-dlq-handler và admin-api với cấu hình chuẩn', () => {
     const fns = dev.findResources('AWS::Lambda::Function');
-    expect(Object.keys(fns)).toHaveLength(3); // public-api, worker, dlq-handler
+    expect(Object.keys(fns)).toHaveLength(4); // public-api, worker, dlq-handler, admin-api
 
     const [, worker] = Object.entries(fns).find(([id]) => id.includes('WorkerFunction'))!;
     expect(worker.Properties.Architectures).toEqual(['arm64']);
@@ -288,6 +288,11 @@ describe('Phase 2 Grading Pipeline (SQS, Worker, DLQ, Alarms)', () => {
     expect(dlqHandler.Properties.Architectures).toEqual(['arm64']);
     expect(dlqHandler.Properties.MemorySize).toBe(256);
     expect(dlqHandler.Properties.Timeout).toBe(30);
+
+    const [, adminApi] = Object.entries(fns).find(([id]) => id.includes('AdminApi'))!;
+    expect(adminApi.Properties.Architectures).toEqual(['arm64']);
+    expect(adminApi.Properties.MemorySize).toBe(256);
+    expect(adminApi.Properties.Timeout).toBe(15);
   });
 
   it('cấu hình 2 EventSourceMapping với SQS batchSize và maxConcurrency', () => {
@@ -321,29 +326,60 @@ describe('Phase 2 Grading Pipeline (SQS, Worker, DLQ, Alarms)', () => {
 });
 
 describe('HTTP API', () => {
-  it('HTTP API + CORS origin theo context', () => {
+  it('HTTP API + CORS origin theo context và headers authorization', () => {
     dev.hasResourceProperties('AWS::ApiGatewayV2::Api', {
       ProtocolType: 'HTTP',
       CorsConfiguration: Match.objectLike({
         AllowOrigins: ['http://localhost:5173', 'http://localhost:5174'],
-        AllowHeaders: ['content-type'],
+        AllowHeaders: ['content-type', 'authorization'],
       }),
     });
   });
 
-  it('đúng 5 route', () => {
-    const routes = Object.values(dev.findResources('AWS::ApiGatewayV2::Route')).map(
-      (r) => r.Properties.RouteKey,
-    );
-    expect(routes.sort()).toEqual(
-      [
-        'GET /api/assignments',
-        'GET /api/assignments/{assignmentId}',
-        'GET /api/teams/check-name',
-        'POST /api/submissions',
-        'POST /api/submissions/{submissionId}/finalize',
-      ].sort(),
-    );
+  it('đúng các route public (5) và các route admin có bảo vệ', () => {
+    const rawRoutes = dev.findResources('AWS::ApiGatewayV2::Route');
+    const routes = Object.values(rawRoutes);
+
+    const publicRouteKeys = [
+      'GET /api/assignments',
+      'GET /api/assignments/{assignmentId}',
+      'GET /api/teams/check-name',
+      'POST /api/submissions',
+      'POST /api/submissions/{submissionId}/finalize',
+    ];
+
+    for (const key of publicRouteKeys) {
+      const r = routes.find((item) => item.Properties.RouteKey === key);
+      expect(r).toBeDefined();
+      expect(r!.Properties.AuthorizationType).toBe('NONE');
+    }
+
+    const adminRouteKeys = [
+      'POST /api/assignments',
+      'PATCH /api/assignments/{assignmentId}/status',
+      'GET /api/assignments/{assignmentId}/teams',
+      'GET /api/teams/{teamId}',
+      'PATCH /api/teams/{teamId}/unlock',
+      'GET /api/teams/{teamId}/files',
+      'GET /api/assignments/{assignmentId}/export-data',
+      'POST /api/teams/{teamId}/grading',
+      'POST /api/assignments/{assignmentId}/grading',
+      'GET /api/teams/{teamId}/grading/history',
+      'PATCH /api/teams/{teamId}/grading/{gradingAttemptId}/review',
+      'GET /api/rubrics',
+      'GET /api/rubrics/active',
+      'POST /api/rubrics',
+      'GET /api/grading-config',
+      'GET /api/grading-config/active',
+      'POST /api/grading-config',
+    ];
+
+    for (const key of adminRouteKeys) {
+      const r = routes.find((item) => item.Properties.RouteKey === key);
+      expect(r).toBeDefined();
+      expect(r!.Properties.AuthorizationType).toBe('JWT');
+      expect(r!.Properties.AuthorizerId).toBeDefined();
+    }
   });
 
   it('throttle stage 20/40, route nộp bài 2/5; stage phụ thuộc route', () => {
@@ -360,6 +396,40 @@ describe('HTTP API', () => {
       },
     });
     expect((stage.DependsOn as string[]).length).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe('Phase 3.1 Cognito & Admin Auth', () => {
+  it('tạo UserPool với AllowAdminCreateUserOnly = true (self-signup tắt)', () => {
+    dev.resourceCountIs('AWS::Cognito::UserPool', 1);
+    dev.hasResourceProperties('AWS::Cognito::UserPool', {
+      UserPoolName: 'QuickGrading-dev-admins',
+      AdminCreateUserConfig: {
+        AllowAdminCreateUserOnly: true,
+      },
+      AliasAttributes: ['email'],
+    });
+  });
+
+  it('tạo UserPoolClient không secret cho SPA web admin', () => {
+    dev.resourceCountIs('AWS::Cognito::UserPoolClient', 1);
+    dev.hasResourceProperties('AWS::Cognito::UserPoolClient', {
+      ClientName: 'QuickGrading-dev-admin-web',
+      GenerateSecret: false,
+      ExplicitAuthFlows: [
+        'ALLOW_USER_PASSWORD_AUTH',
+        'ALLOW_USER_SRP_AUTH',
+        'ALLOW_REFRESH_TOKEN_AUTH',
+      ],
+    });
+  });
+
+  it('tạo HttpJwtAuthorizer trên API Gateway v2 liên kết UserPool', () => {
+    dev.resourceCountIs('AWS::ApiGatewayV2::Authorizer', 1);
+    dev.hasResourceProperties('AWS::ApiGatewayV2::Authorizer', {
+      AuthorizerType: 'JWT',
+      IdentitySource: ['$request.header.Authorization'],
+    });
   });
 });
 
@@ -438,11 +508,13 @@ describe('Tags và Outputs', () => {
     }
   });
 
-  it('có output ApiUrl, BucketName, TableName, GradingQueueUrl, GradingDlqUrl', () => {
+  it('có output ApiUrl, BucketName, TableName, GradingQueueUrl, GradingDlqUrl, UserPoolId, UserPoolClientId', () => {
     dev.hasOutput('ApiUrl', {});
     dev.hasOutput('BucketName', {});
     dev.hasOutput('TableName', {});
     dev.hasOutput('GradingQueueUrl', {});
     dev.hasOutput('GradingDlqUrl', {});
+    dev.hasOutput('UserPoolId', {});
+    dev.hasOutput('UserPoolClientId', {});
   });
 });
