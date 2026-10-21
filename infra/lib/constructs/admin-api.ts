@@ -145,7 +145,10 @@ export class AdminApi extends Construct {
     addAdminRoute(apigwv2.HttpMethod.POST, '/api/teams/{teamId}/grading');
     addAdminRoute(apigwv2.HttpMethod.POST, '/api/assignments/{assignmentId}/grading');
     addAdminRoute(apigwv2.HttpMethod.GET, '/api/teams/{teamId}/grading/history');
-    addAdminRoute(apigwv2.HttpMethod.PATCH, '/api/teams/{teamId}/grading/{gradingAttemptId}/review');
+    addAdminRoute(
+      apigwv2.HttpMethod.PATCH,
+      '/api/teams/{teamId}/grading/{gradingAttemptId}/review',
+    );
 
     // Các routes Rubric & GradingConfig
     addAdminRoute(apigwv2.HttpMethod.GET, '/api/rubrics');

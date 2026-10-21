@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { mockClient } from 'aws-sdk-client-mock';
-import { DynamoDBDocumentClient, GetCommand, QueryCommand, TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
+import {
+  DynamoDBDocumentClient,
+  GetCommand,
+  QueryCommand,
+  TransactWriteCommand,
+} from '@aws-sdk/lib-dynamodb';
 import type { APIGatewayProxyEventV2 } from 'aws-lambda';
 import {
   handleCreateGradingConfig,
@@ -57,23 +62,21 @@ describe('admin/gradingConfig handlers', () => {
         .on(GetCommand, { Key: { PK: 'GRADINGCONFIG#default', SK: 'ACTIVE' } })
         .resolves({ Item: { version: 1 } });
 
-      ddbMock
-        .on(GetCommand, { Key: { PK: 'GRADINGCONFIG#default', SK: 'V#1' } })
-        .resolves({
-          Item: {
-            config: {
-              configId: 'default',
-              version: 1,
-              mode: 'RUBRIC',
-              maxInputTokens: 50000,
-              maxOutputTokens: 2000,
-              autoGradeOnSubmit: false,
-              isActive: true,
-              createdAt: '2026-03-01T00:00:00.000Z',
-              createdBy: 'admin',
-            },
+      ddbMock.on(GetCommand, { Key: { PK: 'GRADINGCONFIG#default', SK: 'V#1' } }).resolves({
+        Item: {
+          config: {
+            configId: 'default',
+            version: 1,
+            mode: 'RUBRIC',
+            maxInputTokens: 50000,
+            maxOutputTokens: 2000,
+            autoGradeOnSubmit: false,
+            isActive: true,
+            createdAt: '2026-03-01T00:00:00.000Z',
+            createdBy: 'admin',
           },
-        });
+        },
+      });
 
       const res = await handleGetActiveGradingConfig();
       expect(res.statusCode).toBe(200);
@@ -154,7 +157,9 @@ describe('admin/gradingConfig handlers', () => {
         body: JSON.stringify({ mode: 'INVALID_MODE' }),
       });
 
-      await expect(handleCreateGradingConfig(event, 'admin')).rejects.toThrow(/mode phải là 1 trong các giá trị/);
+      await expect(handleCreateGradingConfig(event, 'admin')).rejects.toThrow(
+        /mode phải là 1 trong các giá trị/,
+      );
     });
 
     it('báo lỗi ValidationError nếu mode PROMPT nhưng thiếu systemPrompt', async () => {
@@ -162,7 +167,9 @@ describe('admin/gradingConfig handlers', () => {
         body: JSON.stringify({ mode: 'PROMPT', systemPrompt: '' }),
       });
 
-      await expect(handleCreateGradingConfig(event, 'admin')).rejects.toThrow(/systemPrompt là bắt buộc/);
+      await expect(handleCreateGradingConfig(event, 'admin')).rejects.toThrow(
+        /systemPrompt là bắt buộc/,
+      );
     });
 
     it('báo lỗi ValidationError nếu reasoningEffort không hợp lệ', async () => {
@@ -170,7 +177,9 @@ describe('admin/gradingConfig handlers', () => {
         body: JSON.stringify({ mode: 'RUBRIC', reasoningEffort: 'high' }),
       });
 
-      await expect(handleCreateGradingConfig(event, 'admin')).rejects.toThrow(/reasoningEffort phải là/);
+      await expect(handleCreateGradingConfig(event, 'admin')).rejects.toThrow(
+        /reasoningEffort phải là/,
+      );
     });
   });
 });

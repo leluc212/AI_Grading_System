@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { mockClient } from 'aws-sdk-client-mock';
-import { DynamoDBDocumentClient, GetCommand, QueryCommand, TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
+import {
+  DynamoDBDocumentClient,
+  GetCommand,
+  QueryCommand,
+  TransactWriteCommand,
+} from '@aws-sdk/lib-dynamodb';
 import type { APIGatewayProxyEventV2 } from 'aws-lambda';
 import {
   handleCreateRubric,
@@ -57,20 +62,18 @@ describe('admin/rubrics handlers', () => {
         .on(GetCommand, { Key: { PK: 'RUBRIC#default', SK: 'ACTIVE' } })
         .resolves({ Item: { version: 1 } });
 
-      ddbMock
-        .on(GetCommand, { Key: { PK: 'RUBRIC#default', SK: 'V#1' } })
-        .resolves({
-          Item: {
-            rubric: {
-              rubricId: 'r1',
-              version: 1,
-              criteria: [{ id: 'c1', label: 'Tính đúng đắn' }],
-              isActive: true,
-              createdAt: '2026-03-01T00:00:00.000Z',
-              updatedAt: '2026-03-01T00:00:00.000Z',
-            },
+      ddbMock.on(GetCommand, { Key: { PK: 'RUBRIC#default', SK: 'V#1' } }).resolves({
+        Item: {
+          rubric: {
+            rubricId: 'r1',
+            version: 1,
+            criteria: [{ id: 'c1', label: 'Tính đúng đắn' }],
+            isActive: true,
+            createdAt: '2026-03-01T00:00:00.000Z',
+            updatedAt: '2026-03-01T00:00:00.000Z',
           },
-        });
+        },
+      });
 
       const res = await handleGetActiveRubric();
       expect(res.statusCode).toBe(200);
@@ -135,13 +138,9 @@ describe('admin/rubrics handlers', () => {
   describe('handleCreateRubric', () => {
     it('tạo và kích hoạt version rubric mới (tăng version tự động)', async () => {
       // 1. Query versions để tìm maxVersion
-      ddbMock
-        .on(QueryCommand)
-        .resolves({
-          Items: [
-            { rubric: { rubricId: 'r1', version: 1, criteria: [], isActive: true } },
-          ],
-        });
+      ddbMock.on(QueryCommand).resolves({
+        Items: [{ rubric: { rubricId: 'r1', version: 1, criteria: [], isActive: true } }],
+      });
 
       // 2. TransactWriteCommand để lưu V#2 và ACTIVE
       ddbMock.on(TransactWriteCommand).resolves({});
@@ -175,7 +174,9 @@ describe('admin/rubrics handlers', () => {
         body: JSON.stringify({ criteria: [] }),
       });
 
-      await expect(handleCreateRubric(event)).rejects.toThrow(/criteria phải là một mảng không rỗng/);
+      await expect(handleCreateRubric(event)).rejects.toThrow(
+        /criteria phải là một mảng không rỗng/,
+      );
     });
 
     it('báo lỗi ValidationError nếu criterion thiếu id hoặc label', async () => {

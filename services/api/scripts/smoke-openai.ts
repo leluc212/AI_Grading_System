@@ -45,7 +45,8 @@ const SAMPLE_CONFIG: GradingConfig = {
   mode: 'RUBRIC',
   autoGradeOnSubmit: true,
   isActive: true,
-  systemPrompt: 'Bạn là giám khảo chấm bài thực hành lập trình. Hãy đánh giá mã nguồn ngắn gọn và công tâm.',
+  systemPrompt:
+    'Bạn là giám khảo chấm bài thực hành lập trình. Hãy đánh giá mã nguồn ngắn gọn và công tâm.',
   maxInputTokens: 10000,
   maxOutputTokens: 1000,
   model: 'gpt-6.1-sol',
@@ -71,13 +72,17 @@ print(two_sum([2, 7, 11, 15], 9))
 </file>`;
 
 export async function run() {
-  console.log(`[smoke-openai] Kiểm tra SSM Parameter Store (Stage: ${process.env.STAGE}, Region: ${process.env.AWS_REGION})...`);
+  console.log(
+    `[smoke-openai] Kiểm tra SSM Parameter Store (Stage: ${process.env.STAGE}, Region: ${process.env.AWS_REGION})...`,
+  );
 
   const apiKey = await getOpenAiApiKey();
   if (!apiKey || apiKey.length < 10) {
     throw new Error('API Key đọc từ SSM không hợp lệ hoặc rỗng.');
   }
-  console.log(`[smoke-openai] Đã nạp thành công OpenAI API Key từ SSM (độ dài: ${apiKey.length} ký tự).`);
+  console.log(
+    `[smoke-openai] Đã nạp thành công OpenAI API Key từ SSM (độ dài: ${apiKey.length} ký tự).`,
+  );
 
   const ssmModel = await getOpenAiModel();
   const actualModel = ssmModel || 'gpt-6.1-sol';
@@ -113,7 +118,9 @@ export async function run() {
   console.log(`Thời gian thực thi: ${duration} ms`);
   console.log(`Điểm tổng (score): ${score}/100`);
   console.log(`Cần xem lại (needsReview): ${needsReview}`);
-  console.log(`Tổng tokens (input/output/cached): ${usage.inputTokens} / ${usage.outputTokens} / ${usage.cachedInputTokens}`);
+  console.log(
+    `Tổng tokens (input/output/cached): ${usage.inputTokens} / ${usage.outputTokens} / ${usage.cachedInputTokens}`,
+  );
   console.log(`Nhận xét chung: ${feedback}`);
   console.log('Điểm từng tiêu chí:');
   for (const c of criteriaScores) {

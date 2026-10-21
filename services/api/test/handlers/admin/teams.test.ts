@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { mockClient } from 'aws-sdk-client-mock';
-import { DynamoDBDocumentClient, GetCommand, QueryCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import {
+  DynamoDBDocumentClient,
+  GetCommand,
+  QueryCommand,
+  UpdateCommand,
+} from '@aws-sdk/lib-dynamodb';
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import type { APIGatewayProxyEventV2 } from 'aws-lambda';
 import {
@@ -255,51 +260,53 @@ describe('admin/teams handlers', () => {
   describe('handleGetTeamFiles', () => {
     it('trả về nội dung md, xml và presigned URLs', async () => {
       // 1. Get team record có latestSubmissionId
-      ddbMock
-        .on(GetCommand, { Key: { PK: 'TEAM#t1', SK: 'META' } })
-        .resolves({
-          Item: {
-            teamId: 't1',
-            assignmentId: 'a1',
-            teamName: 'Nhóm 1',
-            status: 'SUBMITTED',
-            createdAt: '2026-03-01T00:00:00.000Z',
-            latestSubmissionId: 's1',
-          },
-        });
+      ddbMock.on(GetCommand, { Key: { PK: 'TEAM#t1', SK: 'META' } }).resolves({
+        Item: {
+          teamId: 't1',
+          assignmentId: 'a1',
+          teamName: 'Nhóm 1',
+          status: 'SUBMITTED',
+          createdAt: '2026-03-01T00:00:00.000Z',
+          latestSubmissionId: 's1',
+        },
+      });
 
       // 2. Get submission record
-      ddbMock
-        .on(GetCommand, { Key: { PK: 'TEAM#t1', SK: 'SUBMISSION#s1' } })
-        .resolves({
-          Item: {
-            submissionId: 's1',
-            teamId: 't1',
-            assignmentId: 'a1',
-            submittedAt: '2026-03-01T01:00:00.000Z',
-            files: {
-              md: { fileName: 'report.md', s3Key: 'submissions/t1/s1/report.md', etag: 'e1', size: 100 },
-              xml: { fileName: 'data.xml', s3Key: 'submissions/t1/s1/data.xml', etag: 'e2', size: 200 },
+      ddbMock.on(GetCommand, { Key: { PK: 'TEAM#t1', SK: 'SUBMISSION#s1' } }).resolves({
+        Item: {
+          submissionId: 's1',
+          teamId: 't1',
+          assignmentId: 'a1',
+          submittedAt: '2026-03-01T01:00:00.000Z',
+          files: {
+            md: {
+              fileName: 'report.md',
+              s3Key: 'submissions/t1/s1/report.md',
+              etag: 'e1',
+              size: 100,
+            },
+            xml: {
+              fileName: 'data.xml',
+              s3Key: 'submissions/t1/s1/data.xml',
+              etag: 'e2',
+              size: 200,
             },
           },
-        });
+        },
+      });
 
       // 3. S3 read text
-      s3Mock
-        .on(GetObjectCommand, { Key: 'submissions/t1/s1/report.md' })
-        .resolves({
-          Body: {
-            transformToString: async () => '# Báo Cáo',
-          } as never,
-        });
+      s3Mock.on(GetObjectCommand, { Key: 'submissions/t1/s1/report.md' }).resolves({
+        Body: {
+          transformToString: async () => '# Báo Cáo',
+        } as never,
+      });
 
-      s3Mock
-        .on(GetObjectCommand, { Key: 'submissions/t1/s1/data.xml' })
-        .resolves({
-          Body: {
-            transformToString: async () => '<root><item/></root>',
-          } as never,
-        });
+      s3Mock.on(GetObjectCommand, { Key: 'submissions/t1/s1/data.xml' }).resolves({
+        Body: {
+          transformToString: async () => '<root><item/></root>',
+        } as never,
+      });
 
       const event = makeEvent({
         pathParameters: { teamId: 't1' },
@@ -316,17 +323,15 @@ describe('admin/teams handlers', () => {
     });
 
     it('báo lỗi ValidationError nếu nhóm chưa nộp bài', async () => {
-      ddbMock
-        .on(GetCommand, { Key: { PK: 'TEAM#t1', SK: 'META' } })
-        .resolves({
-          Item: {
-            teamId: 't1',
-            assignmentId: 'a1',
-            teamName: 'Nhóm 1',
-            status: 'OPEN',
-            createdAt: '2026-03-01T00:00:00.000Z',
-          },
-        });
+      ddbMock.on(GetCommand, { Key: { PK: 'TEAM#t1', SK: 'META' } }).resolves({
+        Item: {
+          teamId: 't1',
+          assignmentId: 'a1',
+          teamName: 'Nhóm 1',
+          status: 'OPEN',
+          createdAt: '2026-03-01T00:00:00.000Z',
+        },
+      });
 
       const event = makeEvent({
         pathParameters: { teamId: 't1' },

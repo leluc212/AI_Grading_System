@@ -116,4 +116,3 @@ export async function setAssignmentStatus(
     throw err;
   }
 }
-

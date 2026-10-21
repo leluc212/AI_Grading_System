@@ -275,9 +275,12 @@ describe('AssignmentsPage - xuất Excel (Requirement 10.1, 10.4)', () => {
       expect(exportApi.getAssignmentExportData).toHaveBeenCalledWith('a-open');
     });
     // Requirement 10.4: file được tải trực tiếp từ trình duyệt.
-    await waitFor(() => {
-      expect(createObjectURL).toHaveBeenCalledTimes(1);
-    });
+    await waitFor(
+      () => {
+        expect(createObjectURL).toHaveBeenCalledTimes(1);
+      },
+      { timeout: 3000 },
+    );
     expect(
       await screen.findByText(/Đã tạo file "diem-dot-1-lap-trinh-web-k21-.*\.xlsx"/),
     ).toBeDefined();

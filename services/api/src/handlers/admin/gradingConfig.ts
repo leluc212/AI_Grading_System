@@ -43,7 +43,10 @@ export async function handleCreateGradingConfig(
   }
 
   const rawPrompt = body?.systemPrompt;
-  if ((mode === 'PROMPT' || mode === 'HYBRID') && (typeof rawPrompt !== 'string' || rawPrompt.trim().length === 0)) {
+  if (
+    (mode === 'PROMPT' || mode === 'HYBRID') &&
+    (typeof rawPrompt !== 'string' || rawPrompt.trim().length === 0)
+  ) {
     throw new ValidationError(
       `systemPrompt là bắt buộc khi chế độ chấm là ${mode}.`,
       'systemPrompt',
@@ -58,9 +61,8 @@ export async function handleCreateGradingConfig(
     systemPrompt = rawPrompt;
   }
 
-  const model = typeof body?.model === 'string' && body.model.trim().length > 0
-    ? body.model.trim()
-    : undefined;
+  const model =
+    typeof body?.model === 'string' && body.model.trim().length > 0 ? body.model.trim() : undefined;
 
   let reasoningEffort: 'low' | 'medium' | undefined;
   if (body?.reasoningEffort !== undefined) {
@@ -70,17 +72,18 @@ export async function handleCreateGradingConfig(
     reasoningEffort = body.reasoningEffort;
   }
 
-  const maxInputTokens = typeof body?.maxInputTokens === 'number' && body.maxInputTokens > 0
-    ? body.maxInputTokens
-    : 50000;
+  const maxInputTokens =
+    typeof body?.maxInputTokens === 'number' && body.maxInputTokens > 0
+      ? body.maxInputTokens
+      : 50000;
 
-  const maxOutputTokens = typeof body?.maxOutputTokens === 'number' && body.maxOutputTokens > 0
-    ? body.maxOutputTokens
-    : 2000;
+  const maxOutputTokens =
+    typeof body?.maxOutputTokens === 'number' && body.maxOutputTokens > 0
+      ? body.maxOutputTokens
+      : 2000;
 
-  const autoGradeOnSubmit = typeof body?.autoGradeOnSubmit === 'boolean'
-    ? body.autoGradeOnSubmit
-    : false;
+  const autoGradeOnSubmit =
+    typeof body?.autoGradeOnSubmit === 'boolean' ? body.autoGradeOnSubmit : false;
 
   const newConfig = await createGradingConfigVersion({
     mode,

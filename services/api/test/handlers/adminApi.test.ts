@@ -1,6 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { mockClient } from 'aws-sdk-client-mock';
-import { DynamoDBDocumentClient, GetCommand, PutCommand, QueryCommand, TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
+import {
+  DynamoDBDocumentClient,
+  GetCommand,
+  PutCommand,
+  QueryCommand,
+  TransactWriteCommand,
+} from '@aws-sdk/lib-dynamodb';
 import type { APIGatewayProxyEventV2 } from 'aws-lambda';
 import { getAdminUsername, handler } from '../../src/handlers/adminApi.js';
 

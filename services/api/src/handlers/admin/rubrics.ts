@@ -36,14 +36,20 @@ function validateCriteria(raw: unknown): RubricCriterion[] {
         'criteria',
       );
     }
-    if (weight !== undefined && (typeof weight !== 'number' || Number.isNaN(weight) || weight < 0)) {
+    if (
+      weight !== undefined &&
+      (typeof weight !== 'number' || Number.isNaN(weight) || weight < 0)
+    ) {
       throw new ValidationError(
         `criteria[${index}].weight phải là số không âm nếu có.`,
         'criteria',
       );
     }
     if (description !== undefined && typeof description !== 'string') {
-      throw new ValidationError(`criteria[${index}].description phải là string nếu có.`, 'criteria');
+      throw new ValidationError(
+        `criteria[${index}].description phải là string nếu có.`,
+        'criteria',
+      );
     }
 
     const criterion: RubricCriterion = {

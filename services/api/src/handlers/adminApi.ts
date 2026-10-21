@@ -40,8 +40,7 @@ import {
 export function getAdminUsername(event: APIGatewayProxyEventV2): string {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const claims = (event.requestContext as any)?.authorizer?.jwt?.claims;
-  const username =
-    claims?.['cognito:username'] ?? claims?.username ?? claims?.sub ?? 'admin';
+  const username = claims?.['cognito:username'] ?? claims?.username ?? claims?.sub ?? 'admin';
   return String(username);
 }
 

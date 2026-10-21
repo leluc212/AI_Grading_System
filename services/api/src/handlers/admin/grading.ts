@@ -36,9 +36,10 @@ export async function handleTriggerTeamGrading(
   if (event.body && event.body.trim().length > 0) {
     body = (parseJsonBody(event) ?? {}) as Record<string, unknown>;
   }
-  const adminId = typeof body.adminId === 'string' && body.adminId.trim().length > 0
-    ? body.adminId.trim()
-    : username;
+  const adminId =
+    typeof body.adminId === 'string' && body.adminId.trim().length > 0
+      ? body.adminId.trim()
+      : username;
 
   const force = typeof body.force === 'boolean' ? body.force : true;
 
@@ -78,7 +79,12 @@ export async function handleTriggerAssignmentGrading(
   let triggered = 0;
   let skipped = 0;
   let failed = 0;
-  const results: Array<{ teamId: string; status: string; gradingAttemptId?: string; error?: string }> = [];
+  const results: Array<{
+    teamId: string;
+    status: string;
+    gradingAttemptId?: string;
+    error?: string;
+  }> = [];
 
   for (const team of teams) {
     try {
@@ -90,10 +96,18 @@ export async function handleTriggerAssignmentGrading(
 
       if (res.skipped) {
         skipped += 1;
-        results.push({ teamId: team.teamId, status: 'SKIPPED', gradingAttemptId: res.gradingAttemptId });
+        results.push({
+          teamId: team.teamId,
+          status: 'SKIPPED',
+          gradingAttemptId: res.gradingAttemptId,
+        });
       } else {
         triggered += 1;
-        results.push({ teamId: team.teamId, status: 'TRIGGERED', gradingAttemptId: res.gradingAttemptId });
+        results.push({
+          teamId: team.teamId,
+          status: 'TRIGGERED',
+          gradingAttemptId: res.gradingAttemptId,
+        });
       }
     } catch (err: unknown) {
       failed += 1;
@@ -146,13 +160,18 @@ export async function handleSubmitReview(
 
   const body = (parseJsonBody(event) ?? {}) as Record<string, unknown>;
 
-  const reviewedBy = typeof body.reviewedBy === 'string' && body.reviewedBy.trim().length > 0
-    ? body.reviewedBy.trim()
-    : username;
+  const reviewedBy =
+    typeof body.reviewedBy === 'string' && body.reviewedBy.trim().length > 0
+      ? body.reviewedBy.trim()
+      : username;
 
   let finalScore: number | undefined;
   if (body.finalScore !== undefined) {
-    if (typeof body.finalScore !== 'number' || Number.isNaN(body.finalScore) || body.finalScore < 0) {
+    if (
+      typeof body.finalScore !== 'number' ||
+      Number.isNaN(body.finalScore) ||
+      body.finalScore < 0
+    ) {
       throw new ValidationError('finalScore phải là số không âm.', 'finalScore');
     }
     finalScore = body.finalScore;

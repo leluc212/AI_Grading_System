@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { mockClient } from 'aws-sdk-client-mock';
 import { DynamoDBDocumentClient, GetCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import type { APIGatewayProxyEventV2 } from 'aws-lambda';
-import { handleExportAssignmentData, NOT_GRADED_LABEL } from '../../../src/handlers/admin/export.js';
+import {
+  handleExportAssignmentData,
+  NOT_GRADED_LABEL,
+} from '../../../src/handlers/admin/export.js';
 
 const ddbMock = mockClient(DynamoDBDocumentClient);
 
@@ -47,18 +50,16 @@ describe('admin/export handler', () => {
 
   it('xuất bảng điểm thành công với cả nhóm đã chấm và chưa chấm', async () => {
     // 1. Get assignment
-    ddbMock
-      .on(GetCommand, { Key: { PK: 'ASSIGNMENT#a1', SK: 'META' } })
-      .resolves({
-        Item: {
-          assignmentId: 'a1',
-          assignmentName: 'Đồ Án Cuối Kỳ',
-          status: 'OPEN',
-          createdAt: '2026-03-01T00:00:00.000Z',
-          createdBy: 'admin',
-          submittedTeamCount: 2,
-        },
-      });
+    ddbMock.on(GetCommand, { Key: { PK: 'ASSIGNMENT#a1', SK: 'META' } }).resolves({
+      Item: {
+        assignmentId: 'a1',
+        assignmentName: 'Đồ Án Cuối Kỳ',
+        status: 'OPEN',
+        createdAt: '2026-03-01T00:00:00.000Z',
+        createdBy: 'admin',
+        submittedTeamCount: 2,
+      },
+    });
 
     // 2. Query teams
     ddbMock
@@ -74,7 +75,12 @@ describe('admin/export handler', () => {
             teamName: 'Alpha Team',
             teamNameNormalized: 'alpha team',
             members: [
-              { memberId: 'm1', memberName: 'Nguyễn Văn A', studentCode: 'SV001', email: 'a@sv.edu.vn' },
+              {
+                memberId: 'm1',
+                memberName: 'Nguyễn Văn A',
+                studentCode: 'SV001',
+                email: 'a@sv.edu.vn',
+              },
               { memberId: 'm2', memberName: 'Trần Thị B', email: 'b@sv.edu.vn' },
             ],
             status: 'SUBMITTED',
@@ -86,7 +92,12 @@ describe('admin/export handler', () => {
             teamName: 'Beta Team',
             teamNameNormalized: 'beta team',
             members: [
-              { memberId: 'm3', memberName: 'Lê Văn C', studentCode: 'SV002', email: 'c@sv.edu.vn' },
+              {
+                memberId: 'm3',
+                memberName: 'Lê Văn C',
+                studentCode: 'SV002',
+                email: 'c@sv.edu.vn',
+              },
             ],
             status: 'SUBMITTED',
             createdAt: '2026-03-01T02:00:00.000Z',
@@ -151,9 +162,7 @@ describe('admin/export handler', () => {
     expect(row2.finalDisplayScore).toBe(NOT_GRADED_LABEL);
     expect(row2.reviewStatus).toBeNull();
     expect(row2.gradedAt).toBeNull();
-    expect(row2.members).toEqual([
-      { memberName: 'Lê Văn C', studentCode: 'SV002' },
-    ]);
+    expect(row2.members).toEqual([{ memberName: 'Lê Văn C', studentCode: 'SV002' }]);
   });
 
   it('báo lỗi NotFoundError nếu assignment không tồn tại', async () => {

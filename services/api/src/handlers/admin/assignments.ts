@@ -46,10 +46,7 @@ export async function handleSetAssignmentStatus(
   const status = body?.status;
 
   if (typeof status !== 'string' || !VALID_STATUSES.includes(status as AssignmentStatus)) {
-    throw new ValidationError(
-      `status phải là 1 trong: ${VALID_STATUSES.join(', ')}.`,
-      'status',
-    );
+    throw new ValidationError(`status phải là 1 trong: ${VALID_STATUSES.join(', ')}.`, 'status');
   }
 
   const assignment = await setAssignmentStatus(assignmentId, status as AssignmentStatus);

@@ -1,6 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { mockClient } from 'aws-sdk-client-mock';
-import { DynamoDBDocumentClient, GetCommand, QueryCommand, TransactWriteCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import {
+  DynamoDBDocumentClient,
+  GetCommand,
+  QueryCommand,
+  TransactWriteCommand,
+  UpdateCommand,
+} from '@aws-sdk/lib-dynamodb';
 import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs';
 import type { APIGatewayProxyEventV2 } from 'aws-lambda';
 import {
@@ -64,41 +70,37 @@ describe('admin/grading handlers', () => {
   describe('handleTriggerTeamGrading', () => {
     it('kích hoạt chấm bài thành công cho nhóm đã nộp đủ 2 file', async () => {
       // 1. Team tồn tại và status SUBMITTED
-      ddbMock
-        .on(GetCommand, { Key: { PK: 'TEAM#t1', SK: 'META' } })
-        .resolves({
-          Item: {
-            teamId: 't1',
-            assignmentId: 'a1',
-            teamName: 'Nhóm 1',
-            status: 'SUBMITTED',
-            latestSubmissionId: 'sub-1',
-            createdAt: '2026-03-01T00:00:00.000Z',
-          },
-        });
+      ddbMock.on(GetCommand, { Key: { PK: 'TEAM#t1', SK: 'META' } }).resolves({
+        Item: {
+          teamId: 't1',
+          assignmentId: 'a1',
+          teamName: 'Nhóm 1',
+          status: 'SUBMITTED',
+          latestSubmissionId: 'sub-1',
+          createdAt: '2026-03-01T00:00:00.000Z',
+        },
+      });
 
       // 2. Active GradingConfig
       ddbMock
         .on(GetCommand, { Key: { PK: 'GRADINGCONFIG#default', SK: 'ACTIVE' } })
         .resolves({ Item: { version: 1 } });
-      ddbMock
-        .on(GetCommand, { Key: { PK: 'GRADINGCONFIG#default', SK: 'V#1' } })
-        .resolves({
-          Item: {
-            config: {
-              configId: 'default',
-              version: 1,
-              mode: 'PROMPT',
-              systemPrompt: 'Test',
-              maxInputTokens: 50000,
-              maxOutputTokens: 2000,
-              autoGradeOnSubmit: false,
-              isActive: true,
-              createdAt: '',
-              createdBy: '',
-            },
+      ddbMock.on(GetCommand, { Key: { PK: 'GRADINGCONFIG#default', SK: 'V#1' } }).resolves({
+        Item: {
+          config: {
+            configId: 'default',
+            version: 1,
+            mode: 'PROMPT',
+            systemPrompt: 'Test',
+            maxInputTokens: 50000,
+            maxOutputTokens: 2000,
+            autoGradeOnSubmit: false,
+            isActive: true,
+            createdAt: '',
+            createdBy: '',
           },
-        });
+        },
+      });
 
       // 3. Khóa team và tạo attempt PENDING
       ddbMock.on(TransactWriteCommand).resolves({});
@@ -128,17 +130,15 @@ describe('admin/grading handlers', () => {
     });
 
     it('báo lỗi ValidationError nếu nhóm chưa nộp bài', async () => {
-      ddbMock
-        .on(GetCommand, { Key: { PK: 'TEAM#t1', SK: 'META' } })
-        .resolves({
-          Item: {
-            teamId: 't1',
-            assignmentId: 'a1',
-            teamName: 'Nhóm 1',
-            status: 'OPEN',
-            createdAt: '2026-03-01T00:00:00.000Z',
-          },
-        });
+      ddbMock.on(GetCommand, { Key: { PK: 'TEAM#t1', SK: 'META' } }).resolves({
+        Item: {
+          teamId: 't1',
+          assignmentId: 'a1',
+          teamName: 'Nhóm 1',
+          status: 'OPEN',
+          createdAt: '2026-03-01T00:00:00.000Z',
+        },
+      });
 
       const event = makeEvent({ teamId: 't1' });
       await expect(handleTriggerTeamGrading(event, 'admin')).rejects.toThrow(/Chỉ nhóm đã nộp bài/);
@@ -148,17 +148,15 @@ describe('admin/grading handlers', () => {
   describe('handleTriggerAssignmentGrading', () => {
     it('kích hoạt chấm hàng loạt cho các nhóm SUBMITTED trong đợt', async () => {
       // 1. Assignment tồn tại
-      ddbMock
-        .on(GetCommand, { Key: { PK: 'ASSIGNMENT#a1', SK: 'META' } })
-        .resolves({
-          Item: {
-            assignmentId: 'a1',
-            assignmentName: 'Đợt 1',
-            status: 'OPEN',
-            createdAt: '2026-03-01T00:00:00.000Z',
-            createdBy: 'admin',
-          },
-        });
+      ddbMock.on(GetCommand, { Key: { PK: 'ASSIGNMENT#a1', SK: 'META' } }).resolves({
+        Item: {
+          assignmentId: 'a1',
+          assignmentName: 'Đợt 1',
+          status: 'OPEN',
+          createdAt: '2026-03-01T00:00:00.000Z',
+          createdBy: 'admin',
+        },
+      });
 
       // 2. Query teams trong assignment
       ddbMock
@@ -179,41 +177,37 @@ describe('admin/grading handlers', () => {
         });
 
       // 3. Get team record
-      ddbMock
-        .on(GetCommand, { Key: { PK: 'TEAM#t1', SK: 'META' } })
-        .resolves({
-          Item: {
-            teamId: 't1',
-            assignmentId: 'a1',
-            teamName: 'Nhóm 1',
-            status: 'SUBMITTED',
-            latestSubmissionId: 'sub-1',
-            createdAt: '2026-03-01T00:00:00.000Z',
-          },
-        });
+      ddbMock.on(GetCommand, { Key: { PK: 'TEAM#t1', SK: 'META' } }).resolves({
+        Item: {
+          teamId: 't1',
+          assignmentId: 'a1',
+          teamName: 'Nhóm 1',
+          status: 'SUBMITTED',
+          latestSubmissionId: 'sub-1',
+          createdAt: '2026-03-01T00:00:00.000Z',
+        },
+      });
 
       // 4. GradingConfig
       ddbMock
         .on(GetCommand, { Key: { PK: 'GRADINGCONFIG#default', SK: 'ACTIVE' } })
         .resolves({ Item: { version: 1 } });
-      ddbMock
-        .on(GetCommand, { Key: { PK: 'GRADINGCONFIG#default', SK: 'V#1' } })
-        .resolves({
-          Item: {
-            config: {
-              configId: 'default',
-              version: 1,
-              mode: 'PROMPT',
-              systemPrompt: 'Test',
-              maxInputTokens: 50000,
-              maxOutputTokens: 2000,
-              autoGradeOnSubmit: false,
-              isActive: true,
-              createdAt: '',
-              createdBy: '',
-            },
+      ddbMock.on(GetCommand, { Key: { PK: 'GRADINGCONFIG#default', SK: 'V#1' } }).resolves({
+        Item: {
+          config: {
+            configId: 'default',
+            version: 1,
+            mode: 'PROMPT',
+            systemPrompt: 'Test',
+            maxInputTokens: 50000,
+            maxOutputTokens: 2000,
+            autoGradeOnSubmit: false,
+            isActive: true,
+            createdAt: '',
+            createdBy: '',
           },
-        });
+        },
+      });
 
       // 5. Query latest graded attempt (đối chiếu idempotency)
       ddbMock
@@ -243,24 +237,24 @@ describe('admin/grading handlers', () => {
         .resolves({ Item: undefined });
 
       const event = makeEvent({ assignmentId: 'non-exist' });
-      await expect(handleTriggerAssignmentGrading(event, 'admin')).rejects.toThrow(/Không tìm thấy/);
+      await expect(handleTriggerAssignmentGrading(event, 'admin')).rejects.toThrow(
+        /Không tìm thấy/,
+      );
     });
   });
 
   describe('handleListGradingHistory', () => {
     it('lấy toàn bộ lịch sử chấm của nhóm theo thứ tự tăng dần', async () => {
       // 1. Team tồn tại
-      ddbMock
-        .on(GetCommand, { Key: { PK: 'TEAM#t1', SK: 'META' } })
-        .resolves({
-          Item: {
-            teamId: 't1',
-            assignmentId: 'a1',
-            teamName: 'Nhóm 1',
-            status: 'SUBMITTED',
-            createdAt: '2026-03-01T00:00:00.000Z',
-          },
-        });
+      ddbMock.on(GetCommand, { Key: { PK: 'TEAM#t1', SK: 'META' } }).resolves({
+        Item: {
+          teamId: 't1',
+          assignmentId: 'a1',
+          teamName: 'Nhóm 1',
+          status: 'SUBMITTED',
+          createdAt: '2026-03-01T00:00:00.000Z',
+        },
+      });
 
       // 2. Query grading history
       ddbMock
@@ -298,30 +292,26 @@ describe('admin/grading handlers', () => {
   describe('handleSubmitReview', () => {
     it('giảng viên review và cập nhật finalScore thành công', async () => {
       // 1. Team tồn tại
-      ddbMock
-        .on(GetCommand, { Key: { PK: 'TEAM#t1', SK: 'META' } })
-        .resolves({
-          Item: {
-            teamId: 't1',
-            assignmentId: 'a1',
-            teamName: 'Nhóm 1',
-            status: 'SUBMITTED',
-            createdAt: '2026-03-01T00:00:00.000Z',
-          },
-        });
+      ddbMock.on(GetCommand, { Key: { PK: 'TEAM#t1', SK: 'META' } }).resolves({
+        Item: {
+          teamId: 't1',
+          assignmentId: 'a1',
+          teamName: 'Nhóm 1',
+          status: 'SUBMITTED',
+          createdAt: '2026-03-01T00:00:00.000Z',
+        },
+      });
 
       // 2. Grading attempt tồn tại
-      ddbMock
-        .on(GetCommand, { Key: { PK: 'TEAM#t1', SK: 'GRADING#att-1' } })
-        .resolves({
-          Item: {
-            gradingAttemptId: 'att-1',
-            teamId: 't1',
-            status: 'GRADED',
-            score: 75,
-            reviewStatus: 'PENDING_REVIEW',
-          },
-        });
+      ddbMock.on(GetCommand, { Key: { PK: 'TEAM#t1', SK: 'GRADING#att-1' } }).resolves({
+        Item: {
+          gradingAttemptId: 'att-1',
+          teamId: 't1',
+          status: 'GRADED',
+          score: 75,
+          reviewStatus: 'PENDING_REVIEW',
+        },
+      });
 
       // 3. UpdateCommand cập nhật review
       ddbMock.on(UpdateCommand).resolves({

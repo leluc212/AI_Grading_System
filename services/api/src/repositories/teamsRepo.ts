@@ -7,7 +7,12 @@
  * 2 finalize đồng thời cùng tên chỉ 1 cái thắng.
  */
 import { TransactionCanceledException } from '@aws-sdk/client-dynamodb';
-import { GetCommand, QueryCommand, TransactWriteCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import {
+  GetCommand,
+  QueryCommand,
+  TransactWriteCommand,
+  UpdateCommand,
+} from '@aws-sdk/lib-dynamodb';
 import type { FileType, Team, TeamMember, TeamStatus } from '@quick-grading/shared-types';
 import {
   AssignmentClosedError,
@@ -323,10 +328,7 @@ export async function listTeamsByAssignment(
   return teams;
 }
 
-export async function unlockTeamResubmission(
-  teamId: string,
-  unlockedBy: string,
-): Promise<Team> {
+export async function unlockTeamResubmission(teamId: string, unlockedBy: string): Promise<Team> {
   const existing = await getTeam(teamId);
   if (!existing) {
     throw new NotFoundError('Team', teamId);
@@ -381,4 +383,3 @@ export async function getSubmission(
     files: result.Item.files as Record<FileType, StoredFileMeta>,
   };
 }
-

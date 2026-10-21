@@ -83,7 +83,9 @@ export async function run() {
   console.log(`[seed-grading] Sử dụng bảng: ${tableName}`);
 
   await saveRubricVersion(SEED_RUBRIC);
-  console.log(`[seed-grading] Đã lưu và kích hoạt Rubric v${SEED_RUBRIC.version} (${SEED_RUBRIC.rubricId})`);
+  console.log(
+    `[seed-grading] Đã lưu và kích hoạt Rubric v${SEED_RUBRIC.version} (${SEED_RUBRIC.rubricId})`,
+  );
 
   await saveGradingConfigVersion(SEED_GRADING_CONFIG);
   console.log(

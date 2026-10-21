@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { mockClient } from 'aws-sdk-client-mock';
 import { DynamoDBDocumentClient, PutCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import type { APIGatewayProxyEventV2 } from 'aws-lambda';
-import { handleCreateAssignment, handleSetAssignmentStatus } from '../../../src/handlers/admin/assignments.js';
+import {
+  handleCreateAssignment,
+  handleSetAssignmentStatus,
+} from '../../../src/handlers/admin/assignments.js';
 
 const ddbMock = mockClient(DynamoDBDocumentClient);
 
@@ -80,7 +83,9 @@ describe('admin/assignments handlers', () => {
         body: JSON.stringify({ assignmentName: 'a'.repeat(101) }),
       });
 
-      await expect(handleCreateAssignment(event, 'admin')).rejects.toThrow(/không được vượt quá 100/);
+      await expect(handleCreateAssignment(event, 'admin')).rejects.toThrow(
+        /không được vượt quá 100/,
+      );
     });
   });
 

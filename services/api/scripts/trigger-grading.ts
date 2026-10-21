@@ -46,7 +46,9 @@ async function findFirstTeamWithSubmission(tableName: string): Promise<string> {
 
   const team = res.Items?.find((t) => t.latestSubmissionId);
   if (!team) {
-    throw new Error('Không tìm thấy nhóm nào đã có bài nộp trong đợt a1111111-1111-4111-8111-111111111111');
+    throw new Error(
+      'Không tìm thấy nhóm nào đã có bài nộp trong đợt a1111111-1111-4111-8111-111111111111',
+    );
   }
   return team.teamId as string;
 }

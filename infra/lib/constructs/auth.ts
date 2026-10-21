@@ -58,8 +58,12 @@ export class Auth extends Construct {
     });
 
     // 3. HTTP JWT Authorizer cho API Gateway v2
-    this.authorizer = new HttpJwtAuthorizer('AdminJwtAuthorizer', this.userPool.userPoolProviderUrl, {
-      jwtAudience: [this.userPoolClient.userPoolClientId],
-    });
+    this.authorizer = new HttpJwtAuthorizer(
+      'AdminJwtAuthorizer',
+      this.userPool.userPoolProviderUrl,
+      {
+        jwtAudience: [this.userPoolClient.userPoolClientId],
+      },
+    );
   }
 }

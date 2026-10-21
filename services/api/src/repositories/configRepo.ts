@@ -194,9 +194,7 @@ export async function listRubricVersions(): Promise<Rubric[]> {
     }),
   );
 
-  const rubrics: Rubric[] = (res.Items ?? [])
-    .map((item) => item.rubric as Rubric)
-    .filter(Boolean);
+  const rubrics: Rubric[] = (res.Items ?? []).map((item) => item.rubric as Rubric).filter(Boolean);
 
   return rubrics.sort((a, b) => a.version - b.version);
 }
