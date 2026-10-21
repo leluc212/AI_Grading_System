@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { mockClient } from 'aws-sdk-client-mock';
-import { DynamoDBDocumentClient, GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, GetCommand, PutCommand, QueryCommand, TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
 import type { APIGatewayProxyEventV2 } from 'aws-lambda';
 import { getAdminUsername, handler } from '../../src/handlers/adminApi.js';
 
@@ -117,9 +117,14 @@ describe('adminApi router & handler', () => {
       expect(body.createdBy).toBe('teacher_thien');
     });
 
-    it('dispatch thành công stub route POST /api/rubrics', async () => {
+    it('dispatch thành công POST /api/rubrics', async () => {
+      ddbMock.on(QueryCommand).resolves({ Items: [] });
+      ddbMock.on(TransactWriteCommand).resolves({});
+
       const event = makeEvent('POST', '/api/rubrics', {
-        body: JSON.stringify({}),
+        body: JSON.stringify({
+          criteria: [{ id: 'c1', label: 'Tiêu chí 1' }],
+        }),
       });
       (event.requestContext as unknown as Record<string, unknown>).authorizer = {
         jwt: {
@@ -130,11 +135,11 @@ describe('adminApi router & handler', () => {
       };
 
       const res = await handler(event);
-      expect(res.statusCode).toBe(200);
+      expect(res.statusCode).toBe(201);
 
       const body = JSON.parse(res.body!);
-      expect(body.message).toContain('Stub for Task 3.3');
-      expect(body.updatedBy).toBe('admin_boss');
+      expect(body.version).toBe(1);
+      expect(body.criteria).toHaveLength(1);
     });
 
     it('trả về 404 cho route không được định nghĩa trong admin router', async () => {

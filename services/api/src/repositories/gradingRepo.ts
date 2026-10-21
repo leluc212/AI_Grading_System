@@ -7,7 +7,7 @@ import {
   UpdateCommand,
   TransactWriteCommand,
 } from '@aws-sdk/lib-dynamodb';
-import { GradingInProgressError } from '@quick-grading/shared-types';
+import { GradingInProgressError, NotFoundError } from '@quick-grading/shared-types';
 import type {
   GradingResult,
   ReviewStatus,
@@ -191,7 +191,7 @@ export async function getGradingAttempt(
     }),
   );
 
-  return res.Item as GradingResult | undefined;
+  return res?.Item as GradingResult | undefined;
 }
 
 /**
@@ -359,4 +359,75 @@ export async function getLatestGradedAttempt(teamId: string): Promise<GradingRes
 
   const items = (res.Items ?? []) as GradingResult[];
   return items.find((item) => item.status === 'GRADED');
+}
+
+/**
+ * Lấy toàn bộ lịch sử chấm của một nhóm (sắp xếp tăng dần theo thời gian tạo).
+ */
+export async function listGradingHistory(teamId: string): Promise<GradingResult[]> {
+  const ddb = getDdbDocClient();
+  const { tableName } = readEnv();
+
+  const res = await ddb.send(
+    new QueryCommand({
+      TableName: tableName,
+      KeyConditionExpression: 'PK = :pk AND begins_with(SK, :skPrefix)',
+      ExpressionAttributeValues: {
+        ':pk': `TEAM#${teamId}`,
+        ':skPrefix': 'GRADING#',
+      },
+      ScanIndexForward: true, // Thứ tự thời gian tăng dần
+    }),
+  );
+
+  return (res.Items ?? []) as GradingResult[];
+}
+
+export interface SubmitReviewParams {
+  teamId: string;
+  gradingAttemptId: string;
+  reviewedBy: string;
+  finalScore?: number;
+}
+
+/**
+ * Giảng viên review kết quả chấm: cập nhật reviewStatus = 'REVIEWED', reviewedBy, finalScore (nếu sửa).
+ */
+export async function submitReview({
+  teamId,
+  gradingAttemptId,
+  reviewedBy,
+  finalScore,
+}: SubmitReviewParams): Promise<GradingResult> {
+  const ddb = getDdbDocClient();
+  const { tableName } = readEnv();
+
+  const existing = await getGradingAttempt(teamId, gradingAttemptId);
+  if (!existing) {
+    throw new NotFoundError('GradingResult', gradingAttemptId);
+  }
+
+  const updateExpressions: string[] = ['reviewStatus = :rs', 'reviewedBy = :rb'];
+  const exprValues: Record<string, unknown> = {
+    ':rs': 'REVIEWED',
+    ':rb': reviewedBy,
+  };
+
+  if (finalScore !== undefined) {
+    updateExpressions.push('finalScore = :fs');
+    exprValues[':fs'] = finalScore;
+  }
+
+  const result = await ddb.send(
+    new UpdateCommand({
+      TableName: tableName,
+      Key: gradingAttemptKey(teamId, gradingAttemptId),
+      UpdateExpression: `SET ${updateExpressions.join(', ')}`,
+      ConditionExpression: 'attribute_exists(PK)',
+      ExpressionAttributeValues: exprValues,
+      ReturnValues: 'ALL_NEW',
+    }),
+  );
+
+  return result.Attributes as GradingResult;
 }

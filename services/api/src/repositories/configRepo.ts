@@ -3,8 +3,8 @@
  *
  * Cache trong bộ nhớ theo version để tối ưu cold/warm start cho worker.
  */
-import { GetCommand, TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
-import type { Rubric, GradingConfig } from '@quick-grading/shared-types';
+import { GetCommand, QueryCommand, TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
+import type { Rubric, RubricCriterion, GradingConfig } from '@quick-grading/shared-types';
 import { getDdbDocClient } from './ddb.js';
 import { readEnv } from '../lib/env.js';
 import {
@@ -174,4 +174,97 @@ export async function saveGradingConfigVersion(config: GradingConfig): Promise<v
   );
 
   configCache.set(config.version, config);
+}
+
+/**
+ * Liệt kê toàn bộ phiên bản Rubric, sắp xếp tăng dần theo version.
+ */
+export async function listRubricVersions(): Promise<Rubric[]> {
+  const ddb = getDdbDocClient();
+  const { tableName } = readEnv();
+
+  const res = await ddb.send(
+    new QueryCommand({
+      TableName: tableName,
+      KeyConditionExpression: 'PK = :pk AND begins_with(SK, :prefix)',
+      ExpressionAttributeValues: {
+        ':pk': 'RUBRIC#default',
+        ':prefix': 'V#',
+      },
+    }),
+  );
+
+  const rubrics: Rubric[] = (res.Items ?? [])
+    .map((item) => item.rubric as Rubric)
+    .filter(Boolean);
+
+  return rubrics.sort((a, b) => a.version - b.version);
+}
+
+/**
+ * Tạo và kích hoạt phiên bản Rubric mới.
+ */
+export async function createRubricVersion(criteria: RubricCriterion[]): Promise<Rubric> {
+  const versions = await listRubricVersions();
+  const maxVersion = versions.reduce((max, r) => Math.max(max, r.version), 0);
+  const now = new Date().toISOString();
+
+  const newRubric: Rubric = {
+    rubricId: crypto.randomUUID(),
+    version: maxVersion + 1,
+    criteria,
+    isActive: true,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  await saveRubricVersion(newRubric);
+  return newRubric;
+}
+
+/**
+ * Liệt kê toàn bộ phiên bản GradingConfig, sắp xếp tăng dần theo version.
+ */
+export async function listGradingConfigVersions(): Promise<GradingConfig[]> {
+  const ddb = getDdbDocClient();
+  const { tableName } = readEnv();
+
+  const res = await ddb.send(
+    new QueryCommand({
+      TableName: tableName,
+      KeyConditionExpression: 'PK = :pk AND begins_with(SK, :prefix)',
+      ExpressionAttributeValues: {
+        ':pk': 'GRADINGCONFIG#default',
+        ':prefix': 'V#',
+      },
+    }),
+  );
+
+  const configs: GradingConfig[] = (res.Items ?? [])
+    .map((item) => item.config as GradingConfig)
+    .filter(Boolean);
+
+  return configs.sort((a, b) => a.version - b.version);
+}
+
+/**
+ * Tạo và kích hoạt phiên bản GradingConfig mới.
+ */
+export async function createGradingConfigVersion(
+  params: Omit<GradingConfig, 'configId' | 'version' | 'isActive' | 'createdAt'>,
+): Promise<GradingConfig> {
+  const versions = await listGradingConfigVersions();
+  const maxVersion = versions.reduce((max, c) => Math.max(max, c.version), 0);
+  const now = new Date().toISOString();
+
+  const newConfig: GradingConfig = {
+    ...params,
+    configId: 'default',
+    version: maxVersion + 1,
+    isActive: true,
+    createdAt: now,
+  };
+
+  await saveGradingConfigVersion(newConfig);
+  return newConfig;
 }

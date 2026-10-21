@@ -9,13 +9,27 @@ import type {
   APIGatewayProxyStructuredResultV2,
   Context,
 } from 'aws-lambda';
-import { errorResponse, jsonResponse } from '../lib/http.js';
+import { errorResponse } from '../lib/http.js';
 import { log } from '../lib/logger.js';
 import { createRouter } from '../lib/router.js';
-import { getActiveRubric } from '../repositories/configRepo.js';
-
 import { handleCreateAssignment, handleSetAssignmentStatus } from './admin/assignments.js';
 import { handleExportAssignmentData } from './admin/export.js';
+import {
+  handleCreateGradingConfig,
+  handleGetActiveGradingConfig,
+  handleListGradingConfigVersions,
+} from './admin/gradingConfig.js';
+import {
+  handleListGradingHistory,
+  handleSubmitReview,
+  handleTriggerAssignmentGrading,
+  handleTriggerTeamGrading,
+} from './admin/grading.js';
+import {
+  handleCreateRubric,
+  handleGetActiveRubric,
+  handleListRubricVersions,
+} from './admin/rubrics.js';
 import {
   handleGetTeam,
   handleGetTeamFiles,
@@ -34,29 +48,27 @@ export function getAdminUsername(event: APIGatewayProxyEventV2): string {
 function buildAdminRouter(username: string) {
   return createRouter({
     'GET /api/rubrics/active': async () => {
-      const rubric = await getActiveRubric();
-      return jsonResponse(200, rubric ?? null);
+      return handleGetActiveRubric();
     },
 
     'GET /api/rubrics': async () => {
-      const rubric = await getActiveRubric();
-      return jsonResponse(200, rubric ? [rubric] : []);
+      return handleListRubricVersions();
     },
 
-    'POST /api/rubrics': async () => {
-      return jsonResponse(200, { message: 'Stub for Task 3.3', updatedBy: username });
+    'POST /api/rubrics': async (event) => {
+      return handleCreateRubric(event);
     },
 
     'GET /api/grading-config/active': async () => {
-      return jsonResponse(200, { message: 'Stub for Task 3.3' });
+      return handleGetActiveGradingConfig();
     },
 
     'GET /api/grading-config': async () => {
-      return jsonResponse(200, []);
+      return handleListGradingConfigVersions();
     },
 
-    'POST /api/grading-config': async () => {
-      return jsonResponse(200, { message: 'Stub for Task 3.3', updatedBy: username });
+    'POST /api/grading-config': async (event) => {
+      return handleCreateGradingConfig(event, username);
     },
 
     'POST /api/assignments': async (event) => {
@@ -83,20 +95,20 @@ function buildAdminRouter(username: string) {
       return handleGetTeamFiles(event);
     },
 
-    'POST /api/teams/{teamId}/grading': async () => {
-      return jsonResponse(202, { message: 'Stub for Task 3.3', triggeredBy: username });
+    'POST /api/teams/{teamId}/grading': async (event) => {
+      return handleTriggerTeamGrading(event, username);
     },
 
-    'POST /api/assignments/{assignmentId}/grading': async () => {
-      return jsonResponse(202, { message: 'Stub for Task 3.3', triggeredBy: username });
+    'POST /api/assignments/{assignmentId}/grading': async (event) => {
+      return handleTriggerAssignmentGrading(event, username);
     },
 
-    'GET /api/teams/{teamId}/grading/history': async () => {
-      return jsonResponse(200, []);
+    'GET /api/teams/{teamId}/grading/history': async (event) => {
+      return handleListGradingHistory(event);
     },
 
-    'PATCH /api/teams/{teamId}/grading/{gradingAttemptId}/review': async () => {
-      return jsonResponse(200, { message: 'Stub for Task 3.3', reviewedBy: username });
+    'PATCH /api/teams/{teamId}/grading/{gradingAttemptId}/review': async (event) => {
+      return handleSubmitReview(event, username);
     },
 
     'GET /api/assignments/{assignmentId}/export-data': async (event) => {
