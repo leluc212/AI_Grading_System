@@ -8,14 +8,16 @@
  * _Requirements: 12.1, 12.2, 12.3_
  */
 import { beforeEach, describe, expect, it } from 'vitest';
+import { http, HttpResponse } from 'msw';
 import {
   AssignmentClosedError,
   NotFoundError,
   TeamNameConflictError,
   ValidationError,
 } from '@quick-grading/shared-types';
-import { resetMockDb } from '@quick-grading/mock-server';
+import { getDb, resetMockDb } from '@quick-grading/mock-server';
 import { teamsApi } from '../src/index.js';
+import { server } from './setup.js';
 import {
   ASSIGNMENT_CLOSED_ID,
   ASSIGNMENT_OPEN_ID,
@@ -125,5 +127,102 @@ describe('teamsApi - createTeamAndSubmit', () => {
         xmlFile: makeXmlFile(),
       }),
     ).rejects.toBeInstanceOf(ValidationError);
+  });
+
+  it('upload S3 thất bại ném lỗi "Tải file lên thất bại, vui lòng thử lại." và không tạo nhóm trong DB', async () => {
+    server.use(
+      http.post('http://localhost/mock-s3/upload', () => new HttpResponse(null, { status: 500 })),
+    );
+    const teamCountBefore = getDb().teams.length;
+
+    await expect(
+      teamsApi.createTeamAndSubmit({
+        assignmentId: ASSIGNMENT_OPEN_ID,
+        teamName: 'Nhóm Thất Bại Upload',
+        members: [makeValidMember()],
+        mdFile: makeMdFile(),
+        xmlFile: makeXmlFile(),
+      }),
+    ).rejects.toThrow('Tải file lên thất bại, vui lòng thử lại.');
+
+    expect(getDb().teams.length).toBe(teamCountBefore);
+  });
+
+  it('finalize trả về 409 TEAM_NAME_CONFLICT ném TeamNameConflictError', async () => {
+    server.use(
+      http.post('http://localhost/api/submissions/:submissionId/finalize', () =>
+        HttpResponse.json(
+          {
+            code: 'TEAM_NAME_CONFLICT',
+            message: 'Tên nhóm đã được sử dụng.',
+          },
+          { status: 409 },
+        ),
+      ),
+    );
+
+    await expect(
+      teamsApi.createTeamAndSubmit({
+        assignmentId: ASSIGNMENT_OPEN_ID,
+        teamName: 'Nhóm Bị Xung Đột Khi Finalize',
+        members: [makeValidMember()],
+        mdFile: makeMdFile(),
+        xmlFile: makeXmlFile(),
+      }),
+    ).rejects.toBeInstanceOf(TeamNameConflictError);
+  });
+
+  it('request tạo submission gửi đúng metadata files.md và files.xml', async () => {
+    interface CapturedSubmissionBody {
+      files?: {
+        md?: { fileName: string; size: number };
+        xml?: { fileName: string; size: number };
+      };
+    }
+    let capturedBody: CapturedSubmissionBody | null = null;
+    server.use(
+      http.post('http://localhost/mock-s3/upload', () => new HttpResponse(null, { status: 204 })),
+      http.post('http://localhost/api/submissions', async ({ request }) => {
+        capturedBody = (await request.json()) as CapturedSubmissionBody;
+        return HttpResponse.json(
+          {
+            submissionId: 'test-sid-meta',
+            uploads: {
+              md: { url: 'http://localhost/mock-s3/upload', fields: { key: 'test.md' } },
+              xml: { url: 'http://localhost/mock-s3/upload', fields: { key: 'test.xml' } },
+            },
+            expiresAt: new Date().toISOString(),
+          },
+          { status: 201 },
+        );
+      }),
+      http.post('http://localhost/api/submissions/:sid/finalize', () => {
+        return HttpResponse.json(
+          {
+            team: { teamId: 't-test', teamName: 'Nhóm Test File Meta', status: 'SUBMITTED' },
+            files: [],
+            resubmitted: false,
+          },
+          { status: 201 },
+        );
+      }),
+    );
+
+    const mdFile = new File(['md content'], 'bao-cao.md', { type: 'text/markdown' });
+    const xmlFile = new File(['<xml></xml>'], 'du-lieu.xml', { type: 'application/xml' });
+
+    await teamsApi.createTeamAndSubmit({
+      assignmentId: ASSIGNMENT_OPEN_ID,
+      teamName: 'Nhóm Test File Meta',
+      members: [makeValidMember()],
+      mdFile,
+      xmlFile,
+    });
+
+    const body: CapturedSubmissionBody = capturedBody!;
+    expect(body?.files).toEqual({
+      md: { fileName: 'bao-cao.md', size: mdFile.size },
+      xml: { fileName: 'du-lieu.xml', size: xmlFile.size },
+    });
   });
 });

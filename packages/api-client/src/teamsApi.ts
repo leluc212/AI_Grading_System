@@ -11,14 +11,22 @@
  *   - listTeams(assignmentId, filter?)      -> GET   /api/assignments/:assignmentId/teams?status=
  *   - getTeam(teamId)                        -> GET   /api/teams/:teamId
  *   - checkTeamNameAvailable(aId, name)      -> GET   /api/teams/check-name?assignmentId=&teamName=
- *   - createTeamAndSubmit(input)             -> POST  /api/teams/submit          (multipart)
+ *   - createTeamAndSubmit(input)             -> POST  /api/submissions + S3 POST + POST /api/submissions/:sid/finalize
  *   - resubmitTeamFiles(teamId, md, xml)     -> POST  /api/teams/:teamId/resubmit (multipart)
  *   - unlockResubmission(teamId, adminId)    -> PATCH /api/teams/:teamId/unlock   (JSON)
  *   - getTeamFiles(teamId)                   -> GET   /api/teams/:teamId/files
  *
  * _Requirements: 12.1, 12.2, 12.3_
  */
-import type { SubmissionFile, Team, TeamMember, TeamStatus } from '@quick-grading/shared-types';
+import type {
+  CreateSubmissionResponse,
+  FinalizeSubmissionResponse,
+  PresignedPost,
+  SubmissionFile,
+  Team,
+  TeamMember,
+  TeamStatus,
+} from '@quick-grading/shared-types';
 import { apiFetch, apiFetchFormData, apiFetchJson, buildQuery } from './http.js';
 
 export const teamsApi = {
@@ -48,53 +56,67 @@ export const teamsApi = {
   },
 
   /**
-   * Nộp bài cho 1 nhóm trong 1 request (2 file `.md` + `.xml`).
+   * Nộp bài cho 1 nhóm trong 2 bước (tạo phiên upload -> tải file lên presigned S3 -> finalize).
    *
-   * Handler thật (`submissions.ts`) nhận `multipart/form-data` với các field:
-   *   - `assignmentId`: string
-   *   - `teamName`: string
-   *   - `members`: string (JSON-stringified `Omit<TeamMember, 'memberId'>[]`)
-   *   - `mdFile`: File (`.md`)
-   *   - `xmlFile`: File (`.xml`)
-   * nên hàm này gói input thành `FormData` đúng các field trên.
+   * Flow thực hiện:
+   *   1. Gửi metadata qua `POST /api/submissions` nhận `submissionId` và 2 presigned POST upload URL.
+   *   2. Tải 2 file (`.md` và `.xml`) lên URL tương ứng bằng `multipart/form-data` qua `fetch` trực tiếp
+   *      (các field presigned gửi theo đúng thứ tự, field `file` đặt cuối cùng).
+   *   3. Gọi `POST /api/submissions/:submissionId/finalize` để hoàn tất nộp bài và nhận kết quả.
    *
-   * ## Hàm này lo CẢ nộp lần đầu và nộp lại
-   *
-   * Server tra nhóm theo `assignmentId` + tên đã chuẩn hoá rồi xử theo trạng
-   * thái: chưa có nhóm -> tạo mới (HTTP 201); nhóm đang `RESUBMISSION_ALLOWED`
-   * (Admin đã mở khoá) hoặc `OPEN` (chưa từng nộp) -> nộp vào ĐÚNG nhóm đó
-   * (HTTP 200, `resubmitted: true`); nhóm đang `SUBMITTED` -> ném
-   * `TeamNameConflictError`.
-   *
-   * Lý do gộp: Submitter chỉ biết TÊN nhóm, không biết `teamId` mà
-   * `resubmitTeamFiles` cần. Nếu tách thì phải có endpoint tra `teamId` theo
-   * tên, mà endpoint đó sẽ để khu vực public đọc được dữ liệu nhóm khác
-   * (Requirement 11.1). Gộp vào đây cũng là thứ giữ được Property 1: không
-   * bao giờ tạo thêm nhóm trùng tên trong cùng assignment.
-   *
-   * `resubmitted` cho biết request vừa rồi là nộp lại hay nộp lần đầu, để UI
-   * hiển thị đúng thông báo.
+   * Nếu việc tải file lên S3 thất bại (network error hoặc HTTP không OK),
+   * ném Error('Tải file lên thất bại, vui lòng thử lại.').
    *
    * Throws `TeamNameConflictError` | `AssignmentClosedError` | `ValidationError`
    * (đã được map sẵn ở `http.ts`).
    */
-  createTeamAndSubmit(input: {
+  async createTeamAndSubmit(input: {
     assignmentId: string;
     teamName: string;
     members: Omit<TeamMember, 'memberId'>[];
     mdFile: File;
     xmlFile: File;
   }): Promise<{ team: Team; files: SubmissionFile[]; resubmitted: boolean }> {
-    const formData = new FormData();
-    formData.append('assignmentId', input.assignmentId);
-    formData.append('teamName', input.teamName);
-    formData.append('members', JSON.stringify(input.members));
-    formData.append('mdFile', input.mdFile);
-    formData.append('xmlFile', input.xmlFile);
-    return apiFetchFormData<{ team: Team; files: SubmissionFile[]; resubmitted: boolean }>(
-      '/api/teams/submit',
-      'POST',
-      formData,
+    const createRes = await apiFetchJson<CreateSubmissionResponse>('/api/submissions', 'POST', {
+      assignmentId: input.assignmentId,
+      teamName: input.teamName,
+      members: input.members,
+      files: {
+        md: { fileName: input.mdFile.name, size: input.mdFile.size },
+        xml: { fileName: input.xmlFile.name, size: input.xmlFile.size },
+      },
+    });
+
+    const uploadFile = async (upload: PresignedPost, file: File): Promise<void> => {
+      const formData = new FormData();
+      for (const [key, value] of Object.entries(upload.fields)) {
+        formData.append(key, value);
+      }
+      formData.append('file', file);
+
+      let response: Response;
+      try {
+        response = await fetch(upload.url, {
+          method: 'POST',
+          body: formData,
+        });
+      } catch {
+        throw new Error('Tải file lên thất bại, vui lòng thử lại.');
+      }
+
+      if (!response.ok) {
+        throw new Error('Tải file lên thất bại, vui lòng thử lại.');
+      }
+    };
+
+    await Promise.all([
+      uploadFile(createRes.uploads.md, input.mdFile),
+      uploadFile(createRes.uploads.xml, input.xmlFile),
+    ]);
+
+    return apiFetch<FinalizeSubmissionResponse>(
+      `/api/submissions/${encodeURIComponent(createRes.submissionId)}/finalize`,
+      { method: 'POST' },
     );
   },
 

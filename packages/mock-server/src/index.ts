@@ -21,9 +21,10 @@
  * `@quick-grading/mock-server/dist/browser.js` thay vì re-export tĩnh ở đây.
  */
 export { handlers } from './handlers/index.js';
+export { resetUploadSessions } from './handlers/uploads.js';
 // Re-export store helpers để test (task 4.3) có thể reset về seed data sạch
 // giữa các test-case, và (nếu cần) đọc trực tiếp store để assert trạng thái.
-export { resetMockDb, getDb } from './db.js';
+export { resetMockDb, getDb, registerResetHook } from './db.js';
 export type { MockDb } from './db.js';
 
 export interface StartMockServerOptions {

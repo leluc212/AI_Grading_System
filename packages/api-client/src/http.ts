@@ -52,16 +52,55 @@ function readApiBaseUrl(): string {
   return '';
 }
 
+let apiBaseUrl: string = readApiBaseUrl();
+
 /**
- * Base URL cho mọi request tới service layer.
- *
- * Mặc định '' -> request dạng same-origin `/api/...` (chính là path mà MSW
- * đăng ký intercept ở giai đoạn 1). Đặt qua 1 hằng số duy nhất để giai đoạn
- * 2 chỉ cần đổi ở đây (hoặc inject từ env qua `QG_API_BASE_URL`) là trỏ được
- * sang API Gateway thật — không call site nào phải sửa (design.md >
- * Migration Notes).
+ * Lấy Base URL hiện tại đang dùng cho mọi request tới service layer.
  */
-export const API_BASE_URL: string = readApiBaseUrl();
+export function getApiBaseUrl(): string {
+  return apiBaseUrl;
+}
+
+/**
+ * Cấu hình API Base URL cho toàn bộ service layer.
+ *
+ * Chỉ chấp nhận:
+ *   - https://... (cho production / dev stack trên AWS)
+ *   - http://localhost[:port] hoặc http://127.0.0.1[:port] (cho local dev / test)
+ *
+ * Tự động cắt bỏ các dấu gạch chéo `/` ở cuối.
+ * Ném Error nếu URL không hợp lệ hoặc dùng http không an toàn.
+ */
+export function setApiBaseUrl(url: string): void {
+  if (typeof url !== 'string' || url.trim().length === 0) {
+    throw new Error('API Base URL không được để trống.');
+  }
+  const trimmed = url.trim();
+  let parsed: URL;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    throw new Error(`API Base URL không hợp lệ: "${url}". Yêu cầu URL tuyệt đối hợp lệ.`);
+  }
+
+  const protocol = parsed.protocol;
+  if (protocol === 'https:') {
+    // Hợp lệ
+  } else if (protocol === 'http:') {
+    const hostname = parsed.hostname;
+    if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
+      throw new Error(
+        `API Base URL dùng http không an toàn: chỉ cho phép http://localhost hoặc http://127.0.0.1, nhận được "${url}".`,
+      );
+    }
+  } else {
+    throw new Error(
+      `API Base URL chỉ chấp nhận giao thức http hoặc https, nhận được "${protocol}".`,
+    );
+  }
+
+  apiBaseUrl = trimmed.replace(/\/+$/, '');
+}
 
 /** Shape body lỗi thống nhất từ mọi handler: `{ code, message }`. */
 interface ApiErrorBody {
@@ -129,12 +168,12 @@ async function throwTypedError(response: Response): Promise<never> {
 /**
  * Gửi 1 request và parse response JSON thành `T`.
  *
- * - Ghép `path` sau `API_BASE_URL`.
+ * - Ghép `path` sau `apiBaseUrl`.
  * - Nếu `!response.ok`: đọc `{ code, message }` và ném typed error.
  * - Nếu OK: parse và trả về JSON body dưới dạng `T`.
  */
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, init);
+  const response = await fetch(`${apiBaseUrl}${path}`, init);
   if (!response.ok) {
     await throwTypedError(response);
   }
@@ -153,7 +192,8 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
  * đổi hành vi.
  */
 export async function apiFetchVoid(path: string, init?: RequestInit): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}${path}`, init);
+  const response = await fetch(`${apiBaseUrl}${path}`, init);
+
   if (!response.ok) {
     await throwTypedError(response);
   }

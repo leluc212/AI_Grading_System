@@ -12,6 +12,7 @@ import type { HttpHandler } from 'msw';
 import { assignmentHandlers } from './assignments.js';
 import { teamHandlers } from './teams.js';
 import { submissionHandlers } from './submissions.js';
+import { uploadHandlers } from './uploads.js';
 import { resubmissionHandlers } from './resubmission.js';
 import { teamFilesHandlers } from './team-files.js';
 import { gradingHandlers } from './grading.js';
@@ -23,6 +24,7 @@ export const handlers: HttpHandler[] = [
   ...assignmentHandlers,
   ...teamHandlers,
   ...submissionHandlers,
+  ...uploadHandlers,
   ...resubmissionHandlers,
   ...teamFilesHandlers,
   ...gradingHandlers,

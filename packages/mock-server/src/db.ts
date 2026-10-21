@@ -289,6 +289,13 @@ export function saveDb(): void {
   }
 }
 
+const resetHooks: (() => void)[] = [];
+
+/** Đăng ký callback sẽ được gọi khi resetMockDb() chạy (dùng cho in-memory caches/sessions) */
+export function registerResetHook(hook: () => void): void {
+  resetHooks.push(hook);
+}
+
 /**
  * Khôi phục store về đúng seed data ban đầu và persist lại. Hữu ích cho
  * test (đảm bảo mỗi test bắt đầu từ trạng thái sạch) và cho việc demo (nút
@@ -297,5 +304,8 @@ export function saveDb(): void {
 export function resetMockDb(): MockDb {
   db = createSeedDb();
   saveDb();
+  for (const hook of resetHooks) {
+    hook();
+  }
   return db;
 }
