@@ -7,12 +7,13 @@
  * 2 finalize đồng thời cùng tên chỉ 1 cái thắng.
  */
 import { TransactionCanceledException } from '@aws-sdk/client-dynamodb';
-import { GetCommand, TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
+import { GetCommand, QueryCommand, TransactWriteCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import type { FileType, Team, TeamMember, TeamStatus } from '@quick-grading/shared-types';
 import {
   AssignmentClosedError,
   NotFoundError,
   TeamNameConflictError,
+  ValidationError,
 } from '@quick-grading/shared-types';
 import {
   assignmentKey,
@@ -298,3 +299,86 @@ export async function finalizeExistingTeam(
   ];
   await runFinalizeTransaction(items, team, submission.submissionId);
 }
+
+export async function listTeamsByAssignment(
+  assignmentId: string,
+  statusFilter?: TeamStatus,
+): Promise<Team[]> {
+  const result = await ddb().send(
+    new QueryCommand({
+      TableName: tableName(),
+      IndexName: 'GSI1',
+      KeyConditionExpression: 'GSI1PK = :gpk',
+      ExpressionAttributeValues: {
+        ':gpk': teamsGsi1Pk(assignmentId),
+      },
+      ScanIndexForward: true,
+    }),
+  );
+
+  let teams = (result.Items ?? []).map(toPublicTeam);
+  if (statusFilter && TEAM_STATUSES.includes(statusFilter)) {
+    teams = teams.filter((t) => t.status === statusFilter);
+  }
+  return teams;
+}
+
+export async function unlockTeamResubmission(
+  teamId: string,
+  unlockedBy: string,
+): Promise<Team> {
+  const existing = await getTeam(teamId);
+  if (!existing) {
+    throw new NotFoundError('Team', teamId);
+  }
+
+  if (existing.status !== 'SUBMITTED') {
+    throw new ValidationError(
+      `Chỉ có thể mở khoá nộp lại cho nhóm đang ở trạng thái SUBMITTED (nhóm hiện tại: ${existing.status}).`,
+      'status',
+    );
+  }
+
+  const now = new Date().toISOString();
+  const result = await ddb().send(
+    new UpdateCommand({
+      TableName: tableName(),
+      Key: teamKey(teamId),
+      UpdateExpression: 'SET #status = :allowed, unlockedBy = :by, unlockedAt = :at',
+      ConditionExpression: 'attribute_exists(PK) AND #status = :submitted',
+      ExpressionAttributeNames: { '#status': 'status' },
+      ExpressionAttributeValues: {
+        ':allowed': 'RESUBMISSION_ALLOWED',
+        ':by': unlockedBy,
+        ':at': now,
+        ':submitted': 'SUBMITTED',
+      },
+      ReturnValues: 'ALL_NEW',
+    }),
+  );
+
+  return toPublicTeam(result.Attributes ?? {});
+}
+
+export async function getSubmission(
+  teamId: string,
+  submissionId: string,
+): Promise<SubmissionRecord | undefined> {
+  const result = await ddb().send(
+    new GetCommand({
+      TableName: tableName(),
+      Key: submissionKey(teamId, submissionId),
+    }),
+  );
+
+  if (!result.Item) {
+    return undefined;
+  }
+
+  return {
+    submissionId: String(result.Item.submissionId),
+    submittedAt: String(result.Item.submittedAt),
+    files: result.Item.files as Record<FileType, StoredFileMeta>,
+  };
+}
+

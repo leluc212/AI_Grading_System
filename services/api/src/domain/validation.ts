@@ -60,6 +60,13 @@ export function parseAssignmentId(value: unknown): string {
   return value;
 }
 
+export function parseTeamId(value: unknown): string {
+  if (typeof value !== 'string' || !RESOURCE_ID_PATTERN.test(value)) {
+    throw new ValidationError('Mã nhóm không hợp lệ.', 'teamId');
+  }
+  return value;
+}
+
 export function parseSubmissionId(value: unknown): string {
   if (typeof value !== 'string' || !ULID_PATTERN.test(value)) {
     throw new ValidationError('Mã phiên nộp bài không hợp lệ.', 'submissionId');

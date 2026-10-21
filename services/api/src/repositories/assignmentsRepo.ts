@@ -1,8 +1,9 @@
 /**
  * Đọc Assignment (chỉ đọc ở Phase 1; tạo/đổi trạng thái là API Admin Phase 3).
  */
-import { GetCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { GetCommand, PutCommand, QueryCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import type { Assignment, AssignmentListItem, AssignmentStatus } from '@quick-grading/shared-types';
+import { NotFoundError } from '@quick-grading/shared-types';
 import { ASSIGNMENTS_GSI1PK, assignmentKey } from '../domain/keys.js';
 import { ddb, tableName } from './ddb.js';
 
@@ -62,3 +63,57 @@ export async function listAssignments(): Promise<AssignmentListItem[]> {
   } while (exclusiveStartKey !== undefined && items.length < MAX_LIST_ITEMS);
   return items.slice(0, MAX_LIST_ITEMS);
 }
+
+export async function createAssignment(params: {
+  assignmentName: string;
+  createdBy: string;
+}): Promise<Assignment> {
+  const assignmentId = crypto.randomUUID();
+  const createdAt = new Date().toISOString();
+  const item = {
+    PK: `ASSIGNMENT#${assignmentId}`,
+    SK: 'META',
+    GSI1PK: ASSIGNMENTS_GSI1PK,
+    GSI1SK: createdAt,
+    assignmentId,
+    assignmentName: params.assignmentName.trim(),
+    status: 'OPEN' as AssignmentStatus,
+    createdAt,
+    createdBy: params.createdBy,
+    submittedTeamCount: 0,
+  };
+  await ddb().send(
+    new PutCommand({
+      TableName: tableName(),
+      Item: item,
+      ConditionExpression: 'attribute_not_exists(PK)',
+    }),
+  );
+  return toAssignment(toListItem(item));
+}
+
+export async function setAssignmentStatus(
+  assignmentId: string,
+  status: AssignmentStatus,
+): Promise<Assignment> {
+  try {
+    const result = await ddb().send(
+      new UpdateCommand({
+        TableName: tableName(),
+        Key: assignmentKey(assignmentId),
+        UpdateExpression: 'SET #status = :status',
+        ConditionExpression: 'attribute_exists(PK)',
+        ExpressionAttributeNames: { '#status': 'status' },
+        ExpressionAttributeValues: { ':status': status },
+        ReturnValues: 'ALL_NEW',
+      }),
+    );
+    return toAssignment(toListItem(result.Attributes ?? {}));
+  } catch (err: unknown) {
+    if ((err as { name?: string })?.name === 'ConditionalCheckFailedException') {
+      throw new NotFoundError('Assignment', assignmentId);
+    }
+    throw err;
+  }
+}
+

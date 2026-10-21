@@ -14,6 +14,15 @@ import { log } from '../lib/logger.js';
 import { createRouter } from '../lib/router.js';
 import { getActiveRubric } from '../repositories/configRepo.js';
 
+import { handleCreateAssignment, handleSetAssignmentStatus } from './admin/assignments.js';
+import { handleExportAssignmentData } from './admin/export.js';
+import {
+  handleGetTeam,
+  handleGetTeamFiles,
+  handleListTeams,
+  handleUnlockTeam,
+} from './admin/teams.js';
+
 export function getAdminUsername(event: APIGatewayProxyEventV2): string {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const claims = (event.requestContext as any)?.authorizer?.jwt?.claims;
@@ -50,28 +59,28 @@ function buildAdminRouter(username: string) {
       return jsonResponse(200, { message: 'Stub for Task 3.3', updatedBy: username });
     },
 
-    'POST /api/assignments': async () => {
-      return jsonResponse(201, { message: 'Stub for Task 3.2', createdBy: username });
+    'POST /api/assignments': async (event) => {
+      return handleCreateAssignment(event, username);
     },
 
-    'PATCH /api/assignments/{assignmentId}/status': async () => {
-      return jsonResponse(200, { message: 'Stub for Task 3.2', updatedBy: username });
+    'PATCH /api/assignments/{assignmentId}/status': async (event) => {
+      return handleSetAssignmentStatus(event);
     },
 
-    'GET /api/assignments/{assignmentId}/teams': async () => {
-      return jsonResponse(200, []);
+    'GET /api/assignments/{assignmentId}/teams': async (event) => {
+      return handleListTeams(event);
     },
 
-    'GET /api/teams/{teamId}': async () => {
-      return jsonResponse(200, { message: 'Stub for Task 3.2' });
+    'GET /api/teams/{teamId}': async (event) => {
+      return handleGetTeam(event);
     },
 
-    'PATCH /api/teams/{teamId}/unlock': async () => {
-      return jsonResponse(200, { message: 'Stub for Task 3.2', unlockedBy: username });
+    'PATCH /api/teams/{teamId}/unlock': async (event) => {
+      return handleUnlockTeam(event, username);
     },
 
-    'GET /api/teams/{teamId}/files': async () => {
-      return jsonResponse(200, { message: 'Stub for Task 3.2' });
+    'GET /api/teams/{teamId}/files': async (event) => {
+      return handleGetTeamFiles(event);
     },
 
     'POST /api/teams/{teamId}/grading': async () => {
@@ -90,8 +99,8 @@ function buildAdminRouter(username: string) {
       return jsonResponse(200, { message: 'Stub for Task 3.3', reviewedBy: username });
     },
 
-    'GET /api/assignments/{assignmentId}/export-data': async () => {
-      return jsonResponse(200, { message: 'Stub for Task 3.2' });
+    'GET /api/assignments/{assignmentId}/export-data': async (event) => {
+      return handleExportAssignmentData(event);
     },
   });
 }

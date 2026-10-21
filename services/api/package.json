@@ -22,6 +22,7 @@
     "@aws-sdk/client-ssm": "3.1152.0",
     "@aws-sdk/lib-dynamodb": "3.1152.0",
     "@aws-sdk/s3-presigned-post": "3.1152.0",
+    "@aws-sdk/s3-request-presigner": "3.1152.0",
     "@quick-grading/shared-types": "*",
     "openai": "7.39.0",
     "ulid": "3.0.2"

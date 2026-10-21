@@ -132,3 +132,11 @@ export async function readObjectText(key: string): Promise<string> {
   }
   return await result.Body.transformToString('utf-8');
 }
+
+/** Sinh Presigned GET URL hết hạn sau expiresIn giây (mặc định 300s = 5 phút). */
+export async function createPresignedGetUrl(key: string, expiresIn = 300): Promise<string> {
+  const { getSignedUrl } = await import('@aws-sdk/s3-request-presigner');
+  return getSignedUrl(s3(), new GetObjectCommand({ Bucket: bucketName(), Key: key }), {
+    expiresIn,
+  });
+}
