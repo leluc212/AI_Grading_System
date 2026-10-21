@@ -28,6 +28,9 @@ const s3Mock = mockClient(S3Client);
 process.env.TABLE_NAME = 'QuickGrading-test';
 process.env.BUCKET_NAME = 'quick-grading-test';
 process.env.STAGE = 'test';
+process.env.AWS_REGION = 'ap-southeast-1';
+process.env.AWS_ACCESS_KEY_ID = 'AKIDTEST';
+process.env.AWS_SECRET_ACCESS_KEY = 'test-secret';
 
 function makeEvent(overrides: Partial<APIGatewayProxyEventV2> = {}): APIGatewayProxyEventV2 {
   return {

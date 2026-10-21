@@ -10,9 +10,12 @@ let client: DynamoDBDocumentClient | undefined;
 
 export function ddb(): DynamoDBDocumentClient {
   if (client === undefined) {
-    client = DynamoDBDocumentClient.from(new DynamoDBClient({}), {
-      marshallOptions: { removeUndefinedValues: true },
-    });
+    client = DynamoDBDocumentClient.from(
+      new DynamoDBClient({ region: process.env.AWS_REGION ?? 'ap-southeast-1' }),
+      {
+        marshallOptions: { removeUndefinedValues: true },
+      },
+    );
   }
   return client;
 }

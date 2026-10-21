@@ -29,7 +29,9 @@ let client: S3Client | undefined;
 
 export function s3(): S3Client {
   if (client === undefined) {
-    client = new S3Client({});
+    client = new S3Client({
+      region: process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'ap-southeast-1',
+    });
   }
   return client;
 }

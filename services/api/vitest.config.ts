@@ -8,5 +8,9 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: false,
+    env: {
+      AWS_REGION: 'ap-southeast-1',
+      AWS_DEFAULT_REGION: 'ap-southeast-1',
+    },
   },
 });
