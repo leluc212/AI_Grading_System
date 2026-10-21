@@ -148,7 +148,8 @@ describe('DynamoDB', () => {
 
 describe('Lambda public-api', () => {
   it('arm64, Node 22, 256MB, 10s, không VPC', () => {
-    const [, fn] = only(dev.findResources('AWS::Lambda::Function'));
+    const fns = dev.findResources('AWS::Lambda::Function');
+    const [, fn] = Object.entries(fns).find(([id]) => id.includes('PublicApi'))!;
     const p = (fn as { Properties: Record<string, unknown> }).Properties;
     expect(p.Architectures).toEqual(['arm64']);
     expect(p.Runtime).toBe('nodejs22.x');
@@ -160,6 +161,7 @@ describe('Lambda public-api', () => {
         TABLE_NAME: expect.anything(),
         BUCKET_NAME: expect.anything(),
         STAGE: 'dev',
+        GRADING_QUEUE_URL: expect.anything(),
       },
     });
     expect(JSON.stringify(p.Environment)).not.toMatch(/openai|api-key|SECRET/i);
@@ -172,13 +174,16 @@ describe('Lambda public-api', () => {
 });
 
 describe('IAM least privilege của public-api', () => {
-  function roleStatements(t: Template): Statement[] {
-    const [roleId, role] = only(t.findResources('AWS::IAM::Role'));
+  function publicApiRoleStatements(t: Template): Statement[] {
+    const fns = t.findResources('AWS::Lambda::Function');
+    const [, apiFn] = Object.entries(fns).find(([id]) => id.includes('PublicApi'))!;
+    const roleRef = (apiFn.Properties.Role as { 'Fn::GetAtt': [string, string] })['Fn::GetAtt'][0];
+    const role = t.findResources('AWS::IAM::Role')[roleRef];
     expect((role as { Properties: Record<string, unknown> }).Properties.ManagedPolicyArns).toBe(
       undefined,
     );
     const policies = Object.values(t.findResources('AWS::IAM::Policy')).filter((p) =>
-      JSON.stringify(p.Properties.Roles).includes(roleId),
+      JSON.stringify(p.Properties.Roles).includes(roleRef),
     );
     expect(policies.length).toBeGreaterThan(0);
     return policies.flatMap((p) => p.Properties.PolicyDocument.Statement as Statement[]);
@@ -187,7 +192,7 @@ describe('IAM least privilege của public-api', () => {
   const actionsOf = (s: Statement) => (Array.isArray(s.Action) ? s.Action : [s.Action]);
 
   it('đúng tập action cho phép, không wildcard', () => {
-    const statements = roleStatements(dev);
+    const statements = publicApiRoleStatements(dev);
     const actions = new Set(statements.flatMap(actionsOf));
     expect([...actions].sort()).toEqual(
       [
@@ -201,12 +206,15 @@ describe('IAM least privilege của public-api', () => {
         's3:GetObject',
         's3:PutObject',
         's3:PutObjectTagging',
+        'sqs:GetQueueAttributes',
+        'sqs:GetQueueUrl',
+        'sqs:SendMessage',
       ].sort(),
     );
     for (const action of actions) {
       expect(action).not.toContain('*');
       expect(action).not.toMatch(
-        /^(dynamodb:(Scan|BatchGetItem|BatchWriteItem|DeleteItem)|s3:ListBucket|ssm:|sqs:|kms:)/,
+        /^(dynamodb:(Scan|BatchGetItem|BatchWriteItem|DeleteItem)|s3:ListBucket|ssm:|kms:)/,
       );
     }
     for (const s of statements) {
@@ -216,7 +224,7 @@ describe('IAM least privilege của public-api', () => {
   });
 
   it('Query chỉ trên /index/GSI1; DynamoDB item chỉ trên ARN bảng', () => {
-    const statements = roleStatements(dev);
+    const statements = publicApiRoleStatements(dev);
     const query = statements.filter((s) => actionsOf(s).includes('dynamodb:Query'));
     expect(query).toHaveLength(1);
     expect(actionsOf(query[0])).toEqual(['dynamodb:Query']);
@@ -232,7 +240,7 @@ describe('IAM least privilege của public-api', () => {
   });
 
   it('S3 chỉ trên submissions/*', () => {
-    const statements = roleStatements(dev);
+    const statements = publicApiRoleStatements(dev);
     const s3Statements = statements.filter((s) => actionsOf(s).some((a) => a.startsWith('s3:')));
     expect(s3Statements).toHaveLength(1);
     const resources = Array.isArray(s3Statements[0].Resource)
@@ -244,20 +252,71 @@ describe('IAM least privilege của public-api', () => {
   });
 
   it('logs chỉ trên log group riêng', () => {
-    const statements = roleStatements(dev);
+    const statements = publicApiRoleStatements(dev);
     const logStatements = statements.filter((s) => actionsOf(s).some((a) => a.startsWith('logs:')));
     expect(logStatements).toHaveLength(1);
     expect(JSON.stringify(logStatements[0].Resource)).toMatch(/LogGroup.*Arn/);
   });
 });
 
-describe('Phase 1 không có SQS / OpenAI key', () => {
-  it('0 SQS queue, không tham chiếu SSM OpenAI', () => {
-    dev.resourceCountIs('AWS::SQS::Queue', 0);
-    const json = JSON.stringify(dev.toJSON());
-    expect(json.toLowerCase()).not.toContain('openai');
-    expect(json).not.toContain('/quick-grading/');
-    expect(json).not.toContain('ssm:');
+describe('Phase 2 Grading Pipeline (SQS, Worker, DLQ, Alarms)', () => {
+  it('tạo đúng 2 SQS queues: main queue và DLQ', () => {
+    dev.resourceCountIs('AWS::SQS::Queue', 2);
+    dev.hasResourceProperties('AWS::SQS::Queue', {
+      QueueName: 'QuickGrading-dev-grading-queue',
+      VisibilityTimeout: 720,
+      RedrivePolicy: Match.objectLike({
+        maxReceiveCount: 4,
+      }),
+    });
+    dev.hasResourceProperties('AWS::SQS::Queue', {
+      QueueName: 'QuickGrading-dev-grading-dlq',
+      MessageRetentionPeriod: 1209600, // 14 days
+    });
+  });
+
+  it('tạo Lambda grading-worker và grading-dlq-handler với cấu hình chuẩn', () => {
+    const fns = dev.findResources('AWS::Lambda::Function');
+    expect(Object.keys(fns)).toHaveLength(3); // public-api, worker, dlq-handler
+
+    const [, worker] = Object.entries(fns).find(([id]) => id.includes('WorkerFunction'))!;
+    expect(worker.Properties.Architectures).toEqual(['arm64']);
+    expect(worker.Properties.MemorySize).toBe(512);
+    expect(worker.Properties.Timeout).toBe(120);
+
+    const [, dlqHandler] = Object.entries(fns).find(([id]) => id.includes('DlqHandlerFunction'))!;
+    expect(dlqHandler.Properties.Architectures).toEqual(['arm64']);
+    expect(dlqHandler.Properties.MemorySize).toBe(256);
+    expect(dlqHandler.Properties.Timeout).toBe(30);
+  });
+
+  it('cấu hình 2 EventSourceMapping với SQS batchSize và maxConcurrency', () => {
+    dev.resourceCountIs('AWS::Lambda::EventSourceMapping', 2);
+    dev.hasResourceProperties('AWS::Lambda::EventSourceMapping', {
+      BatchSize: 1,
+      FunctionResponseTypes: ['ReportBatchItemFailures'],
+      ScalingConfig: {
+        MaximumConcurrency: 2,
+      },
+    });
+    dev.hasResourceProperties('AWS::Lambda::EventSourceMapping', {
+      BatchSize: 1,
+    });
+  });
+
+  it('cấu hình CloudWatch Alarms cho DLQ messages và Worker errors', () => {
+    dev.hasResourceProperties('AWS::CloudWatch::Alarm', {
+      AlarmName: 'QuickGrading-dev-grading-dlq-messages',
+      ComparisonOperator: 'GreaterThanOrEqualToThreshold',
+      Threshold: 1,
+      EvaluationPeriods: 1,
+    });
+    dev.hasResourceProperties('AWS::CloudWatch::Alarm', {
+      AlarmName: 'QuickGrading-dev-grading-worker-errors',
+      ComparisonOperator: 'GreaterThanOrEqualToThreshold',
+      Threshold: 1,
+      EvaluationPeriods: 1,
+    });
   });
 });
 
@@ -379,9 +438,11 @@ describe('Tags và Outputs', () => {
     }
   });
 
-  it('có output ApiUrl, BucketName, TableName', () => {
+  it('có output ApiUrl, BucketName, TableName, GradingQueueUrl, GradingDlqUrl', () => {
     dev.hasOutput('ApiUrl', {});
     dev.hasOutput('BucketName', {});
     dev.hasOutput('TableName', {});
+    dev.hasOutput('GradingQueueUrl', {});
+    dev.hasOutput('GradingDlqUrl', {});
   });
 });
