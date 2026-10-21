@@ -23,3 +23,14 @@ export const PRESIGNED_POST_EXPIRES_SECONDS = 600;
 export const UPLOAD_SESSION_TTL_SECONDS = 3600;
 /** Body JSON tối đa 64KB. */
 export const MAX_JSON_BODY_BYTES = 65_536;
+
+/** Độ dài tối đa prompt hệ thống giáo viên (PROMPT/HYBRID): 8.000 ký tự. */
+export const SYSTEM_PROMPT_MAX_LENGTH = 8_000;
+/** Số token đầu vào tối đa mặc định: 50.000 token. */
+export const DEFAULT_MAX_INPUT_TOKENS = 50_000;
+/** Số token đầu ra tối đa mặc định: 2.000 token. */
+export const DEFAULT_MAX_OUTPUT_TOKENS = 2_000;
+/** Độ dài nhận xét chung tối đa: 2.000 ký tự. */
+export const MAX_FEEDBACK_LENGTH = 2_000;
+/** Độ dài nhận xét từng tiêu chí tối đa: 300 ký tự. */
+export const MAX_COMMENT_LENGTH = 300;

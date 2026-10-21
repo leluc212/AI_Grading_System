@@ -7,6 +7,7 @@
 export interface RubricCriterion {
   id: string;
   label: string;
+  description?: string;
   weight?: number;
 }
 
