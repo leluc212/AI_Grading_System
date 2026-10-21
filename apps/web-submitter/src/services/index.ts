@@ -22,4 +22,4 @@
  * (Requirement 6.8, 11.1). Nếu sau này có code trong app này cần tới chúng,
  * đó là dấu hiệu sai thiết kế, không phải thiếu export.
  */
-export { assignmentsApi, teamsApi } from '@quick-grading/api-client';
+export { assignmentsApi, teamsApi, setApiBaseUrl } from '@quick-grading/api-client';
