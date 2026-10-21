@@ -8,7 +8,10 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "seed:dev": "tsx scripts/seed-dev.ts",
-    "smoke:dev": "tsx scripts/smoke-submit.ts"
+    "seed:grading": "tsx scripts/seed-grading.ts",
+    "smoke:dev": "tsx scripts/smoke-submit.ts",
+    "smoke:openai": "tsx scripts/smoke-openai.ts",
+    "trigger:grading": "tsx scripts/trigger-grading.ts"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "3.1152.0",
