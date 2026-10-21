@@ -9,7 +9,7 @@
     "account": "497320113384",
     "region": "ap-southeast-1",
     "alarmEmails": "swat.lucle@gmail.com",
-    "allowedOrigins": "http://localhost:5173,http://localhost:5174",
+    "allowedOrigins": "http://localhost:5173,http://localhost:5174,https://admingrading.vercel.app,https://fcajsubmission.vercel.app",
     "budgetLimitUsd": 10
   }
 }
