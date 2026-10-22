@@ -60,7 +60,10 @@ describe('AdminLayout - điều hướng', () => {
 
     await user.click(screen.getByRole('link', { name: 'Cấu hình AI Prompt' }));
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'Cấu hình AI & System Prompt chấm điểm' }),
+      await screen.findByRole('heading', {
+        level: 1,
+        name: 'Cấu hình AI & System Prompt chấm điểm',
+      }),
     ).toBeDefined();
   });
 });

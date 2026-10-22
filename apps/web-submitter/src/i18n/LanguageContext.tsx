@@ -37,7 +37,8 @@ export const TRANSLATIONS = {
     btnSubmit: 'Submit Assignment',
     loadingAssignments: 'Loading available assignments...',
     emptyAssignmentsTitle: 'No assignments are currently accepting submissions',
-    emptyAssignmentsDesc: 'Please contact your instructor or community mentor if you believe this is an error.',
+    emptyAssignmentsDesc:
+      'Please contact your instructor or community mentor if you believe this is an error.',
     searchPlaceholder: 'Search assignments by name...',
     loadErrorTitle: 'Failed to load assignments',
     btnRetry: 'Try again',
@@ -50,7 +51,8 @@ export const TRANSLATIONS = {
       'Team name must be unique within this assignment. If your team was unlocked by an instructor for resubmission, enter your exact previous team name.',
     teamNamePlaceholder: 'e.g. Cloud Rangers',
     membersLabel: 'Team Members',
-    membersDesc: 'Each team requires at least 1 member. Name and email are required; Student ID is optional.',
+    membersDesc:
+      'Each team requires at least 1 member. Name and email are required; Student ID is optional.',
     studentNameLabel: 'Student Name',
     studentNamePlaceholder: 'John Doe',
     emailLabel: 'Email',
@@ -75,7 +77,8 @@ export const TRANSLATIONS = {
     successAlertHeader: 'Project submission recorded successfully!',
     resubmittedAlertHeader: 'Resubmission recorded successfully!',
     successAlertBody: 'Your team submission has been securely recorded on AWS.',
-    resubmittedAlertBody: 'Your new submission has been recorded and replaces the previous version.',
+    resubmittedAlertBody:
+      'Your new submission has been recorded and replaces the previous version.',
     receiptHeader: 'Submission Digital Receipt',
     labelTeamName: 'Team Name',
     labelAssignment: 'Assignment',
@@ -110,7 +113,8 @@ export const TRANSLATIONS = {
 
     // Assignments Page
     selectAssignmentTitle: 'Chọn bài tập cần nộp',
-    selectAssignmentDesc: 'Chọn đợt chấm mà nhóm bạn cần nộp bài — Nhấn "Nộp bài" để chuyển sang bước điền form',
+    selectAssignmentDesc:
+      'Chọn đợt chấm mà nhóm bạn cần nộp bài — Nhấn "Nộp bài" để chuyển sang bước điền form',
 
     statusOpen: 'Đang mở nộp bài',
     statusClosed: 'Đã đóng',
@@ -150,7 +154,8 @@ export const TRANSLATIONS = {
     btnSubmitForm: 'Nộp bài',
     checkingAssignment: 'Đang kiểm tra đợt chấm...',
     assignmentClosedHeader: 'Đợt chấm đã đóng',
-    assignmentClosedError: 'Đợt chấm đã đóng, không thể nộp bài. Vui lòng liên hệ giảng viên nếu nhóm bạn cần nộp muộn.',
+    assignmentClosedError:
+      'Đợt chấm đã đóng, không thể nộp bài. Vui lòng liên hệ giảng viên nếu nhóm bạn cần nộp muộn.',
     btnChooseOther: 'Chọn đợt chấm khác',
 
     // Success Page
@@ -166,7 +171,8 @@ export const TRANSLATIONS = {
     labelSubmissionType: 'Trạng thái nộp',
     submissionInitial: 'Nộp lần đầu',
     submissionResubmit: 'Nộp lại (Bản cập nhật)',
-    successNote: 'Hệ thống không gửi email xác nhận. Vui lòng lưu lại thông tin trên trang này nếu cần.',
+    successNote:
+      'Hệ thống không gửi email xác nhận. Vui lòng lưu lại thông tin trên trang này nếu cần.',
     btnBackHome: 'Về trang danh sách đợt chấm',
   },
 } as const;
@@ -184,8 +190,8 @@ const STORAGE_KEY = 'fcaj-portal-language';
 
 const LanguageContext = createContext<LanguageContextValue>({
   language: 'en',
-  toggleLanguage: () => { },
-  setLanguage: () => { },
+  toggleLanguage: () => {},
+  setLanguage: () => {},
   t: (key: TranslationKey) => TRANSLATIONS.en[key] || key,
 });
 

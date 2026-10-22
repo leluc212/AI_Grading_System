@@ -121,19 +121,14 @@ export function AssignmentsPage() {
     }
   }, []);
 
-  const allAssignments = useMemo(
-    () => (state.kind === 'ready' ? state.assignments : []),
-    [state],
-  );
+  const allAssignments = useMemo(() => (state.kind === 'ready' ? state.assignments : []), [state]);
 
   const filteredAssignments = useMemo(() => {
     if (!filteringText.trim()) {
       return allAssignments;
     }
     const query = filteringText.toLowerCase();
-    return allAssignments.filter((item) =>
-      item.assignmentName.toLowerCase().includes(query),
-    );
+    return allAssignments.filter((item) => item.assignmentName.toLowerCase().includes(query));
   }, [allAssignments, filteringText]);
 
   return (

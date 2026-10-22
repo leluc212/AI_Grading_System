@@ -19,7 +19,10 @@ export interface FileViewerProps {
   xmlContent: string;
 }
 
-export const FileViewer = memo(function FileViewer({ markdownContent, xmlContent }: FileViewerProps) {
+export const FileViewer = memo(function FileViewer({
+  markdownContent,
+  xmlContent,
+}: FileViewerProps) {
   return (
     <Tabs
       tabs={[

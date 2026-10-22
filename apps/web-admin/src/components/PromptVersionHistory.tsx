@@ -15,7 +15,10 @@ export interface PromptVersionHistoryProps {
   versions: GradingConfig[];
 }
 
-function modeLabel(mode: GradingMode): { label: string; color: 'blue' | 'green' | 'severity-medium' } {
+function modeLabel(mode: GradingMode): {
+  label: string;
+  color: 'blue' | 'green' | 'severity-medium';
+} {
   switch (mode) {
     case 'PROMPT':
       return { label: 'Chấm bằng Prompt', color: 'green' };

@@ -153,7 +153,9 @@ export function SubmitFormPage() {
         </h2>
         <Alert
           type="error"
-          header={language === 'vi' ? 'Không mở được form nộp bài' : 'Unable to open submission form'}
+          header={
+            language === 'vi' ? 'Không mở được form nộp bài' : 'Unable to open submission form'
+          }
           action={<Button onClick={goToAssignmentList}>{t('btnChooseOther')}</Button>}
         >
           {state.message}
@@ -183,13 +185,14 @@ export function SubmitFormPage() {
         >
           {language === 'vi' ? (
             <>
-              Đợt chấm &ldquo;{state.assignment.assignmentName}&rdquo; đã đóng, không thể nộp bài. Vui
-              lòng liên hệ giảng viên nếu nhóm bạn cần nộp muộn.
+              Đợt chấm &ldquo;{state.assignment.assignmentName}&rdquo; đã đóng, không thể nộp bài.
+              Vui lòng liên hệ giảng viên nếu nhóm bạn cần nộp muộn.
             </>
           ) : (
             <>
               Assignment &ldquo;{state.assignment.assignmentName}&rdquo; is closed and no longer
-              accepting submissions. Please contact your instructor if your team needs late submission.
+              accepting submissions. Please contact your instructor if your team needs late
+              submission.
             </>
           )}
         </Alert>
@@ -436,10 +439,7 @@ function TeamSubmissionForm({ assignment, onCancel, onSubmitted }: TeamSubmissio
             />
           </FormField>
 
-          <FormField
-            label={t('membersLabel')}
-            description={t('membersDesc')}
-          >
+          <FormField label={t('membersLabel')} description={t('membersDesc')}>
             <MemberListEditor
               members={members}
               errors={errors.members}
@@ -476,4 +476,3 @@ function TeamSubmissionForm({ assignment, onCancel, onSubmitted }: TeamSubmissio
     </form>
   );
 }
-

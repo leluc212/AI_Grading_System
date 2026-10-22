@@ -74,7 +74,9 @@ async function bootstrap(): Promise<void> {
     throw new Error('Không tìm thấy phần tử #root trong index.html.');
   }
 
-  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? DEFAULT_API_BASE_URL : ''))?.trim();
+  const apiBaseUrl = (
+    import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? DEFAULT_API_BASE_URL : '')
+  )?.trim();
   if (apiBaseUrl) {
     try {
       setApiBaseUrl(apiBaseUrl);

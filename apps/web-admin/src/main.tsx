@@ -79,8 +79,7 @@ async function bootstrap(): Promise<void> {
   }
 
   const apiBaseUrl = (
-    import.meta.env.VITE_API_BASE_URL ||
-    (import.meta.env.PROD ? DEFAULT_API_BASE_URL : '')
+    import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? DEFAULT_API_BASE_URL : '')
   )?.trim();
   const cognitoClientId = (
     import.meta.env.VITE_COGNITO_CLIENT_ID ||

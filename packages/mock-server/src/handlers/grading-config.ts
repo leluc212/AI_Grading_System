@@ -60,7 +60,10 @@ export const gradingConfigHandlers = [
       let systemPrompt: string | undefined;
       if (typeof rawPrompt === 'string') {
         if (rawPrompt.length > 8000) {
-          throw new ValidationError('systemPrompt không được vượt quá 8.000 ký tự.', 'systemPrompt');
+          throw new ValidationError(
+            'systemPrompt không được vượt quá 8.000 ký tự.',
+            'systemPrompt',
+          );
         }
         systemPrompt = rawPrompt;
       }
@@ -80,10 +83,22 @@ export const gradingConfigHandlers = [
         version: newVersion,
         mode,
         systemPrompt,
-        model: typeof body.model === 'string' && body.model.trim().length > 0 ? body.model.trim() : undefined,
-        reasoningEffort: body.reasoningEffort === 'low' || body.reasoningEffort === 'medium' ? body.reasoningEffort : undefined,
-        maxInputTokens: typeof body.maxInputTokens === 'number' && body.maxInputTokens > 0 ? body.maxInputTokens : 50000,
-        maxOutputTokens: typeof body.maxOutputTokens === 'number' && body.maxOutputTokens > 0 ? body.maxOutputTokens : 2000,
+        model:
+          typeof body.model === 'string' && body.model.trim().length > 0
+            ? body.model.trim()
+            : undefined,
+        reasoningEffort:
+          body.reasoningEffort === 'low' || body.reasoningEffort === 'medium'
+            ? body.reasoningEffort
+            : undefined,
+        maxInputTokens:
+          typeof body.maxInputTokens === 'number' && body.maxInputTokens > 0
+            ? body.maxInputTokens
+            : 50000,
+        maxOutputTokens:
+          typeof body.maxOutputTokens === 'number' && body.maxOutputTokens > 0
+            ? body.maxOutputTokens
+            : 2000,
         autoGradeOnSubmit: Boolean(body.autoGradeOnSubmit),
         isActive: true,
         createdAt: now,

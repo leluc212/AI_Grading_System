@@ -143,7 +143,9 @@ function mapErrorBodyToTypedError(status: number, body: ApiErrorBody | null): Er
       return new UnauthorizedError(message);
     default:
       if (status === 401) {
-        return new UnauthorizedError(message ?? 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+        return new UnauthorizedError(
+          message ?? 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+        );
       }
       // Không map được: fallback về Error chung, kèm status để dễ debug.
       return new Error(message ?? `Yêu cầu thất bại với HTTP ${status}.`);

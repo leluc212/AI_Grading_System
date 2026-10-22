@@ -185,11 +185,9 @@ export function RubricConfigPage() {
       }
     >
       <SpaceBetween size="l">
-        <Alert
-          type="info"
-          action={<Button href="/prompt">Cấu hình AI Prompt</Button>}
-        >
-          <strong>Lựa chọn mới:</strong> Bạn có thể chấm điểm tự do bằng lời nhắc riêng (System Prompt) hoặc kết hợp Rubric + Prompt tại trang <strong>Cấu hình AI Prompt</strong>.
+        <Alert type="info" action={<Button href="/prompt">Cấu hình AI Prompt</Button>}>
+          <strong>Lựa chọn mới:</strong> Bạn có thể chấm điểm tự do bằng lời nhắc riêng (System
+          Prompt) hoặc kết hợp Rubric + Prompt tại trang <strong>Cấu hình AI Prompt</strong>.
         </Alert>
 
         {saveNotice !== undefined && (

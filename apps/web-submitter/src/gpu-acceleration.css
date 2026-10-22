@@ -9,52 +9,53 @@
    Tinh tế, sáng sủa, thanh lịch chuẩn AWS Console
    ============================================================ */
 :root {
-  --aws-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --aws-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
 
   /* Page canvas & surfaces */
-  --fcaj-bg-canvas:         #f8f9fa;
-  --fcaj-card-bg:           #ffffff;
-  --fcaj-card-border:       #eaeded;
-  --fcaj-card-divider:      #f2f3f4;
-  --fcaj-card-shadow:       0 1px 3px rgba(0, 7, 22, 0.05), 0 4px 12px rgba(0, 7, 22, 0.03);
+  --fcaj-bg-canvas: #f8f9fa;
+  --fcaj-card-bg: #ffffff;
+  --fcaj-card-border: #eaeded;
+  --fcaj-card-divider: #f2f3f4;
+  --fcaj-card-shadow: 0 1px 3px rgba(0, 7, 22, 0.05), 0 4px 12px rgba(0, 7, 22, 0.03);
   --fcaj-card-hover-shadow: 0 4px 18px rgba(0, 7, 22, 0.08), 0 2px 6px rgba(0, 7, 22, 0.04);
   --fcaj-card-hover-border: #0972d3;
 
   /* Typography */
-  --fcaj-text-primary:      #16191f;
-  --fcaj-text-secondary:    #545b64;
-  --fcaj-text-muted:        #879596;
+  --fcaj-text-primary: #16191f;
+  --fcaj-text-secondary: #545b64;
+  --fcaj-text-muted: #879596;
 
   /* Aliases for legacy compatibility */
-  --fcaj-hero-text:         var(--fcaj-text-primary);
-  --fcaj-hero-desc:         var(--fcaj-text-secondary);
+  --fcaj-hero-text: var(--fcaj-text-primary);
+  --fcaj-hero-desc: var(--fcaj-text-secondary);
 
   /* Hero Banner — Light Mode: Tinh tế, nền trắng ngọc trai chuyển nhẹ sang slate-blue */
-  --fcaj-hero-bg-start:     #ffffff;
-  --fcaj-hero-bg-end:       #f3f6fa;
-  --fcaj-hero-border:       #e2e8f0;
-  --fcaj-hero-shadow:       0 1px 4px rgba(0, 7, 22, 0.04), 0 6px 20px rgba(0, 7, 22, 0.03);
-  --fcaj-hero-title:        #0f1b2a;
-  --fcaj-hero-sub:          #4b5768;
-  --fcaj-hero-badge-bg:     rgba(236, 114, 17, 0.08);
+  --fcaj-hero-bg-start: #ffffff;
+  --fcaj-hero-bg-end: #f3f6fa;
+  --fcaj-hero-border: #e2e8f0;
+  --fcaj-hero-shadow: 0 1px 4px rgba(0, 7, 22, 0.04), 0 6px 20px rgba(0, 7, 22, 0.03);
+  --fcaj-hero-title: #0f1b2a;
+  --fcaj-hero-sub: #4b5768;
+  --fcaj-hero-badge-bg: rgba(236, 114, 17, 0.08);
   --fcaj-hero-badge-border: rgba(236, 114, 17, 0.32);
-  --fcaj-hero-badge-color:  #b35c00;
-  --fcaj-hero-badge-dot:    #ec7211;
-  --fcaj-hero-grid:         rgba(15, 27, 42, 0.02);
-  --fcaj-hero-bottom-fade:  rgba(243, 246, 250, 0.9);
+  --fcaj-hero-badge-color: #b35c00;
+  --fcaj-hero-badge-dot: #ec7211;
+  --fcaj-hero-grid: rgba(15, 27, 42, 0.02);
+  --fcaj-hero-bottom-fade: rgba(243, 246, 250, 0.9);
 
   /* Skyline Illustration — Light Mode: Tòa nhà blend tinh tế dạng kiến trúc */
-  --fcaj-img-blend:         multiply;
-  --fcaj-img-opacity:       0.86;
-  --fcaj-img-filter:        contrast(1.08) brightness(1.02) drop-shadow(0 10px 24px rgba(15, 27, 42, 0.06));
+  --fcaj-img-blend: multiply;
+  --fcaj-img-opacity: 0.86;
+  --fcaj-img-filter: contrast(1.08) brightness(1.02) drop-shadow(0 10px 24px rgba(15, 27, 42, 0.06));
 
   /* Accents */
-  --fcaj-orange:            #ec7211;
-  --fcaj-orange-light:      #ff9900;
-  --fcaj-blue:              #0972d3;
-  --fcaj-green:             #1d8102;
-  --fcaj-green-bg:          #f0fdf4;
-  --fcaj-green-border:      #bbf7d0;
+  --fcaj-orange: #ec7211;
+  --fcaj-orange-light: #ff9900;
+  --fcaj-blue: #0972d3;
+  --fcaj-green: #1d8102;
+  --fcaj-green-bg: #f0fdf4;
+  --fcaj-green-border: #bbf7d0;
 }
 
 /* ============================================================
@@ -62,45 +63,45 @@
    AWS Midnight / Deep Cloudscape Visual Refresh
    ============================================================ */
 body.awsui-dark-mode {
-  --fcaj-bg-canvas:         #0f1b2a;
-  --fcaj-card-bg:           #192534;
-  --fcaj-card-border:       rgba(255, 255, 255, 0.09);
-  --fcaj-card-divider:      rgba(255, 255, 255, 0.06);
-  --fcaj-card-shadow:       0 2px 6px rgba(0, 0, 0, 0.35), 0 6px 20px rgba(0, 0, 0, 0.25);
+  --fcaj-bg-canvas: #0f1b2a;
+  --fcaj-card-bg: #192534;
+  --fcaj-card-border: rgba(255, 255, 255, 0.09);
+  --fcaj-card-divider: rgba(255, 255, 255, 0.06);
+  --fcaj-card-shadow: 0 2px 6px rgba(0, 0, 0, 0.35), 0 6px 20px rgba(0, 0, 0, 0.25);
   --fcaj-card-hover-shadow: 0 6px 24px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3);
   --fcaj-card-hover-border: rgba(9, 114, 211, 0.6);
 
-  --fcaj-text-primary:      #f2f3f3;
-  --fcaj-text-secondary:    #aab7b8;
-  --fcaj-text-muted:        #68707c;
+  --fcaj-text-primary: #f2f3f3;
+  --fcaj-text-secondary: #aab7b8;
+  --fcaj-text-muted: #68707c;
 
   /* Aliases for legacy compatibility */
-  --fcaj-hero-text:         var(--fcaj-text-primary);
-  --fcaj-hero-desc:         var(--fcaj-text-secondary);
+  --fcaj-hero-text: var(--fcaj-text-primary);
+  --fcaj-hero-desc: var(--fcaj-text-secondary);
 
   /* Hero Banner — Dark Mode: Midnight Navy huyền bí với ánh sáng rực rỡ */
-  --fcaj-hero-bg-start:     #132742;
-  --fcaj-hero-bg-end:       #091524;
-  --fcaj-hero-border:       rgba(255, 255, 255, 0.08);
-  --fcaj-hero-shadow:       0 2px 8px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3);
-  --fcaj-hero-title:        #ffffff;
-  --fcaj-hero-sub:          rgba(220, 230, 242, 0.85);
-  --fcaj-hero-badge-bg:     rgba(255, 153, 0, 0.12);
+  --fcaj-hero-bg-start: #132742;
+  --fcaj-hero-bg-end: #091524;
+  --fcaj-hero-border: rgba(255, 255, 255, 0.08);
+  --fcaj-hero-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3);
+  --fcaj-hero-title: #ffffff;
+  --fcaj-hero-sub: rgba(220, 230, 242, 0.85);
+  --fcaj-hero-badge-bg: rgba(255, 153, 0, 0.12);
   --fcaj-hero-badge-border: rgba(255, 153, 0, 0.4);
-  --fcaj-hero-badge-color:  #ffb84d;
-  --fcaj-hero-badge-dot:    #ff9900;
-  --fcaj-hero-grid:         rgba(255, 255, 255, 0.03);
-  --fcaj-hero-bottom-fade:  rgba(9, 21, 36, 0.85);
+  --fcaj-hero-badge-color: #ffb84d;
+  --fcaj-hero-badge-dot: #ff9900;
+  --fcaj-hero-grid: rgba(255, 255, 255, 0.03);
+  --fcaj-hero-bottom-fade: rgba(9, 21, 36, 0.85);
 
   /* Skyline Illustration — Dark Mode: Đêm Sài Gòn rực sáng ánh đèn */
-  --fcaj-img-blend:         normal;
-  --fcaj-img-opacity:       0.95;
-  --fcaj-img-filter:        contrast(1.05) brightness(1.0) drop-shadow(0 0 32px rgba(9, 114, 211, 0.28));
+  --fcaj-img-blend: normal;
+  --fcaj-img-opacity: 0.95;
+  --fcaj-img-filter: contrast(1.05) brightness(1) drop-shadow(0 0 32px rgba(9, 114, 211, 0.28));
 
-  --fcaj-orange:            #ff9900;
-  --fcaj-green:             #4ade80;
-  --fcaj-green-bg:          rgba(34, 197, 94, 0.12);
-  --fcaj-green-border:      rgba(34, 197, 94, 0.3);
+  --fcaj-orange: #ff9900;
+  --fcaj-green: #4ade80;
+  --fcaj-green-bg: rgba(34, 197, 94, 0.12);
+  --fcaj-green-border: rgba(34, 197, 94, 0.3);
 
   background-color: var(--fcaj-bg-canvas);
 }
@@ -108,7 +109,8 @@ body.awsui-dark-mode {
 /* ============================================================
    Base Setup
    ============================================================ */
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
@@ -138,17 +140,34 @@ html, body {
    Micro Animations
    ============================================================ */
 @keyframes fcaj-fade-in-up {
-  from { opacity: 0; transform: translateY(14px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 @keyframes fcaj-float {
-  0%   { transform: translateY(0)   scale(1); }
-  50%  { transform: translateY(-6px) scale(1.004); }
-  100% { transform: translateY(0)   scale(1); }
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-6px) scale(1.004);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
 }
 @keyframes fcaj-badge-pulse {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.75; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.75;
+  }
 }
 
 /* ============================================================
@@ -175,8 +194,7 @@ html, body {
   content: '';
   position: absolute;
   inset: 0;
-  background-image:
-    linear-gradient(var(--fcaj-hero-grid) 1px, transparent 1px),
+  background-image: linear-gradient(var(--fcaj-hero-grid) 1px, transparent 1px),
     linear-gradient(90deg, var(--fcaj-hero-grid) 1px, transparent 1px);
   background-size: 32px 32px;
   pointer-events: none;
@@ -186,7 +204,9 @@ html, body {
 .fcaj-hero-section::after {
   content: '';
   position: absolute;
-  bottom: 0; left: 0; right: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
   height: 48px;
   background: linear-gradient(transparent, var(--fcaj-hero-bottom-fade));
   pointer-events: none;
@@ -296,7 +316,9 @@ body.awsui-dark-mode .fcaj-hero-accent {
     max-width: 100%;
     padding-bottom: 16px;
   }
-  .fcaj-hero-desc { max-width: 100%; }
+  .fcaj-hero-desc {
+    max-width: 100%;
+  }
   .fcaj-hero-illustration {
     width: clamp(200px, 64vw, 340px);
     align-self: flex-end;
@@ -313,7 +335,9 @@ body.awsui-dark-mode .fcaj-hero-accent {
   margin-top: 20px;
 }
 @media (max-width: 600px) {
-  .fcaj-card-grid { grid-template-columns: 1fr; }
+  .fcaj-card-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .fcaj-card {
@@ -374,7 +398,10 @@ body.awsui-dark-mode .fcaj-hero-accent {
   margin-top: 16px;
 }
 @media (max-width: 640px) {
-  .fcaj-form-card { padding: 20px; border-radius: 8px; }
+  .fcaj-form-card {
+    padding: 20px;
+    border-radius: 8px;
+  }
 }
 
 .fcaj-back-btn {
@@ -389,7 +416,9 @@ body.awsui-dark-mode .fcaj-hero-accent {
   border: none;
   padding: 6px 0;
   margin-bottom: 14px;
-  transition: opacity 0.15s ease, transform 0.15s ease;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
 }
 .fcaj-back-btn:hover {
   opacity: 0.8;
@@ -411,9 +440,13 @@ body.awsui-dark-mode .fcaj-hero-accent {
   height: 4px;
   background: linear-gradient(90deg, #1ea158 0%, #0972d3 50%, #ec7211 100%);
 }
-.fcaj-receipt-content { padding: 32px; }
+.fcaj-receipt-content {
+  padding: 32px;
+}
 @media (max-width: 640px) {
-  .fcaj-receipt-content { padding: 20px; }
+  .fcaj-receipt-content {
+    padding: 20px;
+  }
 }
 
 .fcaj-receipt-meta-grid {
@@ -430,7 +463,11 @@ body.awsui-dark-mode .fcaj-receipt-meta-grid {
   background: rgba(255, 255, 255, 0.04);
 }
 
-.fcaj-receipt-meta-item { display: flex; flex-direction: column; gap: 3px; }
+.fcaj-receipt-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
 .fcaj-receipt-meta-label {
   font-size: 0.68rem;
   text-transform: uppercase;
@@ -452,7 +489,7 @@ body.awsui-dark-mode .fcaj-receipt-meta-grid {
   background: var(--fcaj-card-bg);
   border: 1px solid var(--fcaj-card-border);
   border-radius: 6px;
-  font-family: "SFMono-Regular", Consolas, monospace;
+  font-family: 'SFMono-Regular', Consolas, monospace;
   font-size: 0.84rem;
   color: var(--fcaj-text-primary);
   margin-right: 8px;

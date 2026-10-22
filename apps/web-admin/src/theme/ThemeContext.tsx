@@ -27,7 +27,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       if (saved === 'dark' || saved === 'light') {
         return saved;
       }
-      if (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      if (
+        typeof window !== 'undefined' &&
+        window.matchMedia('(prefers-color-scheme: dark)').matches
+      ) {
         return 'dark';
       }
     } catch {
@@ -56,9 +59,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <ThemeContext.Provider value={{ mode, toggleMode, setMode }}>
-      {children}
-    </ThemeContext.Provider>
+    <ThemeContext.Provider value={{ mode, toggleMode, setMode }}>{children}</ThemeContext.Provider>
   );
 }
 

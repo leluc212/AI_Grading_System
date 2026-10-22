@@ -149,7 +149,9 @@ export function PromptConfigPage() {
     }
 
     if (systemPrompt.length > MAX_PROMPT_LENGTH) {
-      setSaveError(`System Prompt không được vượt quá ${MAX_PROMPT_LENGTH.toLocaleString()} ký tự.`);
+      setSaveError(
+        `System Prompt không được vượt quá ${MAX_PROMPT_LENGTH.toLocaleString()} ký tự.`,
+      );
       return;
     }
 
@@ -159,7 +161,8 @@ export function PromptConfigPage() {
         mode,
         systemPrompt: systemPrompt.trim().length > 0 ? systemPrompt.trim() : undefined,
         model: model.trim().length > 0 ? model.trim() : undefined,
-        reasoningEffort: reasoningEffort === 'low' || reasoningEffort === 'medium' ? reasoningEffort : undefined,
+        reasoningEffort:
+          reasoningEffort === 'low' || reasoningEffort === 'medium' ? reasoningEffort : undefined,
         maxInputTokens: Number(maxInputTokens) || 50000,
         maxOutputTokens: Number(maxOutputTokens) || 2000,
       });
@@ -216,10 +219,7 @@ export function PromptConfigPage() {
   return (
     <ContentLayout
       header={
-        <Header
-          variant="h1"
-          description={activeVersionText}
-        >
+        <Header variant="h1" description={activeVersionText}>
           Cấu hình AI & System Prompt chấm điểm
         </Header>
       }
@@ -257,10 +257,7 @@ export function PromptConfigPage() {
           >
             <Container
               header={
-                <Header
-                  variant="h2"
-                  description="Chọn cách AI sẽ đánh giá bài nộp của sinh viên."
-                >
+                <Header variant="h2" description="Chọn cách AI sẽ đánh giá bài nộp của sinh viên.">
                   Phương thức chấm điểm
                 </Header>
               }
@@ -332,11 +329,13 @@ export function PromptConfigPage() {
 
                 {mode === 'RUBRIC' && (
                   <Alert type="info">
-                    Đang chọn chế độ <strong>Chấm theo Rubric</strong>. AI sẽ sử dụng danh sách tiêu chí và trọng số từ trang{' '}
+                    Đang chọn chế độ <strong>Chấm theo Rubric</strong>. AI sẽ sử dụng danh sách tiêu
+                    chí và trọng số từ trang{' '}
                     <a href="/rubric" style={{ fontWeight: 600, color: 'inherit' }}>
                       Cấu hình rubric
                     </a>
-                    . Nếu bạn muốn thêm chỉ dẫn hoặc chấm tự do, hãy chọn <strong>Chấm bằng System Prompt</strong> hoặc <strong>Chế độ kết hợp</strong>.
+                    . Nếu bạn muốn thêm chỉ dẫn hoặc chấm tự do, hãy chọn{' '}
+                    <strong>Chấm bằng System Prompt</strong> hoặc <strong>Chế độ kết hợp</strong>.
                   </Alert>
                 )}
 
@@ -363,7 +362,9 @@ export function PromptConfigPage() {
                             ? { label: reasoningEffort, value: reasoningEffort }
                             : { label: 'Mặc định (Không đặt)', value: '' }
                         }
-                        onChange={({ detail }) => setReasoningEffort(detail.selectedOption.value ?? '')}
+                        onChange={({ detail }) =>
+                          setReasoningEffort(detail.selectedOption.value ?? '')
+                        }
                         options={[
                           { label: 'Mặc định (Không đặt)', value: '' },
                           { label: 'low (Nhanh, tiết kiệm token)', value: 'low' },

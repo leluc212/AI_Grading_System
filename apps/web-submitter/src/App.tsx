@@ -28,7 +28,7 @@ const shellStyle: CSSProperties = {
 };
 
 function AppContent() {
-  const { t, language, toggleLanguage } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
   const { mode, toggleMode } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
@@ -37,9 +37,15 @@ function AppContent() {
     const isEng = language === 'en';
     const items = [{ text: isEng ? 'FCAJ Community' : 'Cộng đồng FCAJ', href: '/' }];
     if (location.pathname.startsWith('/submit/')) {
-      items.push({ text: isEng ? 'Assignment Submission' : 'Nộp bài tập nhóm', href: location.pathname });
+      items.push({
+        text: isEng ? 'Assignment Submission' : 'Nộp bài tập nhóm',
+        href: location.pathname,
+      });
     } else if (location.pathname === '/submit-success') {
-      items.push({ text: isEng ? 'Submission Receipt' : 'Xác nhận nộp bài', href: '/submit-success' });
+      items.push({
+        text: isEng ? 'Submission Receipt' : 'Xác nhận nộp bài',
+        href: '/submit-success',
+      });
     }
     return items;
   }, [location.pathname, language]);

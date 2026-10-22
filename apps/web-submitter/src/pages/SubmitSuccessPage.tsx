@@ -109,7 +109,8 @@ export function SubmitSuccessPage() {
                     </>
                   ) : (
                     <>
-                      Your project submission for team &ldquo;{teamName}&rdquo; on assignment &ldquo;
+                      Your project submission for team &ldquo;{teamName}&rdquo; on assignment
+                      &ldquo;
                       {assignmentName}&rdquo; has been securely recorded on AWS.
                     </>
                   )}

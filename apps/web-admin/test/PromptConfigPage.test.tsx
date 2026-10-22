@@ -45,9 +45,7 @@ async function openPromptPage(): Promise<void> {
 describe('PromptConfigPage', () => {
   it('hiển thị tiêu đề và thông tin phiên bản đang áp dụng', async () => {
     await openPromptPage();
-    expect(
-      screen.getByText(/Đang áp dụng phiên bản 1 \(RUBRIC\)/i),
-    ).toBeDefined();
+    expect(screen.getByText(/Đang áp dụng phiên bản 1 \(RUBRIC\)/i)).toBeDefined();
   });
 
   it('cho phép chuyển sang chế độ PROMPT và nhập nội dung System Prompt', async () => {
@@ -63,7 +61,9 @@ describe('PromptConfigPage', () => {
     expect(textarea).toBeDefined();
 
     await user.type(textarea, 'Chấm điểm tính năng đăng nhập và bảo mật.');
-    expect((textarea as HTMLTextAreaElement).value).toBe('Chấm điểm tính năng đăng nhập và bảo mật.');
+    expect((textarea as HTMLTextAreaElement).value).toBe(
+      'Chấm điểm tính năng đăng nhập và bảo mật.',
+    );
   });
 
   it('nút điền mẫu prompt tự động điền template chuẩn', async () => {
@@ -77,7 +77,9 @@ describe('PromptConfigPage', () => {
     await user.click(templateBtn);
 
     const textarea = screen.getByPlaceholderText(/Nhập hướng dẫn chấm bài cho AI/i);
-    expect((textarea as HTMLTextAreaElement).value).toContain('Bạn là trợ lý AI chấm đồ án sinh viên');
+    expect((textarea as HTMLTextAreaElement).value).toContain(
+      'Bạn là trợ lý AI chấm đồ án sinh viên',
+    );
   });
 
   it('báo lỗi nếu chọn PROMPT nhưng để trống systemPrompt khi bấm Lưu', async () => {
@@ -89,7 +91,9 @@ describe('PromptConfigPage', () => {
     await user.click(saveBtn);
 
     await waitFor(() => {
-      expect(screen.getByText(/Chế độ PROMPT yêu cầu bạn phải nhập nội dung System Prompt/i)).toBeDefined();
+      expect(
+        screen.getByText(/Chế độ PROMPT yêu cầu bạn phải nhập nội dung System Prompt/i),
+      ).toBeDefined();
     });
     expect(saveGradingConfig).not.toHaveBeenCalled();
   });

@@ -79,9 +79,9 @@ export function AdminLayout() {
           title: 'AWS First Cloud AI Journey — Admin Console',
           logo: !isTestEnv
             ? {
-              src: '/logo-aws-fcaj.png',
-              alt: 'AWS First Cloud AI Journey Logo',
-            }
+                src: '/logo-aws-fcaj.png',
+                alt: 'AWS First Cloud AI Journey Logo',
+              }
             : undefined,
           onFollow: (event) => {
             event.preventDefault();
