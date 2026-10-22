@@ -16,7 +16,7 @@ export interface StackConfig {
 }
 
 /** Giống `apps/web-submitter/src/validation.ts`. */
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/;
 const STAGE_PATTERN = /^[a-z][a-z0-9-]{0,15}$/;
 const ACCOUNT_PATTERN = /^\d{12}$/;
 const REGION_PATTERN = /^[a-z]{2}(-[a-z]+)+-\d$/;

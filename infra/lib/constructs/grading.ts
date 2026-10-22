@@ -50,6 +50,7 @@ export class Grading extends Construct {
       queueName: `QuickGrading-${config.stage}-grading-dlq`,
       retentionPeriod: Duration.days(14),
       enforceSSL: true,
+      encryption: sqs.QueueEncryption.SQS_MANAGED,
     });
 
     // 2. Main SQS Queue: visibility timeout 720s (>= 6 * Lambda timeout 120s)
@@ -61,6 +62,7 @@ export class Grading extends Construct {
         maxReceiveCount: 4,
       },
       enforceSSL: true,
+      encryption: sqs.QueueEncryption.SQS_MANAGED,
     });
 
     // 3. Worker Lambda

@@ -128,7 +128,7 @@ function tokenizeTag(tag: string): Token[] {
 
   const rest = tag.slice(nameMatch[0].length);
   // Mỗi vòng lặp lấy 1 cặp thuộc tính; phần không khớp được giữ nguyên là dấu câu.
-  const attributePattern = /([\w:.-]+)(\s*=\s*)("[^"]*"|'[^']*')/g;
+  const attributePattern = /([^\s=/>]+)(\s*=\s*)("[^"]*"|'[^']*')/g;
   let cursor = 0;
   let match: RegExpExecArray | null;
 

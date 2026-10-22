@@ -9,7 +9,7 @@ import { QuickGradingStack } from '../lib/quick-grading-stack.js';
 const app = new App();
 const config = readStackConfig(app);
 
-new QuickGradingStack(app, `QuickGrading-${config.stage}`, {
+export const stack = new QuickGradingStack(app, `QuickGrading-${config.stage}`, {
   env: { account: config.account, region: config.region },
   config,
 });

@@ -51,7 +51,7 @@ export function normalizeTeamName(teamName: string): string {
 export const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 
 /** Regex email "đủ tốt" cho mock — không cần RFC-đầy đủ, chỉ chặn input rõ sai định dạng */
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/;
 
 /** Shape 1 phần tử trong field `members` (JSON) sau khi parse, trước khi validate kỹ */
 interface RawMember {

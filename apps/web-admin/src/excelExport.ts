@@ -127,7 +127,8 @@ export function buildExcelFileName(assignmentName: string, now: Date = new Date(
     .replace(/Đ/g, 'D')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
 
   const datePart = now.toISOString().slice(0, 10);
   const namePart = slug.length > 0 ? slug : 'dot-cham';

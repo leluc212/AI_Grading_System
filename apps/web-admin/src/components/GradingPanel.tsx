@@ -60,8 +60,7 @@ export function GradingPanel({
 }: GradingPanelProps) {
   // Nhãn nút nói rõ đây là lượt đầu hay chấm lại, để Admin biết mình đang tạo
   // thêm 1 lượt mới chứ không ghi đè lượt cũ.
-  const triggerLabel =
-    latest === null ? 'Chấm bài' : latest.status === 'FAILED' ? 'Chấm lại' : 'Chấm lại';
+  const triggerLabel = latest === null ? 'Chấm bài' : 'Chấm lại';
 
   return (
     <Container

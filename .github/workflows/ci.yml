@@ -42,7 +42,7 @@ jobs:
       # `npm ci` thay vì `npm install`: cài đúng theo package-lock.json và
       # fail nếu lock file lệch với package.json, thay vì âm thầm sửa lock.
       - name: Cài dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Kiểm tra format
         run: npm run format:check

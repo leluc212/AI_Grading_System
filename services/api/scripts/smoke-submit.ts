@@ -63,7 +63,12 @@ async function uploadToPresignedPost(
   const blob = typeof fileContent === 'string' ? new Blob([fileContent]) : fileContent;
   formData.append('file', blob, fileName);
 
-  return fetch(presigned.url, {
+  const targetUrl = new URL(presigned.url);
+  if (targetUrl.protocol !== 'http:' && targetUrl.protocol !== 'https:') {
+    throw new Error(`Chỉ hỗ trợ giao thức HTTP/HTTPS: ${targetUrl.protocol}`);
+  }
+
+  return fetch(targetUrl.toString(), {
     method: 'POST',
     body: formData,
   });
@@ -163,13 +168,16 @@ export async function runSmokeTest(apiUrl: string): Promise<boolean> {
         );
       } else {
         // Finalize
-        const finalizeRes = await fetch(
+        const finalizeUrl = new URL(
           `${apiUrl}/api/submissions/${encodeURIComponent(createdSubmissionId)}/finalize`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-          },
         );
+        if (finalizeUrl.protocol !== 'http:' && finalizeUrl.protocol !== 'https:') {
+          throw new Error(`Chỉ hỗ trợ giao thức HTTP/HTTPS: ${finalizeUrl.protocol}`);
+        }
+        const finalizeRes = await fetch(finalizeUrl.toString(), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
 
         if (finalizeRes.status !== 201) {
           report(false, 'Case 2: Nộp bài mới', `Finalize thất bại với HTTP ${finalizeRes.status}`);

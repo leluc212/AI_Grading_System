@@ -41,6 +41,12 @@ function errorResponse(error: DomainError) {
 /** Xác suất 1 lượt chấm giả lập kết thúc `FAILED` — design.md > Mock Server Design ("~10% request") */
 const SIMULATED_FAILURE_RATE = 0.1;
 
+function secureRandom(): number {
+  const buf = new Uint32Array(1);
+  crypto.getRandomValues(buf);
+  return buf[0] / (0xffffffff + 1);
+}
+
 /**
  * Điểm thấp nhất mà AI Grader giả lập có thể sinh ra: 60% thang điểm.
  *
@@ -72,7 +78,7 @@ function completeGradingAsync(gradingAttemptId: string): void {
     return;
   }
 
-  const isSimulatedFailure = Math.random() < SIMULATED_FAILURE_RATE;
+  const isSimulatedFailure = secureRandom() < SIMULATED_FAILURE_RATE;
 
   if (isSimulatedFailure) {
     // Requirement 6.5: lỗi AI Grader/timeout -> status FAILED kèm errorMessage.
@@ -85,7 +91,7 @@ function completeGradingAsync(gradingAttemptId: string): void {
     // nhiên trong khoảng [SIMULATED_MIN_SCORE, GRADING_SCALE.max] — với thang
     // 0-100 là 60-100, đủ để test cả 2 nhánh needsReview.
     const scoreSpan = GRADING_SCALE.max - SIMULATED_MIN_SCORE + 1;
-    const score = SIMULATED_MIN_SCORE + Math.floor(Math.random() * scoreSpan);
+    const score = SIMULATED_MIN_SCORE + Math.floor(secureRandom() * scoreSpan);
     result.status = 'GRADED';
     result.score = score;
     result.aiFeedback =
@@ -170,7 +176,7 @@ export const gradingHandlers = [
     // Handler trả response NGAY với status IN_PROGRESS; việc hoàn tất diễn
     // ra out-of-band, UI phải tự poll để thấy kết quả cuối (xem JSDoc của
     // `completeGradingAsync`).
-    const delayMs = 1500 + Math.random() * 500;
+    const delayMs = 1500 + secureRandom() * 500;
     setTimeout(() => completeGradingAsync(gradingResult.gradingAttemptId), delayMs);
 
     // 202 Accepted: yêu cầu đã được ghi nhận nhưng việc chấm bài chưa hoàn

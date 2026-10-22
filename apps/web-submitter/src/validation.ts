@@ -26,7 +26,7 @@ import type { TeamMember } from '@quick-grading/shared-types';
  * trắng). Giữ 2 phía dùng cùng 1 biểu thức để tránh tình huống khó chịu:
  * client cho qua nhưng server từ chối (hoặc ngược lại).
  */
-export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+export const EMAIL_REGEX = /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/;
 
 /**
  * Một dòng thành viên đang được nhập trên form.
