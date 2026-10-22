@@ -67,15 +67,28 @@ async function startMockServerInDev(): Promise<void> {
   await startMockServer();
 }
 
+const DEFAULT_API_BASE_URL = 'https://jb9dbtvu30.execute-api.ap-southeast-1.amazonaws.com';
+const DEFAULT_COGNITO_CLIENT_ID = '2ck2l1fmjmd61a94d1g8i0pi51';
+const DEFAULT_COGNITO_REGION = 'ap-southeast-1';
+
 async function bootstrap(): Promise<void> {
   const container = document.getElementById('root');
   if (container === null) {
     throw new Error('Không tìm thấy phần tử #root trong index.html.');
   }
 
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
-  const cognitoClientId = import.meta.env.VITE_COGNITO_CLIENT_ID?.trim();
-  const cognitoRegion = import.meta.env.VITE_COGNITO_REGION?.trim() || 'ap-southeast-1';
+  const apiBaseUrl = (
+    import.meta.env.VITE_API_BASE_URL ||
+    (import.meta.env.PROD ? DEFAULT_API_BASE_URL : '')
+  )?.trim();
+  const cognitoClientId = (
+    import.meta.env.VITE_COGNITO_CLIENT_ID ||
+    (import.meta.env.PROD ? DEFAULT_COGNITO_CLIENT_ID : '')
+  )?.trim();
+  const cognitoRegion = (
+    import.meta.env.VITE_COGNITO_REGION ||
+    (import.meta.env.PROD ? DEFAULT_COGNITO_REGION : 'ap-southeast-1')
+  )?.trim();
 
   if (apiBaseUrl) {
     try {

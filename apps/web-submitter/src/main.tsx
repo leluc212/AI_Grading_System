@@ -64,13 +64,15 @@ async function startMockServerInDev(): Promise<void> {
   await startMockServer();
 }
 
+const DEFAULT_API_BASE_URL = 'https://jb9dbtvu30.execute-api.ap-southeast-1.amazonaws.com';
+
 async function bootstrap(): Promise<void> {
   const container = document.getElementById('root');
   if (container === null) {
     throw new Error('Không tìm thấy phần tử #root trong index.html.');
   }
 
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? DEFAULT_API_BASE_URL : ''))?.trim();
   if (apiBaseUrl) {
     try {
       setApiBaseUrl(apiBaseUrl);
