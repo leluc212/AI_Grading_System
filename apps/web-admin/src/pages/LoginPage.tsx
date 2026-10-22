@@ -1,20 +1,3 @@
-/**
- * Trang đăng nhập khu vực Admin (task 6.2).
- *
- * Giai đoạn 1 dùng mock auth: form username/password gọi
- * `authApi.login` (mock server có 1 tài khoản admin cứng để test — xem
- * `packages/mock-server/src/handlers/auth.ts`). Giai đoạn 2 trang này được
- * thay bằng Cognito Hosted UI, nên CỐ TÌNH không có gì ngoài form đăng nhập
- * tối thiểu: không "ghi nhớ đăng nhập", không "quên mật khẩu", không tự đăng
- * ký (Requirement 4.2: Cognito tắt self-signup — tài khoản do người vận hành
- * tạo).
- *
- * Thông tin tài khoản test KHÔNG được in lên UI: nó chỉ đúng với mock server
- * và sẽ thành thông tin sai lệch (hoặc thói quen xấu) khi sang giai đoạn 2.
- * Xem README của `mock-server` nếu cần tra tài khoản để test.
- *
- * _Requirements: 4.1, 4.4_
- */
 import { useCallback, useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import Alert from '@cloudscape-design/components/alert';
@@ -26,20 +9,14 @@ import FormField from '@cloudscape-design/components/form-field';
 import Header from '@cloudscape-design/components/header';
 import Input from '@cloudscape-design/components/input';
 import SpaceBetween from '@cloudscape-design/components/space-between';
+import TopNavigation from '@cloudscape-design/components/top-navigation';
 import { useAdminAuth } from '../auth/AdminAuthContext';
 import { toDisplayMessage } from '../errorMessage';
+import { useTheme } from '../theme/ThemeContext';
 
 /** Đường dẫn mặc định sau khi đăng nhập, khi không có URL nào bị chặn trước đó. */
 const DEFAULT_LANDING_PATH = '/assignments';
 
-/**
- * Lấy URL mà route guard đã chặn (nếu có) để đăng nhập xong quay lại đúng chỗ.
- *
- * `location.state` do client đặt nên phải kiểm tra shape trước khi dùng; và
- * chỉ nhận đường dẫn nội bộ bắt đầu bằng 1 dấu `/`. Chuỗi như
- * `//evil.example.com` hay `https://...` bị bỏ qua để không biến state thành
- * một open redirect.
- */
 function readRedirectPath(state: unknown): string {
   if (typeof state !== 'object' || state === null) {
     return DEFAULT_LANDING_PATH;
@@ -53,6 +30,7 @@ function readRedirectPath(state: unknown): string {
 
 export function LoginPage() {
   const { isAuthenticated, signIn } = useAdminAuth();
+  const { mode, toggleMode } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -66,7 +44,6 @@ export function LoginPage() {
   const redirectPath = readRedirectPath(location.state);
 
   const handleSubmit = useCallback(async () => {
-    // Validate tối thiểu ở client để không gửi request chắc chắn sai.
     const nextUsernameError =
       username.trim().length === 0 ? 'Tên đăng nhập không được để trống.' : undefined;
     const nextPasswordError = password.length === 0 ? 'Mật khẩu không được để trống.' : undefined;
@@ -81,94 +58,134 @@ export function LoginPage() {
     setSubmitting(true);
     try {
       await signIn(username.trim(), password);
-      // Điều hướng tay (thay vì chờ `isAuthenticated` đổi rồi render
-      // `<Navigate>`) để giữ được `replace` — trang đăng nhập không nên nằm
-      // lại trong history sau khi đã vào được khu vực Admin.
       navigate(redirectPath, { replace: true });
     } catch (error: unknown) {
       console.error('[LoginPage] Đăng nhập thất bại:', error);
-      // `UnauthorizedError` đã có câu "Tài khoản hoặc mật khẩu không đúng."
-      // (Requirement 4.4), hiển thị nguyên văn.
       setSubmitError(
         toDisplayMessage(error, 'Không đăng nhập được do lỗi hệ thống. Vui lòng thử lại.'),
       );
-      // Xoá mật khẩu đã nhập, giữ lại tên đăng nhập: gõ lại mật khẩu là
-      // chuyện bình thường, còn bắt gõ lại username thì chỉ gây khó chịu.
       setPassword('');
     } finally {
       setSubmitting(false);
     }
   }, [navigate, password, redirectPath, signIn, username]);
 
-  // Đã đăng nhập mà vẫn mở `/login` (gõ URL, hoặc bấm Back) -> không cần đăng
-  // nhập lại.
   if (isAuthenticated) {
     return <Navigate to={redirectPath} replace />;
   }
 
   return (
-    <Box padding="xxl">
-      {/*
-        Canh giữa + giới hạn bề rộng bằng style thường: `Box` của Cloudscape
-        chỉ nhận các token khoảng cách (`xs`, `s`, `m`, ...) cho `margin`, nên
-        không truyền được `auto` để canh giữa.
-      */}
-      <div style={{ maxWidth: 420, margin: '0 auto' }}>
-        <form
-          // `noValidate`: tắt constraint validation của trình duyệt để thông
-          // báo lỗi luôn là của Cloudscape, không phải tooltip mặc định
-          // (design.md > Error Handling).
-          noValidate
-          onSubmit={(event) => {
-            event.preventDefault();
-            void handleSubmit();
-          }}
-        >
-          <Form
-            actions={
-              <Button variant="primary" formAction="submit" loading={submitting}>
-                Đăng nhập
-              </Button>
-            }
+    <>
+      <TopNavigation
+        identity={{
+          href: '/login',
+          title: 'AWS First Cloud AI Journey — Admin Console',
+          logo: {
+            src: '/logo-aws-fcaj.png',
+            alt: 'AWS FCAJ Logo',
+          },
+        }}
+        utilities={[
+          {
+            type: 'button',
+            text: '',
+            iconSvg:
+              mode === 'dark' ? (
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="5" />
+                  <line x1="12" y1="1" x2="12" y2="3" />
+                  <line x1="12" y1="21" x2="12" y2="23" />
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                  <line x1="1" y1="12" x2="3" y2="12" />
+                  <line x1="21" y1="12" x2="23" y2="12" />
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                </svg>
+              ) : (
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+              ),
+            ariaLabel: mode === 'dark' ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối',
+            onClick: toggleMode,
+          },
+        ]}
+        i18nStrings={{ overflowMenuTriggerText: 'Thêm', overflowMenuTitleText: 'Tất cả' }}
+      />
+      <Box padding="xxl">
+        <div style={{ maxWidth: 440, margin: '48px auto' }} className="gpu-scroll-container">
+          <form
+            noValidate
+            onSubmit={(event) => {
+              event.preventDefault();
+              void handleSubmit();
+            }}
           >
-            <Container
-              header={
-                <Header variant="h1" description="Khu vực quản trị — yêu cầu đăng nhập">
-                  Quick Grading
-                </Header>
+            <Form
+              actions={
+                <Button variant="primary" formAction="submit" loading={submitting}>
+                  Đăng nhập
+                </Button>
               }
             >
-              <SpaceBetween size="l">
-                {submitError !== undefined && (
-                  <Alert type="error" header="Không đăng nhập được">
-                    {submitError}
-                  </Alert>
-                )}
+              <Container
+                header={
+                  <Header variant="h1" description="Khu vực quản trị — yêu cầu đăng nhập">
+                    Quick Grading
+                  </Header>
+                }
+              >
+                <SpaceBetween size="l">
+                  {submitError !== undefined && (
+                    <Alert type="error" header="Không đăng nhập được">
+                      {submitError}
+                    </Alert>
+                  )}
 
-                <FormField label="Tên đăng nhập" errorText={usernameError}>
-                  <Input
-                    value={username}
-                    disabled={submitting}
-                    autoFocus
-                    ariaLabel="Tên đăng nhập"
-                    onChange={({ detail }) => setUsername(detail.value)}
-                  />
-                </FormField>
+                  <FormField label="Tên đăng nhập" errorText={usernameError}>
+                    <Input
+                      value={username}
+                      disabled={submitting}
+                      autoFocus
+                      ariaLabel="Tên đăng nhập"
+                      onChange={({ detail }) => setUsername(detail.value)}
+                    />
+                  </FormField>
 
-                <FormField label="Mật khẩu" errorText={passwordError}>
-                  <Input
-                    value={password}
-                    disabled={submitting}
-                    type="password"
-                    ariaLabel="Mật khẩu"
-                    onChange={({ detail }) => setPassword(detail.value)}
-                  />
-                </FormField>
-              </SpaceBetween>
-            </Container>
-          </Form>
-        </form>
-      </div>
-    </Box>
+                  <FormField label="Mật khẩu" errorText={passwordError}>
+                    <Input
+                      value={password}
+                      disabled={submitting}
+                      type="password"
+                      ariaLabel="Mật khẩu"
+                      onChange={({ detail }) => setPassword(detail.value)}
+                    />
+                  </FormField>
+                </SpaceBetween>
+              </Container>
+            </Form>
+          </form>
+        </div>
+      </Box>
+    </>
   );
 }

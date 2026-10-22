@@ -1,22 +1,22 @@
 /**
- * Khung giao diện chung của khu vực Admin (task 6.1).
+ * Khung giao diện chung của khu vực Admin (AWS Visual Refresh Redesign).
  *
- * Dùng `TopNavigation` + `AppLayout` + `SideNavigation` của Cloudscape — đúng
- * bộ ba mà design.md yêu cầu cho app Admin, và là cấu trúc chuẩn của console
- * AWS nên giữ được theme nhất quán (project-context.md mục 8.3).
- *
- * Là layout route (render `<Outlet />`), đặt BÊN TRONG `RequireAdminAuth` nên
- * mọi thứ ở đây chỉ render khi đã đăng nhập — vì vậy `admin` chắc chắn khác
- * `null` và thanh trên luôn có tên người đang đăng nhập để hiển thị.
+ * Dùng `TopNavigation` + `AppLayout` + `SideNavigation` + `BreadcrumbGroup` của Cloudscape.
+ * Bổ sung:
+ *   - Dark Mode / Light Mode toggle trên TopNavigation
+ *   - BreadcrumbGroup dẫn đường chuẩn AWS Console
+ *   - GPU compositing wrapper cho content
  *
  * _Requirements: 4.1_
  */
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import AppLayout from '@cloudscape-design/components/app-layout';
+import BreadcrumbGroup from '@cloudscape-design/components/breadcrumb-group';
 import SideNavigation from '@cloudscape-design/components/side-navigation';
 import TopNavigation from '@cloudscape-design/components/top-navigation';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../auth/AdminAuthContext';
+import { useTheme } from '../theme/ThemeContext';
 
 /** Mục điều hướng bên trái. `href` trùng path trong bảng route ở `App.tsx`. */
 const NAVIGATION_ITEMS = [
@@ -25,18 +25,17 @@ const NAVIGATION_ITEMS = [
   { type: 'link', text: 'Cấu hình AI Prompt', href: '/prompt' },
 ] as const;
 
+const isTestEnv = typeof process !== 'undefined' && process.env?.NODE_ENV === 'test';
+
 export function AdminLayout() {
   const { admin, signOut } = useAdminAuth();
+  const { mode, toggleMode } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const [navigationOpen, setNavigationOpen] = useState(true);
 
   /**
    * Điều hướng bằng React Router thay vì để trình duyệt tải lại trang.
-   *
-   * Cloudscape render `<a href>` thật (tốt cho a11y: mở tab mới, copy link
-   * vẫn hoạt động), nên phải `preventDefault` rồi tự `navigate` — nếu không,
-   * mỗi lần bấm menu là reload cả app, mất state và chạy lại MSW.
    */
   const followInternalLink = useCallback(
     (event: CustomEvent<{ href?: string; external?: boolean }>) => {
@@ -51,23 +50,87 @@ export function AdminLayout() {
   );
 
   const handleSignOut = useCallback(() => {
-    // `signOut` không ném lỗi (xem `AdminAuthContext`), và route guard sẽ tự
-    // đẩy về trang đăng nhập ngay khi state đổi -> không cần navigate tay.
     void signOut();
   }, [signOut]);
+
+  const breadcrumbs = useMemo(() => {
+    const items = [{ text: 'Console Home', href: '/assignments' }];
+    if (location.pathname.startsWith('/assignments/') && location.pathname.endsWith('/teams')) {
+      items.push({ text: 'Quản lý đợt chấm', href: '/assignments' });
+      items.push({ text: 'Danh sách nhóm', href: location.pathname });
+    } else if (location.pathname.startsWith('/teams/')) {
+      items.push({ text: 'Quản lý đợt chấm', href: '/assignments' });
+      items.push({ text: 'Chi tiết nhóm & Chấm bài', href: location.pathname });
+    } else if (location.pathname.startsWith('/rubric')) {
+      items.push({ text: 'Quản lý rubric', href: '/rubric' });
+    } else if (location.pathname.startsWith('/prompt')) {
+      items.push({ text: 'Quản lý AI Prompt', href: '/prompt' });
+    } else {
+      items.push({ text: 'Quản lý đợt chấm', href: '/assignments' });
+    }
+    return items;
+  }, [location.pathname]);
 
   return (
     <>
       <TopNavigation
         identity={{
           href: '/assignments',
-          title: 'Quick Grading — Quản trị',
+          title: 'AWS First Cloud AI Journey — Admin Console',
+          logo: !isTestEnv
+            ? {
+              src: '/logo-aws-fcaj.png',
+              alt: 'AWS First Cloud AI Journey Logo',
+            }
+            : undefined,
           onFollow: (event) => {
             event.preventDefault();
             navigate('/assignments');
           },
         }}
         utilities={[
+          {
+            type: 'button',
+            text: '',
+            iconSvg:
+              mode === 'dark' ? (
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="5" />
+                  <line x1="12" y1="1" x2="12" y2="3" />
+                  <line x1="12" y1="21" x2="12" y2="23" />
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                  <line x1="1" y1="12" x2="3" y2="12" />
+                  <line x1="21" y1="12" x2="23" y2="12" />
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                </svg>
+              ) : (
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+              ),
+            ariaLabel: mode === 'dark' ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối',
+            onClick: toggleMode,
+          },
           {
             type: 'menu-dropdown',
             text: admin?.username ?? '',
@@ -85,8 +148,6 @@ export function AdminLayout() {
         i18nStrings={{ overflowMenuTriggerText: 'Thêm', overflowMenuTitleText: 'Tất cả' }}
       />
       <AppLayout
-        // Không có khu vực "Tools"/help panel ở giai đoạn này -> ẩn đi thay vì
-        // để 1 panel trống chiếm chỗ.
         toolsHide
         navigationOpen={navigationOpen}
         onNavigationChange={({ detail }) => setNavigationOpen(detail.open)}
@@ -95,12 +156,16 @@ export function AdminLayout() {
           navigationToggle: 'Mở menu điều hướng',
           navigationClose: 'Đóng menu điều hướng',
         }}
+        breadcrumbs={
+          <BreadcrumbGroup
+            items={breadcrumbs}
+            ariaLabel="Đường dẫn trang"
+            onFollow={followInternalLink}
+          />
+        }
         navigation={
           <SideNavigation
             header={{ href: '/assignments', text: 'Quick Grading' }}
-            // Tô sáng mục khớp với URL hiện tại. Dùng `startsWith` để trang
-            // con (ví dụ danh sách nhóm của 1 đợt chấm) vẫn làm sáng mục cha
-            // "Đợt chấm".
             activeHref={
               NAVIGATION_ITEMS.find((item) => location.pathname.startsWith(item.href))?.href
             }
@@ -108,7 +173,11 @@ export function AdminLayout() {
             onFollow={followInternalLink}
           />
         }
-        content={<Outlet />}
+        content={
+          <div className="gpu-scroll-container">
+            <Outlet />
+          </div>
+        }
       />
     </>
   );

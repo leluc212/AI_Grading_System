@@ -16,13 +16,13 @@
 import Alert from '@cloudscape-design/components/alert';
 import Box from '@cloudscape-design/components/box';
 import Button from '@cloudscape-design/components/button';
-import Container from '@cloudscape-design/components/container';
-import Header from '@cloudscape-design/components/header';
 import SpaceBetween from '@cloudscape-design/components/space-between';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { useLanguage } from '../i18n/LanguageContext';
 import { isSubmitSuccessState } from '../submitSuccessState';
 
 export function SubmitSuccessPage() {
+  const { t, language } = useLanguage();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -33,55 +33,116 @@ export function SubmitSuccessPage() {
   const { teamName, assignmentName, fileNames, resubmitted } = location.state;
 
   return (
-    <Container header={<Header variant="h2">Nộp bài thành công</Header>}>
-      <SpaceBetween size="l">
-        {/*
-          Phân biệt nộp lần đầu với nộp lại: ở lần nộp lại, bản nộp trước đã bị
-          thay thế (file cũ vẫn được hệ thống lưu nhưng không còn là bản dùng để
-          chấm), nên nói đúng việc vừa xảy ra để nhóm không nhầm là đã nộp 2 bài.
-        */}
-        <Alert
-          type="success"
-          header={resubmitted ? 'Đã nộp lại bài thành công' : 'Đã nộp bài thành công'}
-        >
-          {resubmitted ? (
-            <>
-              Bản nộp mới của nhóm &ldquo;{teamName}&rdquo; đã được ghi nhận cho đợt chấm &ldquo;
-              {assignmentName}&rdquo; và thay thế bản nộp trước đó.
-            </>
-          ) : (
-            <>
-              Bài của nhóm &ldquo;{teamName}&rdquo; đã được ghi nhận cho đợt chấm &ldquo;
-              {assignmentName}&rdquo;.
-            </>
-          )}
-        </Alert>
+    <div style={{ padding: '16px 0 32px' }}>
+      <div className="fcaj-receipt-card">
+        <div className="fcaj-receipt-accent-bar" />
+        <div className="fcaj-receipt-content">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 44,
+                height: 44,
+                borderRadius: '50%',
+                backgroundColor: 'rgba(30, 161, 88, 0.14)',
+                color: '#1ea158',
+                flexShrink: 0,
+              }}
+            >
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+            </div>
+            <div>
+              <h2
+                style={{
+                  margin: 0,
+                  fontSize: '1.6rem',
+                  fontWeight: 800,
+                  color: 'var(--fcaj-text-primary)',
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                {t('successTitle')}
+              </h2>
+            </div>
+          </div>
 
-        <SpaceBetween size="xs">
-          <Box variant="awsui-key-label">File đã ghi nhận</Box>
-          {/*
-            Liệt kê tên file do SERVER trả về (không phải tên file local người
-            dùng chọn) để nhóm tự đối chiếu đúng những gì hệ thống đã nhận.
-          */}
-          <ul>
-            {fileNames.map((fileName) => (
-              <li key={fileName}>{fileName}</li>
-            ))}
-          </ul>
-        </SpaceBetween>
+          <SpaceBetween size="l">
+            <Alert
+              type="success"
+              header={resubmitted ? t('resubmittedAlertHeader') : t('successAlertHeader')}
+            >
+              {resubmitted ? (
+                <>
+                  {language === 'vi' ? (
+                    <>
+                      Bản nộp mới của nhóm &ldquo;{teamName}&rdquo; đã được ghi nhận cho đợt chấm
+                      &ldquo;{assignmentName}&rdquo; và thay thế bản nộp trước đó.
+                    </>
+                  ) : (
+                    <>
+                      Your updated submission for team &ldquo;{teamName}&rdquo; on assignment
+                      &ldquo;{assignmentName}&rdquo; has been confirmed and replaces the previous
+                      version.
+                    </>
+                  )}
+                </>
+              ) : (
+                <>
+                  {language === 'vi' ? (
+                    <>
+                      Bài của nhóm &ldquo;{teamName}&rdquo; đã được ghi nhận cho đợt chấm &ldquo;
+                      {assignmentName}&rdquo;.
+                    </>
+                  ) : (
+                    <>
+                      Your project submission for team &ldquo;{teamName}&rdquo; on assignment &ldquo;
+                      {assignmentName}&rdquo; has been securely recorded on AWS.
+                    </>
+                  )}
+                </>
+              )}
+            </Alert>
 
-        <Box variant="p" color="text-body-secondary">
-          Hệ thống không gửi email xác nhận. Vui lòng lưu lại thông tin trên trang này nếu cần.
-        </Box>
+            <SpaceBetween size="xs">
+              <Box variant="awsui-key-label">{t('labelFiles')}</Box>
+              <ul style={{ margin: 0, paddingLeft: 20 }}>
+                {fileNames.map((fileName) => (
+                  <li key={fileName} style={{ margin: '6px 0', fontFamily: 'monospace' }}>
+                    {fileName}
+                  </li>
+                ))}
+              </ul>
+            </SpaceBetween>
 
-        <Button
-          onClick={() => {
-            navigate('/');
-          }}
-        >
-          Về trang danh sách đợt chấm
-        </Button>
-      </SpaceBetween>
-    </Container>
+            <Box variant="p" color="text-body-secondary">
+              {t('successNote')}
+            </Box>
+
+            <Button
+              variant="primary"
+              onClick={() => {
+                navigate('/');
+              }}
+            >
+              {t('btnBackHome')}
+            </Button>
+          </SpaceBetween>
+        </div>
+      </div>
+    </div>
   );
 }

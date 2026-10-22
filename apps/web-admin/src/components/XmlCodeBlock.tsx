@@ -18,7 +18,7 @@
  *
  * _Requirements: 5.4, 11.4_
  */
-import type { ReactNode } from 'react';
+import { memo, useMemo, type ReactNode } from 'react';
 import {
   borderRadiusInput,
   colorBackgroundLayoutMain,
@@ -149,11 +149,12 @@ function tokenizeTag(tag: string): Token[] {
   return tokens;
 }
 
-export function XmlCodeBlock({ content }: { content: string }) {
-  const tokens = tokenizeXml(content);
+export const XmlCodeBlock = memo(function XmlCodeBlock({ content }: { content: string }) {
+  const tokens = useMemo(() => tokenizeXml(content), [content]);
 
   return (
     <pre
+      className="gpu-code-container gpu-scroll-container"
       style={{
         margin: 0,
         padding: spaceScaledS,
@@ -168,6 +169,8 @@ export function XmlCodeBlock({ content }: { content: string }) {
         lineHeight: lineHeightBodyS,
         background: colorBackgroundLayoutMain,
         borderRadius: borderRadiusInput,
+        transform: 'translateZ(0)',
+        willChange: 'scroll-position',
       }}
     >
       <code>
@@ -187,4 +190,4 @@ export function XmlCodeBlock({ content }: { content: string }) {
       </code>
     </pre>
   );
-}
+});

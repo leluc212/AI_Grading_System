@@ -1,24 +1,12 @@
 /**
- * `FileViewer` — xem nội dung 2 file bài làm của 1 nhóm (task 8.2).
+ * `FileViewer` — xem nội dung 2 file bài làm của 1 nhóm (task 8.2 - GPU Accelerated).
  *
- * Requirement 5.3: Admin xem được nội dung file NGAY trên trang, không phải
- * tải về. Requirement 5.4: `.md` render thành markdown đã format, `.xml` hiển
- * thị có syntax highlight.
- *
- * Dùng `Tabs` (không phải 2 khối cạnh nhau) vì cả 2 file đều có thể dài; xem
- * lần lượt dễ đọc hơn là chia đôi màn hình.
- *
- * ## An toàn khi render nội dung do sinh viên nộp (Requirement 11.4)
- *
- * `react-markdown` KHÔNG render raw HTML trong markdown theo mặc định — thẻ
- * HTML trong file `.md` sẽ hiện ra dưới dạng chữ, không được thực thi. Đó
- * chính là lý do chọn nó và **không** thêm plugin `rehype-raw`: thêm plugin
- * đó sẽ mở đúng lỗ XSS mà Requirement 11.4 yêu cầu chặn. Phần `.xml` dùng
- * `XmlCodeBlock`, vốn trả về React element chứ không phải HTML string (xem
- * JSDoc của file đó).
+ * Tối ưu hoá với React.memo và Hardware Compositing để tránh render lại
+ * khi trang chi tiết nhóm polling cập nhật trạng thái chấm bài.
  *
  * _Requirements: 5.3, 5.4, 11.4_
  */
+import { memo } from 'react';
 import Box from '@cloudscape-design/components/box';
 import Tabs from '@cloudscape-design/components/tabs';
 import Markdown from 'react-markdown';
@@ -31,7 +19,7 @@ export interface FileViewerProps {
   xmlContent: string;
 }
 
-export function FileViewer({ markdownContent, xmlContent }: FileViewerProps) {
+export const FileViewer = memo(function FileViewer({ markdownContent, xmlContent }: FileViewerProps) {
   return (
     <Tabs
       tabs={[
@@ -41,9 +29,16 @@ export function FileViewer({ markdownContent, xmlContent }: FileViewerProps) {
           content: (
             <Box padding={{ top: 's' }}>
               <div
-                // Giới hạn chiều cao + cho cuộn: file markdown dài không nên
-                // đẩy phần "Chấm bài"/"Lịch sử chấm" xuống quá xa.
-                style={{ maxHeight: 480, overflow: 'auto', wordBreak: 'break-word' }}
+                className="gpu-scroll-container"
+                style={{
+                  maxHeight: 520,
+                  overflow: 'auto',
+                  wordBreak: 'break-word',
+                  transform: 'translateZ(0)',
+                  willChange: 'scroll-position',
+                  padding: '12px',
+                  borderRadius: '6px',
+                }}
                 data-testid="markdown-content"
               >
                 <Markdown>{markdownContent}</Markdown>
@@ -65,4 +60,4 @@ export function FileViewer({ markdownContent, xmlContent }: FileViewerProps) {
       ]}
     />
   );
-}
+});

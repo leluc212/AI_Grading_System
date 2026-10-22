@@ -16,6 +16,8 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import '@cloudscape-design/global-styles/index.css';
+import './gpu-acceleration.css';
+import { ThemeProvider } from './theme/ThemeContext';
 import { App } from './App';
 import { setApiBaseUrl } from './services';
 
@@ -103,9 +105,11 @@ async function bootstrap(): Promise<void> {
 
   createRoot(container).render(
     <StrictMode>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
+      <ThemeProvider>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </ThemeProvider>
     </StrictMode>,
   );
 }

@@ -33,25 +33,29 @@ import { PromptConfigPage } from './pages/PromptConfigPage';
 import { TeamDetailPage } from './pages/TeamDetailPage';
 import { TeamsDashboardPage } from './pages/TeamsDashboardPage';
 
+import { ThemeProvider } from './theme/ThemeContext';
+
 export function App() {
   return (
-    <AdminAuthProvider>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
+    <ThemeProvider>
+      <AdminAuthProvider>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
 
-        <Route element={<RequireAdminAuth />}>
-          <Route element={<AdminLayout />}>
-            <Route path="/" element={<Navigate to="/assignments" replace />} />
-            <Route path="/assignments" element={<AssignmentsPage />} />
-            <Route path="/assignments/:assignmentId/teams" element={<TeamsDashboardPage />} />
-            <Route path="/teams/:teamId" element={<TeamDetailPage />} />
-            <Route path="/rubric" element={<RubricConfigPage />} />
-            <Route path="/prompt" element={<PromptConfigPage />} />
+          <Route element={<RequireAdminAuth />}>
+            <Route element={<AdminLayout />}>
+              <Route path="/" element={<Navigate to="/assignments" replace />} />
+              <Route path="/assignments" element={<AssignmentsPage />} />
+              <Route path="/assignments/:assignmentId/teams" element={<TeamsDashboardPage />} />
+              <Route path="/teams/:teamId" element={<TeamDetailPage />} />
+              <Route path="/rubric" element={<RubricConfigPage />} />
+              <Route path="/prompt" element={<PromptConfigPage />} />
+            </Route>
           </Route>
-        </Route>
 
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </AdminAuthProvider>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AdminAuthProvider>
+    </ThemeProvider>
   );
 }

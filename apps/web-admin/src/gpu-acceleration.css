@@ -1,0 +1,58 @@
+/**
+ * CSS Tối ưu GPU Acceleration & Layout chuẩn AWS Console cho Web Admin.
+ * Kích hoạt Hardware Compositing, Smooth Scrolling, Dark Mode và tối ưu hiển thị danh sách lớn.
+ */
+
+:root {
+  --aws-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  font-family: var(--aws-font-family);
+  background-color: #f2f3f3;
+  color: #16191f;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body.awsui-dark-mode {
+  background-color: #0f1b2a;
+  color: #e9ebed;
+}
+
+/* Thúc đẩy luồng xử lý phần cứng GPU (Hardware Composited Layer) */
+.gpu-scroll-container {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  will-change: scroll-position;
+  contain: content;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Vùng xem code XML và Markdown: cô lập render để tránh repaint DOM nặng */
+.gpu-code-container {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  contain: strict;
+  will-change: scroll-position;
+}
+
+/* Tối ưu render bảng danh sách dài (bỏ qua render hàng ngoài màn hình) */
+.gpu-table-row {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 48px;
+}
+
+/* Thẻ card có hiệu ứng hover mượt mà với GPU */
+.aws-smooth-card {
+  transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
+  will-change: transform;
+}
+
+.aws-smooth-card:hover {
+  transform: translateY(-2px);
+}

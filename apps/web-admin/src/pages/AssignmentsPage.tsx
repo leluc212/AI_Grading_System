@@ -1,21 +1,15 @@
 /**
- * Trang danh sách Assignment (task 7.1, 7.2).
+ * Trang danh sách Assignment (task 7.1, 7.2 - AWS Console Visual Refresh).
  *
- * Mỗi dòng hiển thị trạng thái + số nhóm đã nộp (Requirement 1.3), có nút tạo
- * mới (7.2) và nút đóng/mở từng đợt (Requirement 1.4, 1.5).
- *
- * Requirement 1.6 (không có cơ chế tự đóng theo thời gian) được thể hiện bằng
- * việc KHÔNG có cột deadline và KHÔNG có cấu hình hẹn giờ nào ở đây — trạng
- * thái chỉ đổi khi Admin bấm. Mô tả của trang nói rõ điều đó để Admin không đi
- * tìm chỗ đặt deadline.
- *
- * Số nhóm đã nộp lấy từ `submittedTeamCount` do server tính (xem
- * `AssignmentListItem` ở `shared-types`), không tự đếm ở client — nếu đếm ở
- * client thì phải tải Team của mọi assignment chỉ để hiện 1 con số.
+ * Tích hợp:
+ *   - TextFilter tìm kiếm tức thì
+ *   - Phân loại trạng thái rõ ràng
+ *   - Nút xuất Excel và đóng/mở đợt chấm
+ *   - GPU Hardware Compositing
  *
  * _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6_
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { AssignmentListItem, AssignmentStatus } from '@quick-grading/shared-types';
 import Alert from '@cloudscape-design/components/alert';
@@ -26,6 +20,7 @@ import Header from '@cloudscape-design/components/header';
 import Link from '@cloudscape-design/components/link';
 import SpaceBetween from '@cloudscape-design/components/space-between';
 import Table from '@cloudscape-design/components/table';
+import TextFilter from '@cloudscape-design/components/text-filter';
 import { CreateAssignmentModal } from '../components/CreateAssignmentModal';
 import { AssignmentStatusBadge } from '../components/StatusBadge';
 import { assignmentsApi, exportApi } from '../services';
@@ -43,12 +38,9 @@ export function AssignmentsPage() {
   const [state, setState] = useState<LoadState>({ kind: 'loading' });
   const [reloadToken, setReloadToken] = useState(0);
   const [createModalVisible, setCreateModalVisible] = useState(false);
-  /**
-   * `assignmentId` đang đổi trạng thái, để chỉ nút của ĐÚNG dòng đó hiện
-   * spinner (dùng 1 cờ boolean chung sẽ làm mọi nút cùng quay).
-   */
+  const [filteringText, setFilteringText] = useState('');
+
   const [togglingId, setTogglingId] = useState<string | null>(null);
-  /** `assignmentId` đang xuất Excel — cùng lý do như `togglingId`. */
   const [exportingId, setExportingId] = useState<string | null>(null);
   const [actionNotice, setActionNotice] = useState<string | undefined>(undefined);
   const [actionError, setActionError] = useState<string | undefined>(undefined);
@@ -84,13 +76,6 @@ export function AssignmentsPage() {
     setReloadToken((token) => token + 1);
   }, []);
 
-  /**
-   * Đóng/mở 1 đợt chấm (Requirement 1.4, 1.5).
-   *
-   * Sau khi đổi xong thì tải lại cả danh sách thay vì chỉ sửa 1 dòng trong
-   * state: `submittedTeamCount` của các đợt khác có thể đã thay đổi do nhóm
-   * vừa nộp bài, nên đọc lại là cách duy nhất chắc chắn đúng.
-   */
   const toggleStatus = useCallback(
     async (assignment: AssignmentListItem) => {
       const nextStatus: AssignmentStatus = assignment.status === 'OPEN' ? 'CLOSED' : 'OPEN';
@@ -118,12 +103,6 @@ export function AssignmentsPage() {
     [reload],
   );
 
-  /**
-   * Xuất điểm của 1 đợt chấm ra `.xlsx` (Requirement 10.1 - 10.4).
-   *
-   * Toàn bộ việc dựng file diễn ra ở client (xem `src/excelExport.ts`); ở đây
-   * chỉ lấy dữ liệu nguồn, dựng blob rồi kích hoạt tải xuống.
-   */
   const exportToExcel = useCallback(async (assignment: AssignmentListItem) => {
     setExportingId(assignment.assignmentId);
     setActionError(undefined);
@@ -142,7 +121,20 @@ export function AssignmentsPage() {
     }
   }, []);
 
-  const assignments = state.kind === 'ready' ? state.assignments : [];
+  const allAssignments = useMemo(
+    () => (state.kind === 'ready' ? state.assignments : []),
+    [state],
+  );
+
+  const filteredAssignments = useMemo(() => {
+    if (!filteringText.trim()) {
+      return allAssignments;
+    }
+    const query = filteringText.toLowerCase();
+    return allAssignments.filter((item) =>
+      item.assignmentName.toLowerCase().includes(query),
+    );
+  }, [allAssignments, filteringText]);
 
   return (
     <ContentLayout
@@ -191,27 +183,47 @@ export function AssignmentsPage() {
         )}
 
         <Table
-          items={assignments}
+          items={filteredAssignments}
           loading={state.kind === 'loading'}
           loadingText="Đang tải danh sách đợt chấm..."
           variant="container"
           trackBy="assignmentId"
+          header={
+            <Header
+              variant="h2"
+              counter={
+                state.kind === 'ready'
+                  ? filteredAssignments.length === allAssignments.length
+                    ? `(${allAssignments.length})`
+                    : `(${filteredAssignments.length}/${allAssignments.length})`
+                  : undefined
+              }
+            >
+              Danh sách đợt chấm
+            </Header>
+          }
+          filter={
+            allAssignments.length > 2 ? (
+              <TextFilter
+                filteringText={filteringText}
+                filteringPlaceholder="Tìm kiếm tên đợt chấm..."
+                onChange={({ detail }) => setFilteringText(detail.filteringText)}
+              />
+            ) : undefined
+          }
           columnDefinitions={[
             {
               id: 'assignmentName',
               header: 'Tên đợt chấm',
-              // Tên là đường dẫn vào dashboard nhóm của đợt đó (task 8.1).
               cell: (item) => (
                 <Link
                   href={`/assignments/${item.assignmentId}/teams`}
                   onFollow={(event) => {
-                    // Giữ `<a href>` thật cho a11y nhưng điều hướng bằng
-                    // router để không reload cả app.
                     event.preventDefault();
                     navigate(`/assignments/${item.assignmentId}/teams`);
                   }}
                 >
-                  {item.assignmentName}
+                  <span style={{ fontWeight: 600 }}>{item.assignmentName}</span>
                 </Link>
               ),
             },
@@ -236,8 +248,6 @@ export function AssignmentsPage() {
               cell: (item) => (
                 <SpaceBetween direction="horizontal" size="xs">
                   <Button
-                    // Nhiều dòng đều có nút này -> nhãn cho screen reader phải
-                    // kèm tên đợt chấm để phân biệt.
                     ariaLabel={
                       item.status === 'OPEN'
                         ? `Đóng đợt chấm ${item.assignmentName}`

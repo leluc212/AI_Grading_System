@@ -16,8 +16,16 @@
  *    phải gọi tay. Thiếu bước này các test sau sẽ thấy DOM của test trước và
  *    query `getBy*` fail vì tìm thấy nhiều phần tử trùng.
  */
-import { afterEach } from 'vitest';
+import { afterEach, beforeEach } from 'vitest';
 import { cleanup } from '@testing-library/react';
+
+beforeEach(() => {
+  try {
+    localStorage.setItem('fcaj-portal-language', 'vi');
+  } catch {
+    // Ignore in tests
+  }
+});
 
 /** Stub `matchMedia`: luôn báo "không khớp" và no-op mọi listener. */
 if (typeof window.matchMedia !== 'function') {

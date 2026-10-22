@@ -31,13 +31,12 @@ import {
 import Alert from '@cloudscape-design/components/alert';
 import Box from '@cloudscape-design/components/box';
 import Button from '@cloudscape-design/components/button';
-import Container from '@cloudscape-design/components/container';
 import Form from '@cloudscape-design/components/form';
 import FormField from '@cloudscape-design/components/form-field';
-import Header from '@cloudscape-design/components/header';
 import Input from '@cloudscape-design/components/input';
 import SpaceBetween from '@cloudscape-design/components/space-between';
 import Spinner from '@cloudscape-design/components/spinner';
+import { useLanguage } from '../i18n/LanguageContext';
 import { FileUploadField } from '../components/FileUploadField';
 import { MemberListEditor } from '../components/MemberListEditor';
 import { assignmentsApi, teamsApi } from '../services';
@@ -65,6 +64,7 @@ type GateState =
   | { kind: 'open'; assignment: Assignment };
 
 export function SubmitFormPage() {
+  const { t, language } = useLanguage();
   const { assignmentId } = useParams<{ assignmentId: string }>();
   const navigate = useNavigate();
   const [state, setState] = useState<GateState>({ kind: 'loading' });
@@ -117,57 +117,132 @@ export function SubmitFormPage() {
 
   if (state.kind === 'loading') {
     return (
-      <Container header={<Header variant="h2">Nộp bài</Header>}>
-        <Box textAlign="center" padding="l">
-          <SpaceBetween size="s" alignItems="center">
+      <div className="fcaj-form-card">
+        <h2
+          style={{
+            margin: '0 0 16px',
+            fontSize: '1.6rem',
+            fontWeight: 800,
+            color: 'var(--fcaj-text-primary)',
+          }}
+        >
+          {t('submitFormTitle')}
+        </h2>
+        <Box textAlign="center" padding="xxl">
+          <SpaceBetween size="m" alignItems="center">
             <Spinner size="large" />
-            <Box variant="p">Đang kiểm tra đợt chấm...</Box>
+            <Box variant="h3">{t('checkingAssignment')}</Box>
           </SpaceBetween>
         </Box>
-      </Container>
+      </div>
     );
   }
 
   if (state.kind === 'error') {
     return (
-      <Container header={<Header variant="h2">Nộp bài</Header>}>
+      <div className="fcaj-form-card">
+        <h2
+          style={{
+            margin: '0 0 16px',
+            fontSize: '1.6rem',
+            fontWeight: 800,
+            color: 'var(--fcaj-text-primary)',
+          }}
+        >
+          {t('submitFormTitle')}
+        </h2>
         <Alert
           type="error"
-          header="Không mở được form nộp bài"
-          action={<Button onClick={goToAssignmentList}>Chọn đợt chấm khác</Button>}
+          header={language === 'vi' ? 'Không mở được form nộp bài' : 'Unable to open submission form'}
+          action={<Button onClick={goToAssignmentList}>{t('btnChooseOther')}</Button>}
         >
           {state.message}
         </Alert>
-      </Container>
+      </div>
     );
   }
 
   if (state.kind === 'closed') {
     // Requirement 1.8 — từ chối và nói rõ lý do, KHÔNG render form.
     return (
-      <Container header={<Header variant="h2">Nộp bài</Header>}>
+      <div className="fcaj-form-card">
+        <h2
+          style={{
+            margin: '0 0 16px',
+            fontSize: '1.6rem',
+            fontWeight: 800,
+            color: 'var(--fcaj-text-primary)',
+          }}
+        >
+          {t('submitFormTitle')}
+        </h2>
         <Alert
           type="error"
-          header="Đợt chấm đã đóng"
-          action={<Button onClick={goToAssignmentList}>Chọn đợt chấm khác</Button>}
+          header={t('assignmentClosedHeader')}
+          action={<Button onClick={goToAssignmentList}>{t('btnChooseOther')}</Button>}
         >
-          Đợt chấm &ldquo;{state.assignment.assignmentName}&rdquo; đã đóng, không thể nộp bài. Vui
-          lòng liên hệ giảng viên nếu nhóm bạn cần nộp muộn.
+          {language === 'vi' ? (
+            <>
+              Đợt chấm &ldquo;{state.assignment.assignmentName}&rdquo; đã đóng, không thể nộp bài. Vui
+              lòng liên hệ giảng viên nếu nhóm bạn cần nộp muộn.
+            </>
+          ) : (
+            <>
+              Assignment &ldquo;{state.assignment.assignmentName}&rdquo; is closed and no longer
+              accepting submissions. Please contact your instructor if your team needs late submission.
+            </>
+          )}
         </Alert>
-      </Container>
+      </div>
     );
   }
 
   // state.kind === 'open' — Requirement 1.7 đã thoả: có đúng 1 assignment
   // đang OPEN được xác định, giờ mới cho phép điền form.
   return (
-    <Container
-      header={
-        <Header variant="h2" description={`Đợt chấm: ${state.assignment.assignmentName}`}>
-          Nộp bài
-        </Header>
-      }
-    >
+    <div className="fcaj-form-card">
+      <button type="button" className="fcaj-back-btn" onClick={goToAssignmentList}>
+        ← {t('btnChooseOther')}
+      </button>
+
+      <div
+        style={{
+          marginBottom: 24,
+          paddingBottom: 20,
+          borderBottom: '1px solid var(--fcaj-card-border)',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 12,
+          }}
+        >
+          <h2
+            style={{
+              margin: 0,
+              fontSize: '1.75rem',
+              fontWeight: 800,
+              color: 'var(--fcaj-text-primary)',
+            }}
+          >
+            {t('submitFormTitle')}
+          </h2>
+          <span className="fcaj-status-pill">
+            <span className="fcaj-status-dot" />
+            {t('statusOpen')}
+          </span>
+        </div>
+        <p style={{ margin: '8px 0 0', color: 'var(--fcaj-text-secondary)', fontSize: '0.95rem' }}>
+          {language === 'vi'
+            ? `Đợt chấm: ${state.assignment.assignmentName}`
+            : `Assignment: ${state.assignment.assignmentName}`}
+        </p>
+      </div>
+
       <TeamSubmissionForm
         assignment={state.assignment}
         onCancel={goToAssignmentList}
@@ -177,7 +252,7 @@ export function SubmitFormPage() {
           navigate('/submit-success', { state: successState, replace: true });
         }}
       />
-    </Container>
+    </div>
   );
 }
 
@@ -204,6 +279,7 @@ interface TeamSubmissionFormProps {
 const NO_ERRORS: SubmitFormErrors = { members: {} };
 
 function TeamSubmissionForm({ assignment, onCancel, onSubmitted }: TeamSubmissionFormProps) {
+  const { t, language } = useLanguage();
   const [teamName, setTeamName] = useState('');
   // Requirement 2.3: mở form là đã có sẵn 1 dòng thành viên để điền.
   const [members, setMembers] = useState<MemberDraft[]>(() => [createEmptyMember()]);
@@ -218,64 +294,53 @@ function TeamSubmissionForm({ assignment, onCancel, onSubmitted }: TeamSubmissio
   /**
    * Map lỗi từ lớp service sang thông báo cụ thể cho người nộp bài
    * (Requirement 2.10, 2.12).
-   *
-   * Phân loại theo `instanceof` typed error — đây chính là lý do `api-client`
-   * map `{ code, message }` của server thành error class: UI quyết định cách
-   * hiển thị dựa trên LOẠI lỗi, không phải so khớp chuỗi.
    */
-  const describeSubmitError = useCallback((error: unknown): SubmitState => {
-    if (error instanceof TeamNameConflictError) {
-      // Requirement 2.12 — message của error đã đúng câu nghiệp vụ cần hiển
-      // thị ("Nhóm ... đã nộp bài, vui lòng liên hệ Admin nếu cần nộp lại.").
+  const describeSubmitError = useCallback(
+    (error: unknown): SubmitState => {
+      if (error instanceof TeamNameConflictError) {
+        return {
+          kind: 'failed',
+          header: language === 'vi' ? 'Tên nhóm đã được sử dụng' : 'Team Name Already in Use',
+          message: error.message,
+          blocking: false,
+        };
+      }
+      if (error instanceof AssignmentClosedError) {
+        return {
+          kind: 'failed',
+          header: language === 'vi' ? 'Đợt chấm đã đóng' : 'Assignment Closed',
+          message: error.message,
+          blocking: true,
+        };
+      }
+      if (error instanceof NotFoundError) {
+        return {
+          kind: 'failed',
+          header: language === 'vi' ? 'Không tìm thấy đợt chấm' : 'Assignment Not Found',
+          message: error.message,
+          blocking: true,
+        };
+      }
+      if (error instanceof ValidationError) {
+        return {
+          kind: 'failed',
+          header: language === 'vi' ? 'Thông tin chưa hợp lệ' : 'Invalid Submission Data',
+          message: error.message,
+          blocking: false,
+        };
+      }
       return {
         kind: 'failed',
-        header: 'Tên nhóm đã được sử dụng',
-        message: error.message,
+        header: language === 'vi' ? 'Không nộp được bài' : 'Submission Failed',
+        message:
+          language === 'vi'
+            ? 'Đã xảy ra lỗi hệ thống khi ghi nhận bài nộp. Bài của nhóm CHƯA được ghi nhận, vui lòng thử lại.'
+            : 'A system error occurred while recording your submission. Your team submission has NOT been recorded, please try again.',
         blocking: false,
       };
-    }
-    if (error instanceof AssignmentClosedError) {
-      // Đợt chấm bị Admin đóng trong lúc nhóm đang điền form.
-      return {
-        kind: 'failed',
-        header: 'Đợt chấm đã đóng',
-        message: error.message,
-        blocking: true,
-      };
-    }
-    if (error instanceof NotFoundError) {
-      return {
-        kind: 'failed',
-        header: 'Không tìm thấy đợt chấm',
-        message: error.message,
-        blocking: true,
-      };
-    }
-    if (error instanceof ValidationError) {
-      // Server validate lại và từ chối (Requirement 11.3). Hiển thị nguyên
-      // văn câu của server — nó chỉ rõ thành viên/file nào sai.
-      //
-      // Ghi chú: body lỗi từ server chỉ có `{ code, message }` nên
-      // `ValidationError.field` luôn `undefined` ở phía client (xem
-      // `api-client/http.ts`). Vì vậy lỗi này hiện ở alert chung thay vì gắn
-      // được vào đúng ô — client đã validate trước nên trường hợp này hiếm.
-      return {
-        kind: 'failed',
-        header: 'Thông tin chưa hợp lệ',
-        message: error.message,
-        blocking: false,
-      };
-    }
-    // Requirement 2.10: lỗi hệ thống -> thông báo rõ ràng, và tuyệt đối
-    // KHÔNG điều hướng sang trang thành công.
-    return {
-      kind: 'failed',
-      header: 'Không nộp được bài',
-      message:
-        'Đã xảy ra lỗi hệ thống khi ghi nhận bài nộp. Bài của nhóm CHƯA được ghi nhận, vui lòng thử lại.',
-      blocking: false,
-    };
-  }, []);
+    },
+    [language],
+  );
 
   const handleSubmit = useCallback(async () => {
     const draft = { teamName, members, mdFile, xmlFile };
@@ -283,20 +348,19 @@ function TeamSubmissionForm({ assignment, onCancel, onSubmitted }: TeamSubmissio
     setErrors(nextErrors);
 
     if (hasSubmitFormErrors(nextErrors)) {
-      // Chặn tại client, chưa gọi API (Requirement 2.9: chỉ nộp khi đủ thông
-      // tin hợp lệ).
       setSubmitState({
         kind: 'failed',
-        header: 'Thông tin chưa hợp lệ',
-        message: 'Vui lòng kiểm tra lại các ô được đánh dấu lỗi phía dưới.',
+        header: language === 'vi' ? 'Thông tin chưa hợp lệ' : 'Invalid Submission Data',
+        message:
+          language === 'vi'
+            ? 'Vui lòng kiểm tra lại các ô được đánh dấu lỗi phía dưới.'
+            : 'Please review and fix the flagged errors below before submitting.',
         blocking: false,
       });
       return;
     }
 
     if (draft.mdFile === null || draft.xmlFile === null) {
-      // Không thể xảy ra: `validateSubmitForm` đã báo lỗi khi thiếu file.
-      // Nhánh này tồn tại để thu hẹp kiểu cho TypeScript.
       return;
     }
 
@@ -311,35 +375,22 @@ function TeamSubmissionForm({ assignment, onCancel, onSubmitted }: TeamSubmissio
         xmlFile: draft.xmlFile,
       });
 
-      // Requirement 2.9: chỉ tới đây — khi API trả OK — mới được coi là
-      // thành công. Requirement 2.11: không gửi email gì cho Submitter.
       onSubmitted({
         teamName: result.team.teamName,
         assignmentName: assignment.assignmentName,
         fileNames: result.files.map((file) => file.fileName),
-        // Server quyết định đây là nộp lần đầu hay nộp lại (nhóm đã được Admin
-        // mở khoá) — client không tự suy đoán được vì không đọc được danh sách
-        // nhóm của đợt chấm (Requirement 11.1).
         resubmitted: result.resubmitted,
       });
     } catch (error: unknown) {
       console.error('[TeamSubmissionForm] Nộp bài thất bại:', error);
       setSubmitState(describeSubmitError(error));
     }
-  }, [assignment, describeSubmitError, mdFile, members, onSubmitted, teamName, xmlFile]);
+  }, [assignment, describeSubmitError, language, mdFile, members, onSubmitted, teamName, xmlFile]);
 
   return (
     <form
-      // `noValidate`: tắt constraint validation của trình duyệt. Nếu bật, 1 ô
-      // không thoả ràng buộc HTML (type/required/pattern) sẽ khiến trình duyệt
-      // CHẶN luôn sự kiện submit — `handleSubmit` không chạy và người dùng chỉ
-      // thấy tooltip mặc định của trình duyệt thay vì thông báo Cloudscape của
-      // ta (design.md > Error Handling). Toàn bộ validate do
-      // `validateSubmitForm` đảm nhiệm, và server kiểm lại lần nữa.
       noValidate
       onSubmit={(event) => {
-        // Chặn submit mặc định của trình duyệt (reload trang) — toàn bộ việc
-        // gửi do `handleSubmit` đảm nhiệm.
         event.preventDefault();
         void handleSubmit();
       }}
@@ -348,10 +399,10 @@ function TeamSubmissionForm({ assignment, onCancel, onSubmitted }: TeamSubmissio
         actions={
           <SpaceBetween direction="horizontal" size="xs">
             <Button variant="link" onClick={onCancel} disabled={submitting}>
-              Huỷ
+              {t('btnCancel')}
             </Button>
             <Button variant="primary" formAction="submit" loading={submitting} disabled={blocked}>
-              Nộp bài
+              {t('btnSubmitForm')}
             </Button>
           </SpaceBetween>
         }
@@ -363,7 +414,7 @@ function TeamSubmissionForm({ assignment, onCancel, onSubmitted }: TeamSubmissio
               header={submitState.header}
               action={
                 submitState.blocking ? (
-                  <Button onClick={onCancel}>Chọn đợt chấm khác</Button>
+                  <Button onClick={onCancel}>{t('btnChooseOther')}</Button>
                 ) : undefined
               }
             >
@@ -372,30 +423,22 @@ function TeamSubmissionForm({ assignment, onCancel, onSubmitted }: TeamSubmissio
           )}
 
           <FormField
-            label="Tên nhóm"
-            // Nói rõ cách nộp lại: đây là đường duy nhất để nhóm đã được Admin
-            // mở khoá nộp bản mới (Requirement 2.14), và nếu không hướng dẫn
-            // thì không ai đoán được.
-            description="Tên nhóm phải khác các nhóm đã nộp trong cùng đợt chấm này. Nếu nhóm bạn đã được giảng viên mở khoá nộp lại, hãy nhập đúng tên nhóm cũ để nộp bản mới."
+            label={t('teamNameLabel')}
+            description={t('teamNameDesc')}
             errorText={errors.teamName}
           >
             <Input
               value={teamName}
               disabled={submitting}
-              placeholder="Nhóm Rồng Vàng"
+              placeholder={t('teamNamePlaceholder')}
               ariaLabel="Tên nhóm"
               onChange={({ detail }) => setTeamName(detail.value)}
             />
           </FormField>
 
-          {/*
-            Requirement 2.5: form KHÔNG có field "tên trường". Đây là chủ ý,
-            không phải bỏ sót — đừng thêm vào.
-          */}
-
           <FormField
-            label="Thành viên nhóm"
-            description="Mỗi nhóm cần ít nhất 1 thành viên. Tên và email là bắt buộc, MSSV tuỳ chọn."
+            label={t('membersLabel')}
+            description={t('membersDesc')}
           >
             <MemberListEditor
               members={members}
@@ -406,8 +449,8 @@ function TeamSubmissionForm({ assignment, onCancel, onSubmitted }: TeamSubmissio
           </FormField>
 
           <FileUploadField
-            label="File bài làm (.md)"
-            description="File markdown chứa phần trình bày của nhóm."
+            label={t('mdFileLabel')}
+            description={t('mdFileDesc')}
             extension=".md"
             value={mdFile}
             errorText={errors.mdFile}
@@ -418,8 +461,8 @@ function TeamSubmissionForm({ assignment, onCancel, onSubmitted }: TeamSubmissio
           />
 
           <FileUploadField
-            label="File bài làm (.xml)"
-            description="File XML kèm theo bài làm của nhóm."
+            label={t('xmlFileLabel')}
+            description={t('xmlFileDesc')}
             extension=".xml"
             value={xmlFile}
             errorText={errors.xmlFile}
@@ -433,3 +476,4 @@ function TeamSubmissionForm({ assignment, onCancel, onSubmitted }: TeamSubmissio
     </form>
   );
 }
+

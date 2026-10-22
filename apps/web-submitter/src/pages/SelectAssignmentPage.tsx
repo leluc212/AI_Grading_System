@@ -1,62 +1,43 @@
 /**
- * Trang chọn Assignment (task 5.2).
+ * Trang chọn Assignment (FCAJ Community Modern Redesign).
  *
- * Requirement 1.7: Submitter phải chọn/xác định đúng 1 Assignment đang
- * `OPEN` TRƯỚC khi được điền form nhóm. Trang này là bước đó — nó chỉ liệt
- * kê các đợt chấm đang `OPEN` và điều hướng sang `/submit/:assignmentId`.
- *
- * Vì sao lọc `OPEN` ở client: `assignmentsApi.listAssignments()` trả về TẤT
- * CẢ assignment (endpoint này dùng chung với dashboard Admin, nơi cần thấy cả
- * `CLOSED`). Khu vực public thì chỉ được thấy đợt đang mở, nên lọc ở đây.
- * Việc lọc này CHỈ là UX — nó không phải cơ chế bảo vệ: Submitter vẫn có thể
- * gõ tay URL `/submit/<id-của-assignment-đã-đóng>`, nên chốt chặn thật nằm ở
- * `SubmitFormPage` (Requirement 1.8) và cuối cùng là ở server
- * (`AssignmentClosedError` khi nộp).
- *
- * _Requirements: 1.7, 1.8_
+ * Tích hợp:
+ *   - Hero Banner chuẩn phong cách Ảnh 3 (AWS First Cloud AI Journey Community)
+ *   - Lưới thẻ bài nộp hiện đại, loại bỏ hoàn toàn hiện tượng "lộ viền" (Border Stacking)
+ *   - Đa ngôn ngữ ENG (mặc định) & VN
+ *   - Giữ nguyên 100% kết nối API `assignmentsApi.listAssignments()`
+ *   - Tối ưu GPU Hardware Compositing & Smooth Card Elevating
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Assignment } from '@quick-grading/shared-types';
 import Alert from '@cloudscape-design/components/alert';
 import Box from '@cloudscape-design/components/box';
 import Button from '@cloudscape-design/components/button';
-import Cards from '@cloudscape-design/components/cards';
-import Container from '@cloudscape-design/components/container';
 import Header from '@cloudscape-design/components/header';
 import SpaceBetween from '@cloudscape-design/components/space-between';
 import Spinner from '@cloudscape-design/components/spinner';
+import TextFilter from '@cloudscape-design/components/text-filter';
+import { useLanguage } from '../i18n/LanguageContext';
 import { assignmentsApi } from '../services';
 import { toDisplayMessage } from '../errorMessage';
 import { formatDateTime } from '../format';
 
-/**
- * Trạng thái tải danh sách, mô hình hoá dạng discriminated union để không
- * bao giờ tồn tại tổ hợp vô nghĩa (ví dụ vừa `loading` vừa có `errorMessage`).
- */
 type LoadState =
   | { kind: 'loading' }
   | { kind: 'error'; message: string }
   | { kind: 'ready'; openAssignments: Assignment[] };
 
 export function SelectAssignmentPage() {
+  const { t, language } = useLanguage();
   const navigate = useNavigate();
   const [state, setState] = useState<LoadState>({ kind: 'loading' });
-  /**
-   * Tăng lên mỗi lần bấm "Thử lại" để `useEffect` chạy lại. Dùng counter
-   * thay vì gọi trực tiếp hàm load trong `onClick` để chỉ có DUY NHẤT 1 nơi
-   * thực hiện việc tải + 1 nơi xử lý huỷ (tránh 2 luồng cập nhật state song
-   * song khi người dùng bấm "Thử lại" liên tục).
-   */
   const [reloadToken, setReloadToken] = useState(0);
+  const [filteringText, setFilteringText] = useState('');
 
+  // Bảo toàn 100% kết nối API gốc
   useEffect(() => {
-    // Cờ chống cập nhật state sau khi component đã unmount (hoặc sau khi
-    // effect bị thay thế bởi lần reload mới). Cần thiết vì `StrictMode` ở
-    // dev chạy effect 2 lần, và vì người dùng có thể rời trang trước khi
-    // request xong.
     let cancelled = false;
-
     setState({ kind: 'loading' });
 
     assignmentsApi
@@ -74,18 +55,22 @@ export function SelectAssignmentPage() {
         if (cancelled) {
           return;
         }
-        // Log nguyên lỗi để debug, nhưng hiển thị câu thân thiện cho sinh viên.
-        console.error('[SelectAssignmentPage] Không tải được danh sách đợt chấm:', error);
+        console.error('[SelectAssignmentPage] Failed to load assignments:', error);
         setState({
           kind: 'error',
-          message: toDisplayMessage(error, 'Không tải được danh sách đợt chấm. Vui lòng thử lại.'),
+          message: toDisplayMessage(
+            error,
+            language === 'en'
+              ? 'Failed to load assignments list. Please try again.'
+              : 'Không tải được danh sách đợt chấm. Vui lòng thử lại.',
+          ),
         });
       });
 
     return () => {
       cancelled = true;
     };
-  }, [reloadToken]);
+  }, [reloadToken, language]);
 
   const retry = useCallback(() => {
     setReloadToken((token) => token + 1);
@@ -98,80 +83,152 @@ export function SelectAssignmentPage() {
     [navigate],
   );
 
+  const filteredAssignments = useMemo(() => {
+    if (state.kind !== 'ready') {
+      return [];
+    }
+    if (!filteringText.trim()) {
+      return state.openAssignments;
+    }
+    const query = filteringText.toLowerCase();
+    return state.openAssignments.filter((item) =>
+      item.assignmentName.toLowerCase().includes(query),
+    );
+  }, [state, filteringText]);
+
   return (
-    <Container
-      header={
-        <Header variant="h2" description="Chọn đợt chấm mà nhóm bạn cần nộp bài">
-          Chọn bài tập cần nộp
-        </Header>
-      }
-    >
-      {state.kind === 'loading' && (
-        <Box textAlign="center" padding="l">
-          <SpaceBetween size="s" alignItems="center">
-            <Spinner size="large" />
-            <Box variant="p">Đang tải danh sách đợt chấm...</Box>
-          </SpaceBetween>
-        </Box>
-      )}
+    <div className="gpu-scroll-container">
+      {/* 1. Hero Banner */}
+      <section className="fcaj-hero-section">
+        <div className="fcaj-hero-content">
+          <div className="fcaj-hero-badge">
+            <span className="fcaj-hero-badge-dot" />
+            AWS FIRST CLOUD AI JOURNEY
+          </div>
+          <h1 className="fcaj-hero-title">
+            {t('heroHeadlinePart1')}{' '}
+            <span className="fcaj-hero-accent">{t('heroHeadlinePart2')}</span>
+          </h1>
+          <p className="fcaj-hero-desc">{t('heroTagline')}</p>
+        </div>
+        <div className="fcaj-hero-illustration" aria-hidden="true">
+          <img src="/bitex.png" alt="Ho Chi Minh City skyline" />
+        </div>
+      </section>
 
-      {state.kind === 'error' && (
-        <Alert
-          type="error"
-          header="Không tải được danh sách đợt chấm"
-          action={<Button onClick={retry}>Thử lại</Button>}
-        >
-          {state.message}
-        </Alert>
-      )}
-
-      {state.kind === 'ready' && (
-        <Cards
-          items={state.openAssignments}
-          trackBy="assignmentId"
-          cardsPerRow={[{ cards: 1 }, { minWidth: 600, cards: 2 }]}
-          // Không truyền `ariaLabels`: type của Cloudscape yêu cầu khai báo
-          // cả `itemSelectionLabel` + `selectionGroupLabel` cùng lúc, nhưng
-          // danh sách này KHÔNG có chọn nhiều item -> hai nhãn đó là prop
-          // chết. Ngữ cảnh cho screen reader đã có từ heading h2 của
-          // `Container` bao ngoài, và mỗi nút hành động có `ariaLabel` riêng
-          // kèm tên đợt chấm.
-          cardDefinition={{
-            header: (assignment) => assignment.assignmentName,
-            sections: [
-              {
-                id: 'createdAt',
-                header: 'Ngày tạo',
-                content: (assignment) => formatDateTime(assignment.createdAt),
-              },
-              {
-                id: 'action',
-                content: (assignment) => (
-                  <Button
-                    variant="primary"
-                    // Nhiều card đều có nút "Nộp bài" -> nhãn cho screen
-                    // reader phải kèm tên đợt chấm để phân biệt được.
-                    ariaLabel={`Nộp bài cho đợt chấm ${assignment.assignmentName}`}
-                    onClick={() => goToSubmitForm(assignment.assignmentId)}
-                  >
-                    Nộp bài
-                  </Button>
-                ),
-              },
-            ],
-          }}
-          empty={
-            <Box textAlign="center" padding="l">
-              <SpaceBetween size="xs">
-                <Box variant="strong">Hiện không có đợt chấm nào đang mở</Box>
-                <Box variant="p" color="text-body-secondary">
-                  Vui lòng liên hệ giảng viên nếu bạn cho rằng đây là sự nhầm lẫn.
-                </Box>
-              </SpaceBetween>
-            </Box>
+      {/* 2. Phần Lưới Danh Sách Bài Tập — KHÔNG BỌC CONTAINER LỘ VIỀN */}
+      <section style={{ marginTop: '16px' }}>
+        <Header
+          variant="h2"
+          description={t('selectAssignmentDesc')}
+          counter={state.kind === 'ready' ? `(${state.openAssignments.length})` : undefined}
+          actions={
+            state.kind === 'ready' && state.openAssignments.length > 2 ? (
+              <div style={{ minWidth: 260 }}>
+                <TextFilter
+                  filteringText={filteringText}
+                  filteringPlaceholder={t('searchPlaceholder')}
+                  onChange={({ detail }) => setFilteringText(detail.filteringText)}
+                />
+              </div>
+            ) : undefined
           }
-        />
-      )}
-    </Container>
+        >
+          {t('selectAssignmentTitle')}
+        </Header>
+
+        {/* Loading state */}
+        {state.kind === 'loading' && (
+          <Box textAlign="center" padding="xxl">
+            <SpaceBetween size="s" alignItems="center">
+              <Spinner size="large" />
+              <Box variant="p">{t('loadingAssignments')}</Box>
+            </SpaceBetween>
+          </Box>
+        )}
+
+        {/* Error state */}
+        {state.kind === 'error' && (
+          <Box margin={{ top: 'm' }}>
+            <Alert
+              type="error"
+              header={t('loadErrorTitle')}
+              action={<Button onClick={retry}>{t('btnRetry')}</Button>}
+            >
+              {state.message}
+            </Alert>
+          </Box>
+        )}
+
+        {/* Ready state: Lưới thẻ phẳng hiện đại */}
+        {state.kind === 'ready' && (
+          <>
+            {filteredAssignments.length === 0 ? (
+              <Box textAlign="center" padding="xxl" margin={{ top: 'm' }}>
+                <SpaceBetween size="xs">
+                  <Box variant="strong" fontSize="heading-m">
+                    {t('emptyAssignmentsTitle')}
+                  </Box>
+                  <Box variant="p" color="text-body-secondary">
+                    {t('emptyAssignmentsDesc')}
+                  </Box>
+                </SpaceBetween>
+              </Box>
+            ) : (
+              <div className="fcaj-card-grid">
+                {filteredAssignments.map((assignment) => (
+                  <article key={assignment.assignmentId} className="fcaj-card">
+                    <div>
+                      {/* Card Header: Tên bài & Status Chip */}
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: '14px' }}>
+                        <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'inherit' }}>
+                          {assignment.assignmentName}
+                        </h3>
+                        <div className="fcaj-status-pill">
+                          <span className="fcaj-status-dot" />
+                          <span>{t('statusOpen')}</span>
+                        </div>
+                      </div>
+
+                      {/* Card Body */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.875rem', color: 'var(--fcaj-text-secondary)', marginBottom: '20px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                            <line x1="16" y1="2" x2="16" y2="6" />
+                            <line x1="8" y1="2" x2="8" y2="6" />
+                            <line x1="3" y1="10" x2="21" y2="10" />
+                          </svg>
+                          <span>{t('createdDate')}: {formatDateTime(assignment.createdAt)}</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                          </svg>
+                          <span>{t('fileReqContent')}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Card Action Button */}
+                    <div style={{ paddingTop: '16px', borderTop: '1px solid var(--fcaj-card-border)' }}>
+                      <Button
+                        variant="primary"
+                        iconName="upload"
+                        ariaLabel={`Nộp bài cho đợt chấm ${assignment.assignmentName}`}
+                        onClick={() => goToSubmitForm(assignment.assignmentId)}
+                      >
+                        {t('btnSubmit')}
+                      </Button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </section>
+    </div>
   );
 }
