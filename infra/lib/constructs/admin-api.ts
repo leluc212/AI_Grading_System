@@ -96,6 +96,7 @@ export class AdminApi extends Construct {
           'dynamodb:UpdateItem',
           'dynamodb:DeleteItem',
           'dynamodb:ConditionCheckItem',
+          'dynamodb:Query',
         ],
         resources: [table.tableArn],
       }),

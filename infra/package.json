@@ -8,7 +8,7 @@
     "test": "vitest run",
     "synth": "cdk synth -c stage=dev --profile quick-grading --quiet",
     "diff:dev": "cdk diff QuickGrading-dev -c stage=dev --profile quick-grading",
-    "deploy:dev": "cdk deploy QuickGrading-dev -c stage=dev --profile quick-grading"
+    "deploy:dev": "cdk deploy QuickGrading-dev -c stage=dev --profile quick-grading --require-approval never"
   },
   "dependencies": {
     "aws-cdk-lib": "2.273.0",
