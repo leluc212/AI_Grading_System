@@ -24,7 +24,11 @@ export async function readApiUrlFromStack(stackName: string): Promise<string> {
   if (!output?.OutputValue) {
     throw new Error(`Output ApiUrl không tìm thấy trong stack ${stackName}.`);
   }
-  return output.OutputValue.replace(/\/+$/, '');
+  let cleanVal = output.OutputValue;
+  while (cleanVal.endsWith('/')) {
+    cleanVal = cleanVal.slice(0, -1);
+  }
+  return cleanVal;
 }
 
 interface PresignedPostData {

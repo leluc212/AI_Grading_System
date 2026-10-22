@@ -99,7 +99,11 @@ export function setApiBaseUrl(url: string): void {
     );
   }
 
-  apiBaseUrl = trimmed.replace(/\/+$/, '');
+  let cleanUrl = trimmed;
+  while (cleanUrl.endsWith('/')) {
+    cleanUrl = cleanUrl.slice(0, -1);
+  }
+  apiBaseUrl = cleanUrl;
 }
 
 /** Shape body lỗi thống nhất từ mọi handler: `{ code, message }`. */

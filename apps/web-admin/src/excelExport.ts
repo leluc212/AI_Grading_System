@@ -119,19 +119,23 @@ export function buildSheetRows(data: AssignmentExportData): ExportSheetRow[] {
  * tiếng Việt dễ bị lỗi encoding khi mở trên máy khác / hệ thống khác.
  */
 export function buildExcelFileName(assignmentName: string, now: Date = new Date()): string {
-  const slug = assignmentName
+  let cleanSlug = assignmentName
     .normalize('NFD')
-    // Bỏ dấu thanh/dấu phụ (U+0300-U+036F) sau khi tách tổ hợp ở bước NFD.
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/đ/g, 'd')
     .replace(/Đ/g, 'D')
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+/, '')
-    .replace(/-+$/, '');
+    .replace(/[^a-z0-9]+/g, '-');
+
+  while (cleanSlug.startsWith('-')) {
+    cleanSlug = cleanSlug.slice(1);
+  }
+  while (cleanSlug.endsWith('-')) {
+    cleanSlug = cleanSlug.slice(0, -1);
+  }
 
   const datePart = now.toISOString().slice(0, 10);
-  const namePart = slug.length > 0 ? slug : 'dot-cham';
+  const namePart = cleanSlug.length > 0 ? cleanSlug : 'dot-cham';
   return `diem-${namePart}-${datePart}.xlsx`;
 }
 

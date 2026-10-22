@@ -16,7 +16,7 @@ export const MEMBER_NAME_MAX_LENGTH = 100;
 export const EMAIL_MAX_LENGTH = 254;
 export const STUDENT_CODE_MAX_LENGTH = 30;
 export const FILE_NAME_MAX_LENGTH = 255;
-export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+export const EMAIL_PATTERN = /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/;
 /** Presigned POST upload hết hạn sau 10 phút. */
 export const PRESIGNED_POST_EXPIRES_SECONDS = 600;
 /** Phiên upload (chưa finalize) hết hạn sau 1 giờ. */

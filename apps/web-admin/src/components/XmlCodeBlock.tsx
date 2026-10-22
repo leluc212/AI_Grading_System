@@ -127,23 +127,55 @@ function tokenizeTag(tag: string): Token[] {
   tokens.push({ text: nameMatch[1], kind: 'tagName' });
 
   const rest = tag.slice(nameMatch[0].length);
-  // Mỗi vòng lặp lấy 1 cặp thuộc tính; phần không khớp được giữ nguyên là dấu câu.
-  const attributePattern = /([^\s=/>]+)(\s*=\s*)("[^"]*"|'[^']*')/g;
-  let cursor = 0;
-  let match: RegExpExecArray | null;
+  let i = 0;
 
-  while ((match = attributePattern.exec(rest)) !== null) {
-    if (match.index > cursor) {
-      tokens.push({ text: rest.slice(cursor, match.index), kind: 'punctuation' });
+  while (i < rest.length) {
+    const punctStart = i;
+    while (i < rest.length && /[\s/>?]/.test(rest[i])) {
+      i++;
     }
-    tokens.push({ text: match[1], kind: 'attributeName' });
-    tokens.push({ text: match[2], kind: 'punctuation' });
-    tokens.push({ text: match[3], kind: 'attributeValue' });
-    cursor = match.index + match[0].length;
-  }
+    if (i > punctStart) {
+      tokens.push({ text: rest.slice(punctStart, i), kind: 'punctuation' });
+    }
+    if (i >= rest.length) break;
 
-  if (cursor < rest.length) {
-    tokens.push({ text: rest.slice(cursor), kind: 'punctuation' });
+    const nameStart = i;
+    while (i < rest.length && !/[\s=/>?]/.test(rest[i])) {
+      i++;
+    }
+    if (i === nameStart) {
+      tokens.push({ text: rest[i], kind: 'punctuation' });
+      i++;
+      continue;
+    }
+    tokens.push({ text: rest.slice(nameStart, i), kind: 'attributeName' });
+
+    const eqStart = i;
+    while (i < rest.length && /\s/.test(rest[i])) {
+      i++;
+    }
+    if (i < rest.length && rest[i] === '=') {
+      i++;
+      while (i < rest.length && /\s/.test(rest[i])) {
+        i++;
+      }
+      tokens.push({ text: rest.slice(eqStart, i), kind: 'punctuation' });
+
+      if (i < rest.length && (rest[i] === '"' || rest[i] === "'")) {
+        const quote = rest[i];
+        const valStart = i;
+        i++;
+        while (i < rest.length && rest[i] !== quote) {
+          i++;
+        }
+        if (i < rest.length && rest[i] === quote) {
+          i++;
+        }
+        tokens.push({ text: rest.slice(valStart, i), kind: 'attributeValue' });
+      }
+    } else if (i > eqStart) {
+      tokens.push({ text: rest.slice(eqStart, i), kind: 'punctuation' });
+    }
   }
 
   return tokens;
