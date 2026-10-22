@@ -22,6 +22,7 @@ import { useAdminAuth } from '../auth/AdminAuthContext';
 const NAVIGATION_ITEMS = [
   { type: 'link', text: 'Đợt chấm', href: '/assignments' },
   { type: 'link', text: 'Cấu hình rubric', href: '/rubric' },
+  { type: 'link', text: 'Cấu hình AI Prompt', href: '/prompt' },
 ] as const;
 
 export function AdminLayout() {

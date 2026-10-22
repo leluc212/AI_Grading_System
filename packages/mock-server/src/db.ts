@@ -13,7 +13,7 @@
  */
 import type { Assignment } from '@quick-grading/shared-types';
 import type { GradingResult } from '@quick-grading/shared-types';
-import type { Rubric } from '@quick-grading/shared-types';
+import type { Rubric, GradingConfig } from '@quick-grading/shared-types';
 import type { SubmissionFile } from '@quick-grading/shared-types';
 import type { Team } from '@quick-grading/shared-types';
 
@@ -24,6 +24,7 @@ export interface MockDb {
   submissionFiles: SubmissionFile[];
   gradingResults: GradingResult[];
   rubrics: Rubric[];
+  gradingConfigs: GradingConfig[];
 }
 
 /** Key duy nhất dùng để persist toàn bộ store vào `localStorage` */
@@ -227,7 +228,22 @@ function createSeedDb(): MockDb {
     },
   ];
 
-  return { assignments, teams, submissionFiles, gradingResults, rubrics };
+  const gradingConfigs: GradingConfig[] = [
+    {
+      configId: 'default',
+      version: 1,
+      mode: 'RUBRIC',
+      systemPrompt: undefined,
+      maxInputTokens: 50_000,
+      maxOutputTokens: 2_000,
+      autoGradeOnSubmit: false,
+      isActive: true,
+      createdAt: now,
+      createdBy: 'admin',
+    },
+  ];
+
+  return { assignments, teams, submissionFiles, gradingResults, rubrics, gradingConfigs };
 }
 
 /** True nếu `localStorage` khả dụng trong môi trường hiện tại (trình duyệt) */
@@ -255,7 +271,11 @@ function loadDb(): MockDb {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        return JSON.parse(raw) as MockDb;
+        const parsed = JSON.parse(raw) as MockDb;
+        if (!parsed.gradingConfigs) {
+          parsed.gradingConfigs = createSeedDb().gradingConfigs;
+        }
+        return parsed;
       }
     } catch {
       // Dữ liệu trong localStorage bị hỏng/không parse được — bỏ qua và

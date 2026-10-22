@@ -13,5 +13,6 @@ export * from './assignmentsApi.js';
 export * from './teamsApi.js';
 export * from './gradingApi.js';
 export * from './rubricsApi.js';
+export * from './gradingConfigApi.js';
 export * from './exportApi.js';
 export * from './authApi.js';

@@ -18,6 +18,7 @@ export {
   authApi,
   exportApi,
   gradingApi,
+  gradingConfigApi,
   rubricsApi,
   teamsApi,
   setApiBaseUrl,

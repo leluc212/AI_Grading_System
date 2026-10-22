@@ -73,10 +73,19 @@ export function buildGradingPrompt({
     instructionsParts.push(
       config.mode === 'HYBRID'
         ? 'HƯỚNG DẪN BỔ SUNG CỦA GIẢNG VIÊN (ÁP DỤNG CÙNG RUBRIC):'
-        : 'HƯỚNG DẪN CHẤM BÀI CỦA GIẢNG VIÊN:',
+        : 'HƯỚNG DẪN CHẤM BÀI CỦA GIẢNG VIÊN (SYSTEM PROMPT):',
       config.systemPrompt.trim(),
       '',
     );
+
+    if (config.mode === 'PROMPT') {
+      instructionsParts.push(
+        'QUY TẮC ĐẦU RA KHI CHẤM BẰNG PROMPT:',
+        '- Điểm tổng kết ước tính trên thang điểm 0 - 100 đặt tại trường `totalScore` theo đúng hướng dẫn của giảng viên.',
+        '- Trường `criteria` bạn có thể để mảng rỗng [] hoặc phân chia thành các khía cạnh đánh giá phù hợp.',
+        '',
+      );
+    }
   }
 
   // 3. Quy cách đánh giá và phản hồi

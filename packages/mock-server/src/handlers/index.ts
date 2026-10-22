@@ -17,6 +17,7 @@ import { resubmissionHandlers } from './resubmission.js';
 import { teamFilesHandlers } from './team-files.js';
 import { gradingHandlers } from './grading.js';
 import { rubricHandlers } from './rubrics.js';
+import { gradingConfigHandlers } from './grading-config.js';
 import { exportHandlers } from './export.js';
 import { authHandlers } from './auth.js';
 
@@ -29,6 +30,7 @@ export const handlers: HttpHandler[] = [
   ...teamFilesHandlers,
   ...gradingHandlers,
   ...rubricHandlers,
+  ...gradingConfigHandlers,
   ...exportHandlers,
   ...authHandlers,
 ];

@@ -29,6 +29,7 @@ import { AdminLayout } from './components/AdminLayout';
 import { AssignmentsPage } from './pages/AssignmentsPage';
 import { LoginPage } from './pages/LoginPage';
 import { RubricConfigPage } from './pages/RubricConfigPage';
+import { PromptConfigPage } from './pages/PromptConfigPage';
 import { TeamDetailPage } from './pages/TeamDetailPage';
 import { TeamsDashboardPage } from './pages/TeamsDashboardPage';
 
@@ -45,6 +46,7 @@ export function App() {
             <Route path="/assignments/:assignmentId/teams" element={<TeamsDashboardPage />} />
             <Route path="/teams/:teamId" element={<TeamDetailPage />} />
             <Route path="/rubric" element={<RubricConfigPage />} />
+            <Route path="/prompt" element={<PromptConfigPage />} />
           </Route>
         </Route>
 

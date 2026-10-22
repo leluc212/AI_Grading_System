@@ -36,6 +36,7 @@ describe('AdminLayout - điều hướng', () => {
 
     expect(screen.getByRole('link', { name: 'Đợt chấm' })).toBeDefined();
     expect(screen.getByRole('link', { name: 'Cấu hình rubric' })).toBeDefined();
+    expect(screen.getByRole('link', { name: 'Cấu hình AI Prompt' })).toBeDefined();
     // `TopNavigation` render tên đăng nhập 2 lần (bản đầy đủ + bản thu gọn
     // cho màn hình hẹp), nên dùng `getAllByText` thay vì `getByText`.
     expect(screen.getAllByText('admin').length).toBeGreaterThan(0);
@@ -51,6 +52,16 @@ describe('AdminLayout - điều hướng', () => {
     // Nếu `onFollow` không `preventDefault` + `navigate`, jsdom sẽ không đổi
     // nội dung và heading dưới đây không xuất hiện.
     expect(await screen.findByRole('heading', { level: 1, name: 'Cấu hình rubric' })).toBeDefined();
+  });
+
+  it('bấm mục Cấu hình AI Prompt chuyển sang trang cấu hình prompt', async () => {
+    const user = userEvent.setup();
+    renderAppAt('/assignments');
+
+    await user.click(screen.getByRole('link', { name: 'Cấu hình AI Prompt' }));
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Cấu hình AI & System Prompt chấm điểm' }),
+    ).toBeDefined();
   });
 });
 

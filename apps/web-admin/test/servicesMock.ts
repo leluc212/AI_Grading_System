@@ -51,6 +51,11 @@ export function createServicesMock() {
       listRubricVersions: vi.fn(),
       saveRubric: vi.fn(),
     },
+    gradingConfigApi: {
+      getActiveGradingConfig: vi.fn(),
+      listGradingConfigVersions: vi.fn(),
+      saveGradingConfig: vi.fn(),
+    },
     exportApi: {
       // Tên hàm phải khớp bản THẬT ở `api-client` (`getAssignmentExportData`),
       // không phải `exportAssignmentToExcel` như contract trong design.md:
