@@ -165,7 +165,16 @@ async function throwTypedError(response: Response): Promise<never> {
     // mapErrorBodyToTypedError xử lý fallback theo status.
     body = null;
   }
-  throw mapErrorBodyToTypedError(response.status, body);
+  const err = mapErrorBodyToTypedError(response.status, body);
+  if (err instanceof UnauthorizedError) {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(ADMIN_SESSION_KEY);
+    }
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('admin:unauthorized'));
+    }
+  }
+  throw err;
 }
 
 const ADMIN_SESSION_KEY = 'quick-grading-admin-session';

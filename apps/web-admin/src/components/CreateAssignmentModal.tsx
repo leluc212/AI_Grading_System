@@ -64,7 +64,7 @@ export function CreateAssignmentModal({
     try {
       // Gửi tên đã trim để không lưu `" Đợt 1 "` vào cơ sở dữ liệu.
       const created = await assignmentsApi.createAssignment({ assignmentName: trimmed });
-      onCreated(created.assignmentName);
+      onCreated(created?.assignmentName || trimmed);
     } catch (error: unknown) {
       console.error('[CreateAssignmentModal] Tạo đợt chấm thất bại:', error);
       setSubmitError(

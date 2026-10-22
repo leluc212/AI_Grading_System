@@ -16,7 +16,7 @@
  *
  * _Requirements: 4.1, 4.4, 4.5_
  */
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { authApi } from '../services';
 
@@ -59,6 +59,17 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
    * F5.
    */
   const [admin, setAdmin] = useState<AdminIdentity | null>(() => authApi.getCurrentAdmin());
+
+  // Lắng nghe sự kiện token hết hạn (401) từ HTTP client để tự động logout và đẩy về login
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      setAdmin(null);
+    };
+    window.addEventListener('admin:unauthorized', handleUnauthorized);
+    return () => {
+      window.removeEventListener('admin:unauthorized', handleUnauthorized);
+    };
+  }, []);
 
   const signIn = useCallback(async (username: string, password: string) => {
     await authApi.login(username, password);

@@ -61,7 +61,7 @@ export function toCriterionDrafts(criteria: RubricCriterion[]): CriterionDraft[]
   return criteria.map((criterion) => ({
     localId: createId('local'),
     id: criterion.id,
-    label: criterion.label,
+    label: criterion.label ?? (criterion as unknown as { name?: string }).name ?? '',
     weightText: criterion.weight === undefined ? '' : String(criterion.weight),
   }));
 }
