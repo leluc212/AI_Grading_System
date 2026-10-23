@@ -218,7 +218,8 @@ body {
   z-index: 2;
   flex: 1 1 auto;
   max-width: 54%;
-  padding-bottom: 38px;
+  align-self: center;
+  padding: 32px 0;
   animation: fcaj-fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
@@ -315,7 +316,8 @@ body.awsui-dark-mode .fcaj-hero-accent {
   }
   .fcaj-hero-content {
     max-width: 100%;
-    padding-bottom: 16px;
+    align-self: flex-start;
+    padding: 0 0 16px;
   }
   .fcaj-hero-desc {
     max-width: 100%;
