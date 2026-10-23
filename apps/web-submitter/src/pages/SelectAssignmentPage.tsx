@@ -103,9 +103,6 @@ export function SelectAssignmentPage() {
       {/* 1. Hero Banner */}
       <section className="fcaj-hero-section">
         <div className="fcaj-hero-content">
-          <div className="fcaj-hero-badge">
-            <span className="fcaj-hero-badge-dot" /> AWS FIRST CLOUD AI JOURNEY
-          </div>
           <h1 className="fcaj-hero-title">
             {t('heroHeadlinePart1')}{' '}
             <span className="fcaj-hero-accent">{t('heroHeadlinePart2')}</span>

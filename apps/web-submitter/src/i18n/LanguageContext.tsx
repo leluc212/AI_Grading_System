@@ -122,7 +122,6 @@ export const TRANSLATIONS = {
   },
   vi: {
     // Brand & Top Navigation
-    brandTitle: 'AWS First Cloud AI Journey',
     brandSubtitle: 'Cổng Nộp Bài Sinh Viên',
     portalBadge: 'Trang Chủ',
     navHome: 'Đợt nộp bài',
