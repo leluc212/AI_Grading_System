@@ -11,6 +11,7 @@ import type * as apigwv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import * as budgets from 'aws-cdk-lib/aws-budgets';
 import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch';
 import * as cwActions from 'aws-cdk-lib/aws-cloudwatch-actions';
+import * as kms from 'aws-cdk-lib/aws-kms';
 import * as sns from 'aws-cdk-lib/aws-sns';
 import * as subscriptions from 'aws-cdk-lib/aws-sns-subscriptions';
 import { Construct } from 'constructs';
@@ -34,9 +35,9 @@ export class Monitoring extends Construct {
     }
 
     this.topic = new sns.Topic(this, 'AlarmTopic', {
-      // NOSONAR typescript:S6327 - SNS topic uses default encryption; email alert topics should not use KMS
       topicName: `QuickGrading-${config.stage}-alarms`,
       displayName: `QuickGrading ${config.stage} alarms`,
+      masterKey: kms.Alias.fromAliasName(this, 'DefaultSnsKey', 'alias/aws/sns'),
     });
     for (const email of config.alarmEmails) {
       this.topic.addSubscription(new subscriptions.EmailSubscription(email));

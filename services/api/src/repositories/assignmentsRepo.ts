@@ -52,27 +52,42 @@ export async function getAssignment(assignmentId: string): Promise<AssignmentLis
   return result.Item === undefined ? undefined : toListItem(result.Item);
 }
 
+async function queryAssignmentPage(
+  exclusiveStartKey?: Record<string, unknown>,
+): Promise<{ items: AssignmentListItem[]; nextKey?: Record<string, unknown> }> {
+  const result = await ddb().send(
+    new QueryCommand({
+      TableName: tableName(),
+      IndexName: 'GSI1',
+      KeyConditionExpression: 'GSI1PK = :pk',
+      ExpressionAttributeValues: { ':pk': ASSIGNMENTS_GSI1PK },
+      ScanIndexForward: true,
+      ExclusiveStartKey: exclusiveStartKey,
+    }),
+  );
+  return {
+    items: (result.Items ?? []).map(toListItem),
+    nextKey: result.LastEvaluatedKey,
+  };
+}
+
 export async function listAssignments(): Promise<AssignmentListItem[]> {
-  const items: AssignmentListItem[] = [];
-  let exclusiveStartKey: Record<string, unknown> | undefined;
-  do {
-    const result = await ddb().send(
-      // NOSONAR typescript:S9382 - DynamoDB pagination is inherently sequential
-      new QueryCommand({
-        TableName: tableName(),
-        IndexName: 'GSI1',
-        KeyConditionExpression: 'GSI1PK = :pk',
-        ExpressionAttributeValues: { ':pk': ASSIGNMENTS_GSI1PK },
-        ScanIndexForward: true,
-        ExclusiveStartKey: exclusiveStartKey,
-      }),
-    );
-    for (const item of result.Items ?? []) {
-      items.push(toListItem(item));
+  async function fetchAll(
+    exclusiveStartKey?: Record<string, unknown>,
+    accumulated: AssignmentListItem[] = [],
+  ): Promise<AssignmentListItem[]> {
+    if (accumulated.length >= MAX_LIST_ITEMS) {
+      return accumulated.slice(0, MAX_LIST_ITEMS);
     }
-    exclusiveStartKey = result.LastEvaluatedKey;
-  } while (exclusiveStartKey !== undefined && items.length < MAX_LIST_ITEMS);
-  return items.slice(0, MAX_LIST_ITEMS);
+    const { items, nextKey } = await queryAssignmentPage(exclusiveStartKey);
+    const combined = [...accumulated, ...items];
+    if (nextKey === undefined || combined.length >= MAX_LIST_ITEMS) {
+      return combined.slice(0, MAX_LIST_ITEMS);
+    }
+    return fetchAll(nextKey, combined);
+  }
+
+  return fetchAll();
 }
 
 export async function createAssignment(params: {
