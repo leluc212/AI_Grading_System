@@ -495,3 +495,21 @@ body.awsui-dark-mode .fcaj-receipt-meta-grid {
   margin-right: 8px;
   margin-bottom: 8px;
 }
+
+/* Dấu sao đỏ cho các trường bắt buộc */
+.fcaj-required-star {
+  color: var(--color-text-status-error, #d91535);
+  font-weight: 700;
+  margin-left: 4px;
+}
+
+/* Làm mờ ô MSSV, khi hover, focus-within hoặc đã nhập dữ liệu thì hiện rõ 100% */
+.fcaj-mssv-input {
+  opacity: 0.45;
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.fcaj-mssv-input:hover,
+.fcaj-mssv-input:focus-within,
+.fcaj-mssv-input.has-value {
+  opacity: 1;
+}

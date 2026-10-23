@@ -62,7 +62,15 @@ export function FileUploadField({
 
   return (
     <div data-testid={`file-upload-${extension.replace('.', '')}`}>
-      <FormField label={label} description={description}>
+      <FormField
+        label={
+          <span>
+            <span>{label}</span>
+            <span className="fcaj-required-star">*</span>
+          </span>
+        }
+        description={description}
+      >
         <FileUpload
           value={value === null ? [] : [value]}
           onChange={({ detail }) => {

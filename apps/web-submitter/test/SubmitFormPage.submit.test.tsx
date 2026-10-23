@@ -86,7 +86,7 @@ describe('Form nộp bài - cấu trúc form (Requirement 2.1, 2.5)', () => {
     expect(screen.getByLabelText('Tên nhóm')).toBeDefined();
     expect(screen.getByLabelText('Tên sinh viên của thành viên thứ 1')).toBeDefined();
     expect(screen.getByLabelText('Email của thành viên thứ 1')).toBeDefined();
-    expect(screen.getByLabelText('MSSV của thành viên thứ 1 (tuỳ chọn)')).toBeDefined();
+    expect(screen.getByLabelText('MSSV của thành viên thứ 1')).toBeDefined();
     expect(screen.getByText('File bài làm (.md)')).toBeDefined();
     expect(screen.getByText('File bài làm (.xml)')).toBeDefined();
   });
@@ -185,7 +185,7 @@ describe('Form nộp bài - nộp thành công (Requirement 2.9)', () => {
     await openForm();
 
     await fillValidForm(user);
-    await user.type(screen.getByLabelText('MSSV của thành viên thứ 1 (tuỳ chọn)'), 'SV001');
+    await user.type(screen.getByLabelText('MSSV của thành viên thứ 1'), 'SV001');
     await clickSubmit(user);
 
     await waitFor(() => {
@@ -346,7 +346,7 @@ describe('Form nộp bài - nộp lại sau khi được mở khoá (Requirement
     // Đây là đường DUY NHẤT để nhóm đã được mở khoá nộp bản mới, nên không
     // hướng dẫn thì không ai đoán được.
     expect(
-      screen.getByText(/đã được giảng viên mở khoá nộp lại.*nhập đúng tên nhóm cũ/),
+      screen.getByText(/Tên nhóm phải chính xác với tên nhóm trên portal AWS FCAJ/),
     ).toBeDefined();
   });
 

@@ -92,14 +92,17 @@ function MemberStudentCodeControl({
   ariaLabel,
   onChange,
 }: MemberControlProps) {
+  const hasValue = item.studentCode.trim().length > 0;
   return (
-    <Input
-      value={item.studentCode}
-      disabled={disabled}
-      placeholder={placeholder}
-      ariaLabel={ariaLabel}
-      onChange={({ detail }) => onChange(item.localId, detail.value)}
-    />
+    <div className={`fcaj-mssv-input ${hasValue ? 'has-value' : ''}`}>
+      <Input
+        value={item.studentCode}
+        disabled={disabled}
+        placeholder={placeholder}
+        ariaLabel={ariaLabel}
+        onChange={({ detail }) => onChange(item.localId, detail.value)}
+      />
+    </div>
   );
 }
 
@@ -124,7 +127,12 @@ function buildMemberDefinitions(
 ): AttributeEditorProps.FieldDefinition<MemberDraft>[] {
   return [
     {
-      label: labels.nameLabel,
+      label: (
+        <span>
+          <span>{labels.nameLabel}</span>
+          <span className="fcaj-required-star">*</span>
+        </span>
+      ),
       errorText: (item) => errors[item.localId]?.memberName,
       control: (item) => {
         const pos = members.indexOf(item) + 1;
@@ -145,7 +153,12 @@ function buildMemberDefinitions(
       },
     },
     {
-      label: labels.emailLabel,
+      label: (
+        <span>
+          <span>{labels.emailLabel}</span>
+          <span className="fcaj-required-star">*</span>
+        </span>
+      ),
       errorText: (item) => errors[item.localId]?.email,
       control: (item) => {
         const pos = members.indexOf(item) + 1;
@@ -177,8 +190,8 @@ function buildMemberDefinitions(
             placeholder={labels.codePlaceholder}
             ariaLabel={
               labels.isVi
-                ? `MSSV của thành viên thứ ${pos.toString()} (tuỳ chọn)`
-                : `Student ID for member ${pos.toString()} (Optional)`
+                ? `MSSV của thành viên thứ ${pos.toString()}`
+                : `Student ID for member ${pos.toString()}`
             }
             onChange={handleStudentCodeChange}
           />

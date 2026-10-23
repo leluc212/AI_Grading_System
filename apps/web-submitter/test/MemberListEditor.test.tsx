@@ -47,14 +47,13 @@ function emailInput(position: number): HTMLInputElement {
 }
 
 describe('MemberListEditor', () => {
-  it('hiển thị 1 dòng thành viên với 3 ô: tên, email, MSSV (tuỳ chọn)', () => {
+  it('hiển thị 1 dòng thành viên với 3 ô: tên, email, MSSV', () => {
     render(<Harness />);
 
     expect(nameInput(1)).toBeDefined();
     expect(emailInput(1)).toBeDefined();
-    expect(screen.getByLabelText('MSSV của thành viên thứ 1 (tuỳ chọn)')).toBeDefined();
-    // Nhãn cột phải nói rõ MSSV là tuỳ chọn (Requirement 2.2).
-    expect(screen.getByText('MSSV (tuỳ chọn)')).toBeDefined();
+    expect(screen.getByLabelText('MSSV của thành viên thứ 1')).toBeDefined();
+    expect(screen.getByText('MSSV')).toBeDefined();
   });
 
   it('nút "+ Thêm sinh viên" thêm được nhiều dòng (Requirement 2.3)', async () => {
