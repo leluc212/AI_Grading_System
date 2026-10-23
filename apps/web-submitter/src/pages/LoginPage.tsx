@@ -42,13 +42,7 @@ function GoogleIcon() {
   );
 }
 
-function LoginHeader({
-  isDark,
-  title,
-}: {
-  readonly isDark: boolean;
-  readonly title: string;
-}) {
+function LoginHeader({ isDark, title }: { readonly isDark: boolean; readonly title: string }) {
   const headingColor = isDark ? '#f8fafc' : '#0f172a';
 
   return (
@@ -149,7 +143,9 @@ export function LoginPage() {
   const cardBg = isDark
     ? 'linear-gradient(180deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.85) 100%)'
     : 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)';
-  const cardBorder = isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(226, 232, 240, 0.9)';
+  const cardBorder = isDark
+    ? '1px solid rgba(255, 255, 255, 0.1)'
+    : '1px solid rgba(226, 232, 240, 0.9)';
   const cardShadow = isDark
     ? '0 20px 40px -15px rgba(0, 0, 0, 0.6), 0 0 30px -10px rgba(255, 153, 0, 0.15)'
     : '0 20px 35px -10px rgba(0, 0, 0, 0.08)';
