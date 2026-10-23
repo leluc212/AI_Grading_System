@@ -122,7 +122,7 @@ export const TRANSLATIONS = {
     // Submission History
     navHistory: 'Submission History',
     historyTitle: 'Submission History',
-    historySubtitle: 'View receipts and details of your submitted assignments',
+    historySubtitle: 'View details of your submitted workshops',
     historyCount: 'Submissions',
     historySearchPlaceholder: 'Search by team name or assignment...',
     emptyHistoryTitle: 'No submissions found',
@@ -252,11 +252,11 @@ export const TRANSLATIONS = {
     // Submission History
     navHistory: 'Lịch sử nộp bài',
     historyTitle: 'Lịch sử nộp bài',
-    historySubtitle: 'Xem lại biên nhận và thông tin các bài tập bạn đã nộp',
+    historySubtitle: 'Xem lại thông tin các bài workshop bạn đã nộp',
     historyCount: 'Bài nộp',
     historySearchPlaceholder: 'Tìm kiếm theo tên nhóm hoặc đợt chấm...',
     emptyHistoryTitle: 'Chưa có bài nộp nào',
-    emptyHistoryDesc: 'Bạn chưa nộp bài cho đợt chấm nào với tài khoản email này.',
+    emptyHistoryDesc: 'Bạn chưa nộp bài cho đợt chấm nào với tài khoản này.',
     btnBrowseAssignments: 'Xem các đợt nộp bài',
     colAssignment: 'Đợt chấm bài',
     colTeam: 'Tên nhóm',

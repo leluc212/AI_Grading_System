@@ -380,13 +380,6 @@ export function SubmissionHistoryPage() {
                 </SpaceBetween>
               </div>
             </div>
-
-            <Box variant="p" color="text-body-secondary" fontSize="body-s">
-              🔒{' '}
-              {language === 'vi'
-                ? 'Biên nhận bài nộp chính thức. Bài nộp đã được mã hóa và bảo vệ an toàn trên hạ tầng đám mây AWS.'
-                : 'Official submission receipt. Submissions are encrypted and securely stored on AWS cloud infrastructure.'}
-            </Box>
           </SpaceBetween>
         </Modal>
       )}
