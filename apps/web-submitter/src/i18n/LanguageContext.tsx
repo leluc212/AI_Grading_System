@@ -103,6 +103,22 @@ export const TRANSLATIONS = {
     successNote:
       'The system does not send confirmation emails. Please save the information on this page if needed.',
     btnBackHome: 'Back to assignment list',
+
+    // Login & Anti-Spam Auth
+    loginTitle: 'Sign In to Submit',
+    loginSubtitle: 'Authenticate with your Google account to submit your project and prevent spam.',
+    loginWithGoogle: 'Continue with Google',
+    loginDemoBtn: 'Quick Demo Login (Test Mode)',
+    loginWhyTitle: 'Why do you need to sign in?',
+    loginWhyDesc:
+      'To prevent automated spam and ensure every team submission is authenticated and attributed to verified students.',
+    loginBadgeCognito: 'Secured by AWS Cognito',
+    loginBadgePkce: 'OAuth 2.0 PKCE Protected',
+    loginBadgeAntiSpam: 'Anti-Spam Shield Active',
+    navLogin: 'Sign In',
+    navLogout: 'Sign Out',
+    verifiedGoogleBadge: 'Verified via Google',
+    loginRequiredAlert: 'Please sign in with Google to access the assignment submission form.',
   },
   vi: {
     // Brand & Top Navigation
@@ -194,6 +210,22 @@ export const TRANSLATIONS = {
     successNote:
       'Hệ thống không gửi email xác nhận. Vui lòng lưu lại thông tin trên trang này nếu cần.',
     btnBackHome: 'Về trang danh sách đợt chấm',
+
+    // Login & Anti-Spam Auth
+    loginTitle: 'Đăng nhập để nộp bài',
+    loginSubtitle: 'Xác thực tài khoản Google để bắt đầu nộp bài và phòng chống spam.',
+    loginWithGoogle: 'Tiếp tục với Google',
+    loginDemoBtn: 'Đăng nhập thử nghiệm (Chế độ Test)',
+    loginWhyTitle: 'Tại sao cần đăng nhập?',
+    loginWhyDesc:
+      'Hệ thống yêu cầu xác thực qua Google nhằm ngăn chặn spam bài nộp, bảo vệ quyền tác giả và đảm bảo tính minh bạch cho nhóm bạn.',
+    loginBadgeCognito: 'Bảo mật bởi AWS Cognito',
+    loginBadgePkce: 'Bảo vệ OAuth 2.0 PKCE',
+    loginBadgeAntiSpam: 'Kích hoạt lá chắn chống Spam',
+    navLogin: 'Đăng nhập',
+    navLogout: 'Đăng xuất',
+    verifiedGoogleBadge: 'Đã xác thực qua Google',
+    loginRequiredAlert: 'Vui lòng đăng nhập bằng Google để vào biểu mẫu nộp bài.',
   },
 } as const;
 

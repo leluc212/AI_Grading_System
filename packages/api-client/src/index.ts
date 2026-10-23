@@ -16,3 +16,4 @@ export * from './rubricsApi.js';
 export * from './gradingConfigApi.js';
 export * from './exportApi.js';
 export * from './authApi.js';
+export * from './submitterAuthApi.js';

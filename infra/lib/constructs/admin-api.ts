@@ -158,5 +158,8 @@ export class AdminApi extends Construct {
     addAdminRoute(apigwv2.HttpMethod.GET, '/api/grading-config');
     addAdminRoute(apigwv2.HttpMethod.GET, '/api/grading-config/active');
     addAdminRoute(apigwv2.HttpMethod.POST, '/api/grading-config');
+
+    // Quản lý Nhật ký đăng nhập (Login Audit Logs)
+    addAdminRoute(apigwv2.HttpMethod.GET, '/api/admin/login-logs');
   }
 }

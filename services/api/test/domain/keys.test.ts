@@ -20,6 +20,8 @@ describe('key builders', () => {
     ]);
     expect(keys.teamsGsi1Pk('a1')).toBe('ASSIGNMENT#a1#TEAMS');
     expect(keys.ASSIGNMENTS_GSI1PK).toBe('ASSIGNMENTS');
+    expect(keys.LOGIN_LOGS_GSI1PK).toBe('LOGIN_LOGS');
+    expect(keys.loginLogKey('l1')).toEqual({ PK: 'LOGIN_LOG#l1', SK: 'META' });
   });
 
   it('S3 key theo submissions/{aid}/{teamId}/{sid}/report.md|data.xml', () => {

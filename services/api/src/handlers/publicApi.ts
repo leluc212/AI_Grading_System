@@ -15,7 +15,7 @@ import type {
   APIGatewayProxyStructuredResultV2,
   Context,
 } from 'aws-lambda';
-import { NotFoundError } from '@quick-grading/shared-types';
+import { NotFoundError, ValidationError, type LoginAuditLog } from '@quick-grading/shared-types';
 import {
   parseAssignmentId,
   parseCheckNameQuery,
@@ -26,6 +26,7 @@ import { errorResponse, jsonResponse } from '../lib/http.js';
 import { log } from '../lib/logger.js';
 import { createRouter, parseJsonBody } from '../lib/router.js';
 import { getAssignment, listAssignments, toAssignment } from '../repositories/assignmentsRepo.js';
+import { recordLoginLog } from '../repositories/loginAuditRepo.js';
 import {
   checkTeamName,
   createSubmission,
@@ -80,6 +81,30 @@ function buildRouter(ids: LogIds) {
         files: result.files,
         resubmitted: result.resubmitted,
       });
+    },
+
+    'POST /api/auth/submitter-login-log': async (event) => {
+      const body = parseJsonBody(event) as Record<string, unknown>;
+      const email = typeof body?.email === 'string' ? body.email.trim() : '';
+      if (!email) {
+        throw new ValidationError('Email đăng nhập không được để trống.', 'email');
+      }
+      const logId = crypto.randomUUID();
+      const ipAddress = event.requestContext?.http?.sourceIp ?? '127.0.0.1';
+      const userAgent = event.requestContext?.http?.userAgent ?? 'unknown';
+      const logItem: LoginAuditLog = {
+        logId,
+        userSub: typeof body?.userSub === 'string' ? body.userSub : 'sub-' + logId.slice(0, 8),
+        email,
+        name: typeof body?.name === 'string' ? body.name : email.split('@')[0],
+        provider: typeof body?.provider === 'string' ? body.provider : 'Google',
+        ipAddress,
+        userAgent,
+        timestamp: new Date().toISOString(),
+        status: 'SUCCESS',
+      };
+      await recordLoginLog(logItem);
+      return jsonResponse(201, { success: true, logId });
     },
   });
 }

@@ -102,13 +102,56 @@ export const authHandlers = [
   }),
 
   // POST /api/auth/logout — Requirement 4.1
-  //
-  // Mock auth stateless: không có server-side session để xoá, việc "đăng
-  // xuất" thực chất do client xoá token khỏi localStorage. Handler chỉ xác
-  // nhận thành công (204 No Content, không body) để service layer
-  // `logout(): Promise<void>` có endpoint gọi đúng luồng, khớp với API
-  // Gateway thật sẽ dùng ở giai đoạn 2.
   http.post('/api/auth/logout', () => {
     return new HttpResponse(null, { status: 204 });
   }),
+
+  // POST /api/auth/submitter-login-log — Ghi nhận audit log đăng nhập sinh viên
+  http.post('/api/auth/submitter-login-log', async ({ request }) => {
+    const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
+    const email = (body?.email as string) || 'student.fcaj@gmail.com';
+    const logId = crypto.randomUUID();
+    const newLog = {
+      logId,
+      userSub: (body?.userSub as string) || 'sub-' + logId.slice(0, 8),
+      email,
+      name: (body?.name as string) || email.split('@')[0],
+      provider: (body?.provider as string) || 'Google',
+      ipAddress: '127.0.0.1',
+      userAgent: request.headers.get('user-agent') || 'Browser',
+      timestamp: new Date().toISOString(),
+      status: 'SUCCESS' as const,
+    };
+    mockLoginLogs.unshift(newLog);
+    return HttpResponse.json({ success: true, logId }, { status: 201 });
+  }),
+
+  // GET /api/admin/login-logs — Truy vấn danh sách nhật ký đăng nhập cho Admin
+  http.get('/api/admin/login-logs', () => {
+    return HttpResponse.json({ items: mockLoginLogs }, { status: 200 });
+  }),
+];
+
+const mockLoginLogs: Array<{
+  logId: string;
+  userSub: string;
+  email: string;
+  name: string;
+  provider: string;
+  ipAddress: string;
+  userAgent: string;
+  timestamp: string;
+  status: 'SUCCESS' | 'FAILED';
+}> = [
+  {
+    logId: 'seed-log-1',
+    userSub: 'google-oauth2|1092837465',
+    email: 'cloud.warrior@gmail.com',
+    name: 'Cloud Warrior',
+    provider: 'Google',
+    ipAddress: '14.161.22.89',
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0',
+    timestamp: new Date(Date.now() - 3600000).toISOString(),
+    status: 'SUCCESS',
+  },
 ];

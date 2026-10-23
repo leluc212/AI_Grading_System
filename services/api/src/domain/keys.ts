@@ -34,6 +34,11 @@ export function uploadKey(submissionId: string): ItemKey {
 }
 
 export const ASSIGNMENTS_GSI1PK = 'ASSIGNMENTS';
+export const LOGIN_LOGS_GSI1PK = 'LOGIN_LOGS';
+
+export function loginLogKey(logId: string): ItemKey {
+  return { PK: `LOGIN_LOG#${logId}`, SK: 'META' };
+}
 
 export function teamsGsi1Pk(assignmentId: string): string {
   return `ASSIGNMENT#${assignmentId}#TEAMS`;

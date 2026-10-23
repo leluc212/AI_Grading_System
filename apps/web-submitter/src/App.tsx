@@ -14,7 +14,11 @@ import BreadcrumbGroup from '@cloudscape-design/components/breadcrumb-group';
 import TopNavigation from '@cloudscape-design/components/top-navigation';
 import { useMemo, type CSSProperties } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { RequireSubmitterAuth } from './auth/RequireSubmitterAuth';
+import { SubmitterAuthProvider, useSubmitterAuth } from './auth/SubmitterAuthContext';
 import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
+import { AuthCallbackPage } from './pages/AuthCallbackPage';
+import { LoginPage } from './pages/LoginPage';
 import { SelectAssignmentPage } from './pages/SelectAssignmentPage';
 import { SubmitFormPage } from './pages/SubmitFormPage';
 import { SubmitSuccessPage } from './pages/SubmitSuccessPage';
@@ -30,13 +34,19 @@ const shellStyle: CSSProperties = {
 function AppContent() {
   const { t, language, toggleLanguage } = useLanguage();
   const { mode, toggleMode } = useTheme();
+  const { user, isAuthenticated, logout } = useSubmitterAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
   const breadcrumbItems = useMemo(() => {
     const isEng = language === 'en';
     const items = [{ text: isEng ? 'Home' : 'Trang chủ', href: '/' }];
-    if (location.pathname.startsWith('/submit/')) {
+    if (location.pathname === '/login') {
+      items.push({
+        text: t('navLogin'),
+        href: '/login',
+      });
+    } else if (location.pathname.startsWith('/submit/')) {
       items.push({
         text: isEng ? 'Submit' : 'Nộp bài',
         href: location.pathname,
@@ -48,7 +58,7 @@ function AppContent() {
       });
     }
     return items;
-  }, [location.pathname, language]);
+  }, [location.pathname, language, t]);
 
   return (
     <>
@@ -138,6 +148,66 @@ function AppContent() {
             ariaLabel: mode === 'dark' ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối',
             onClick: toggleMode,
           },
+          ...(isAuthenticated && user
+            ? [
+                {
+                  type: 'menu-dropdown' as const,
+                  text: user.name || user.email,
+                  description: user.email,
+                  iconSvg: (
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#ff9900"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                  ),
+                  items: [
+                    { id: 'user-email', text: user.email, disabled: true },
+                    { id: 'signout', text: t('navLogout') },
+                  ],
+                  onItemClick: (event: { detail: { id: string } }) => {
+                    if (event.detail.id === 'signout') {
+                      logout();
+                      navigate('/');
+                    }
+                  },
+                },
+              ]
+            : [
+                {
+                  type: 'button' as const,
+                  text: t('navLogin'),
+                  iconSvg: (
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                      <polyline points="10 17 15 12 10 7" />
+                      <line x1="15" y1="12" x2="3" y2="12" />
+                    </svg>
+                  ),
+                  onClick: () => {
+                    navigate('/login');
+                  },
+                },
+              ]),
         ]}
         i18nStrings={{ overflowMenuTriggerText: 'More', overflowMenuTitleText: 'Navigation' }}
       />
@@ -175,7 +245,16 @@ function AppContent() {
 
         <Routes>
           <Route path="/" element={<SelectAssignmentPage />} />
-          <Route path="/submit/:assignmentId" element={<SubmitFormPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/auth/callback" element={<AuthCallbackPage />} />
+          <Route
+            path="/submit/:assignmentId"
+            element={
+              <RequireSubmitterAuth>
+                <SubmitFormPage />
+              </RequireSubmitterAuth>
+            }
+          />
           <Route path="/submit-success" element={<SubmitSuccessPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
@@ -188,7 +267,9 @@ export function App() {
   return (
     <ThemeProvider>
       <LanguageProvider>
-        <AppContent />
+        <SubmitterAuthProvider>
+          <AppContent />
+        </SubmitterAuthProvider>
       </LanguageProvider>
     </ThemeProvider>
   );

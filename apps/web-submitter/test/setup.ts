@@ -22,6 +22,18 @@ import { cleanup } from '@testing-library/react';
 beforeEach(() => {
   try {
     localStorage.setItem('fcaj-portal-language', 'vi');
+    localStorage.setItem(
+      'quick-grading-submitter-session',
+      JSON.stringify({
+        token: 'test-token-12345',
+        profile: {
+          sub: 'test-google-sub-1',
+          email: 'student.test@gmail.com',
+          name: 'Test Student',
+          provider: 'Google',
+        },
+      }),
+    );
   } catch {
     // Ignore in tests
   }

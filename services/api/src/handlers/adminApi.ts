@@ -36,6 +36,7 @@ import {
   handleListTeams,
   handleUnlockTeam,
 } from './admin/teams.js';
+import { handleListLoginLogs } from './admin/loginLogs.js';
 
 export function getAdminUsername(event: APIGatewayProxyEventV2): string {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -112,6 +113,10 @@ function buildAdminRouter(username: string) {
 
     'GET /api/assignments/{assignmentId}/export-data': async (event) => {
       return handleExportAssignmentData(event);
+    },
+
+    'GET /api/admin/login-logs': async (event) => {
+      return handleListLoginLogs(event);
     },
   });
 }

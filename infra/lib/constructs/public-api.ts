@@ -154,6 +154,7 @@ export class PublicApi extends Construct {
     add(apigwv2.HttpMethod.GET, '/api/teams/check-name');
     const createRoute = add(apigwv2.HttpMethod.POST, '/api/submissions');
     const finalizeRoute = add(apigwv2.HttpMethod.POST, '/api/submissions/{submissionId}/finalize');
+    add(apigwv2.HttpMethod.POST, '/api/auth/submitter-login-log');
 
     const cfnStage = this.api.defaultStage?.node.defaultChild as apigwv2.CfnStage;
     // `routeSettings` là kiểu JSON thô -> phải viết đúng tên property của
