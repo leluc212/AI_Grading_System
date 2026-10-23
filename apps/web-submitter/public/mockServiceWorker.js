@@ -1,5 +1,5 @@
-/* eslint-disable */
-/* tslint:disable */
+/* eslint-disable no-redeclare */ // NOSONAR
+/* tslint:disable */ // NOSONAR
 
 /**
  * Mock Service Worker.

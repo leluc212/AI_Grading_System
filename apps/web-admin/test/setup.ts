@@ -23,19 +23,33 @@ if (typeof window.matchMedia !== 'function') {
       matches: false,
       media: query,
       onchange: null,
-      addListener: () => {},
-      removeListener: () => {},
-      addEventListener: () => {},
-      removeEventListener: () => {},
+      addListener: () => {
+        /* no-op for test stub */
+      },
+      removeListener: () => {
+        /* no-op for test stub */
+      },
+      addEventListener: () => {
+        /* no-op for test stub */
+      },
+      removeEventListener: () => {
+        /* no-op for test stub */
+      },
       dispatchEvent: () => false,
     }) as unknown as MediaQueryList;
 }
 
 /** Stub observer: không bao giờ phát callback -> component giữ layout mặc định. */
 class NoopObserver {
-  observe(): void {}
-  unobserve(): void {}
-  disconnect(): void {}
+  observe(): void {
+    // No-op for test environment stub
+  }
+  unobserve(): void {
+    // No-op for test environment stub
+  }
+  disconnect(): void {
+    // No-op for test environment stub
+  }
   takeRecords(): [] {
     return [];
   }

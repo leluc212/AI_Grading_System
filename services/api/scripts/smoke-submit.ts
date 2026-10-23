@@ -78,47 +78,35 @@ async function uploadToPresignedPost(
   });
 }
 
-export async function runSmokeTest(apiUrl: string): Promise<boolean> {
-  console.log(`[smoke-submit] Bắt đầu smoke test với API: ${apiUrl}`);
-  let allPassed = true;
+type ReportFn = (pass: boolean, name: string, detail: string) => void;
 
-  function report(pass: boolean, name: string, detail: string) {
-    if (pass) {
-      console.log(`PASS ${name} (${detail})`);
-    } else {
-      console.error(`FAIL ${name} (${detail})`);
-      allPassed = false;
-    }
-  }
-
-  // 1. GET /api/assignments includes OPEN and CLOSED
+async function testAssignments(apiUrl: string, report: ReportFn): Promise<void> {
   try {
     const res = await fetch(`${apiUrl}/api/assignments`);
     if (!res.ok) {
       report(false, 'Case 1: GET /api/assignments', `HTTP ${res.status}`);
+      return;
+    }
+    const data = (await res.json()) as Array<{ assignmentId: string; status: string }>;
+    const hasOpen = data.some((a) => a.assignmentId === ASSIGNMENT_OPEN_ID && a.status === 'OPEN');
+    const hasClosed = data.some(
+      (a) => a.assignmentId === ASSIGNMENT_CLOSED_ID && a.status === 'CLOSED',
+    );
+    if (hasOpen && hasClosed) {
+      report(true, 'Case 1: GET /api/assignments', `HTTP ${res.status}, tìm thấy cả 2 đợt`);
     } else {
-      const data = (await res.json()) as Array<{ assignmentId: string; status: string }>;
-      const hasOpen = data.some(
-        (a) => a.assignmentId === ASSIGNMENT_OPEN_ID && a.status === 'OPEN',
-      );
-      const hasClosed = data.some(
-        (a) => a.assignmentId === ASSIGNMENT_CLOSED_ID && a.status === 'CLOSED',
-      );
-      if (hasOpen && hasClosed) {
-        report(true, 'Case 1: GET /api/assignments', `HTTP ${res.status}, tìm thấy cả 2 đợt`);
-      } else {
-        report(false, 'Case 1: GET /api/assignments', 'Không tìm thấy đủ 2 đợt đã seed');
-      }
+      report(false, 'Case 1: GET /api/assignments', 'Không tìm thấy đủ 2 đợt đã seed');
     }
   } catch (err) {
     report(false, 'Case 1: GET /api/assignments', err instanceof Error ? err.message : String(err));
   }
+}
 
-  // 2. New team Smoke <ULID> into OPEN: create -> 201; 2 presigned POST uploads -> 2xx; finalize -> 201
-  const smokeUlid = ulid();
-  const smokeTeamName = `Smoke ${smokeUlid}`;
-  let createdSubmissionId = '';
-
+async function testNewSubmission(
+  apiUrl: string,
+  report: ReportFn,
+  smokeTeamName: string,
+): Promise<void> {
   try {
     const mdContent = '# Báo cáo đồ án\nNội dung báo cáo mẫu kiểm thử.';
     const xmlContent = '<?xml version="1.0" encoding="UTF-8"?><data><item>test</item></data>';
@@ -147,65 +135,64 @@ export async function runSmokeTest(apiUrl: string): Promise<boolean> {
 
     if (createRes.status !== 201) {
       report(false, 'Case 2: Nộp bài mới', `Tạo submission thất bại với HTTP ${createRes.status}`);
+      return;
+    }
+
+    const createData = (await createRes.json()) as CreateResponse;
+    const uploadMdRes = await uploadToPresignedPost(createData.uploads.md, mdContent, 'report.md');
+    const uploadXmlRes = await uploadToPresignedPost(
+      createData.uploads.xml,
+      xmlContent,
+      'data.xml',
+    );
+
+    if (!uploadMdRes.ok || !uploadXmlRes.ok) {
+      report(
+        false,
+        'Case 2: Nộp bài mới',
+        `Upload S3 thất bại: md HTTP ${uploadMdRes.status}, xml HTTP ${uploadXmlRes.status}`,
+      );
+      return;
+    }
+
+    const finalizeUrl = new URL(
+      `${apiUrl}/api/submissions/${encodeURIComponent(createData.submissionId)}/finalize`,
+    );
+    if (finalizeUrl.protocol !== 'http:' && finalizeUrl.protocol !== 'https:') {
+      throw new Error(`Chỉ hỗ trợ giao thức HTTP/HTTPS: ${finalizeUrl.protocol}`);
+    }
+    const finalizeRes = await fetch(finalizeUrl.toString(), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (finalizeRes.status !== 201) {
+      report(false, 'Case 2: Nộp bài mới', `Finalize thất bại với HTTP ${finalizeRes.status}`);
+      return;
+    }
+
+    const finalData = (await finalizeRes.json()) as FinalizeResponse;
+    const statusOk = finalData.team?.status === 'SUBMITTED';
+    const filesOk = Array.isArray(finalData.files) && finalData.files.length === 2;
+    if (statusOk && filesOk) {
+      report(
+        true,
+        'Case 2: Nộp bài mới',
+        `HTTP 201, teamId=${finalData.team.teamId}, sid=${createData.submissionId}`,
+      );
     } else {
-      const createData = (await createRes.json()) as CreateResponse;
-      createdSubmissionId = createData.submissionId;
-
-      // Upload MD
-      const uploadMdRes = await uploadToPresignedPost(
-        createData.uploads.md,
-        mdContent,
-        'report.md',
-      );
-      // Upload XML
-      const uploadXmlRes = await uploadToPresignedPost(
-        createData.uploads.xml,
-        xmlContent,
-        'data.xml',
-      );
-
-      if (!uploadMdRes.ok || !uploadXmlRes.ok) {
-        report(
-          false,
-          'Case 2: Nộp bài mới',
-          `Upload S3 thất bại: md HTTP ${uploadMdRes.status}, xml HTTP ${uploadXmlRes.status}`,
-        );
-      } else {
-        // Finalize
-        const finalizeUrl = new URL(
-          `${apiUrl}/api/submissions/${encodeURIComponent(createdSubmissionId)}/finalize`,
-        );
-        if (finalizeUrl.protocol !== 'http:' && finalizeUrl.protocol !== 'https:') {
-          throw new Error(`Chỉ hỗ trợ giao thức HTTP/HTTPS: ${finalizeUrl.protocol}`);
-        }
-        const finalizeRes = await fetch(finalizeUrl.toString(), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-        });
-
-        if (finalizeRes.status !== 201) {
-          report(false, 'Case 2: Nộp bài mới', `Finalize thất bại với HTTP ${finalizeRes.status}`);
-        } else {
-          const finalData = (await finalizeRes.json()) as FinalizeResponse;
-          const statusOk = finalData.team?.status === 'SUBMITTED';
-          const filesOk = Array.isArray(finalData.files) && finalData.files.length === 2;
-          if (statusOk && filesOk) {
-            report(
-              true,
-              'Case 2: Nộp bài mới',
-              `HTTP 201, teamId=${finalData.team.teamId}, sid=${createdSubmissionId}`,
-            );
-          } else {
-            report(false, 'Case 2: Nộp bài mới', 'Dữ liệu finalize không đúng trạng thái kỳ vọng');
-          }
-        }
-      }
+      report(false, 'Case 2: Nộp bài mới', 'Dữ liệu finalize không đúng trạng thái kỳ vọng');
     }
   } catch (err) {
     report(false, 'Case 2: Nộp bài mới', err instanceof Error ? err.message : String(err));
   }
+}
 
-  // 3. Same name again: create -> 409 TEAM_NAME_CONFLICT
+async function testDuplicateTeamName(
+  apiUrl: string,
+  report: ReportFn,
+  smokeTeamName: string,
+): Promise<void> {
   try {
     const dupPayload = {
       assignmentId: ASSIGNMENT_OPEN_ID,
@@ -236,8 +223,9 @@ export async function runSmokeTest(apiUrl: string): Promise<boolean> {
   } catch (err) {
     report(false, 'Case 3: Trùng tên nhóm', err instanceof Error ? err.message : String(err));
   }
+}
 
-  // 4. Into CLOSED assignment: create -> 409 ASSIGNMENT_CLOSED
+async function testClosedAssignment(apiUrl: string, report: ReportFn): Promise<void> {
   try {
     const closedPayload = {
       assignmentId: ASSIGNMENT_CLOSED_ID,
@@ -268,10 +256,11 @@ export async function runSmokeTest(apiUrl: string): Promise<boolean> {
   } catch (err) {
     report(false, 'Case 4: Nộp vào đợt đã đóng', err instanceof Error ? err.message : String(err));
   }
+}
 
-  // 5. Declared size 6 MB: create -> 400 VALIDATION_ERROR
+async function testOversizeDeclared(apiUrl: string, report: ReportFn): Promise<void> {
   try {
-    const oversizeDeclaredPayload = {
+    const oversizePayload = {
       assignmentId: ASSIGNMENT_OPEN_ID,
       teamName: `Smoke Oversize ${ulid()}`,
       members: [{ memberName: 'Sinh Viên 4', email: 'sv4@example.com' }],
@@ -281,24 +270,20 @@ export async function runSmokeTest(apiUrl: string): Promise<boolean> {
       },
     };
 
-    const oversizeRes = await fetch(`${apiUrl}/api/submissions`, {
+    const res = await fetch(`${apiUrl}/api/submissions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(oversizeDeclaredPayload),
+      body: JSON.stringify(oversizePayload),
     });
 
-    const oversizeBody = (await oversizeRes.json().catch(() => ({}))) as { code?: string };
-    if (oversizeRes.status === 400 && oversizeBody.code === 'VALIDATION_ERROR') {
-      report(
-        true,
-        'Case 5: Khai báo kích thước file vượt 5MB',
-        `HTTP 400, code: ${oversizeBody.code}`,
-      );
+    const body = (await res.json().catch(() => ({}))) as { code?: string };
+    if (res.status === 400 && body.code === 'VALIDATION_ERROR') {
+      report(true, 'Case 5: Khai báo kích thước file vượt 5MB', `HTTP 400, code: ${body.code}`);
     } else {
       report(
         false,
         'Case 5: Khai báo kích thước file vượt 5MB',
-        `Kỳ vọng 400 VALIDATION_ERROR, nhận HTTP ${oversizeRes.status}`,
+        `Kỳ vọng 400 VALIDATION_ERROR, nhận HTTP ${res.status}`,
       );
     }
   } catch (err) {
@@ -308,10 +293,11 @@ export async function runSmokeTest(apiUrl: string): Promise<boolean> {
       err instanceof Error ? err.message : String(err),
     );
   }
+}
 
-  // 6. Declared 5 MB but upload 6 MB blob to presigned POST -> S3 rejects (non-2xx, EntityTooLarge)
+async function testOversizeS3Upload(apiUrl: string, report: ReportFn): Promise<void> {
   try {
-    const validDeclaredPayload = {
+    const payload = {
       assignmentId: ASSIGNMENT_OPEN_ID,
       teamName: `Smoke S3Reject ${ulid()}`,
       members: [{ memberName: 'Sinh Viên 5', email: 'sv5@example.com' }],
@@ -321,37 +307,31 @@ export async function runSmokeTest(apiUrl: string): Promise<boolean> {
       },
     };
 
-    const validCreateRes = await fetch(`${apiUrl}/api/submissions`, {
+    const createRes = await fetch(`${apiUrl}/api/submissions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(validDeclaredPayload),
+      body: JSON.stringify(payload),
     });
 
-    if (validCreateRes.status !== 201) {
+    if (createRes.status !== 201) {
       report(
         false,
         'Case 6: S3 từ chối file > 5MB',
-        `Tạo submission thất bại với HTTP ${validCreateRes.status}`,
+        `Tạo submission thất bại với HTTP ${createRes.status}`,
       );
+      return;
+    }
+
+    const createData = (await createRes.json()) as CreateResponse;
+    const oversizeBuffer = Buffer.alloc(6 * 1024 * 1024, 0x20);
+    const oversizeBlob = new Blob([oversizeBuffer], { type: 'text/markdown' });
+
+    const s3Res = await uploadToPresignedPost(createData.uploads.md, oversizeBlob, 'report.md');
+
+    if (!s3Res.ok) {
+      report(true, 'Case 6: S3 từ chối file > 5MB', `HTTP ${s3Res.status} từ S3`);
     } else {
-      const validCreateData = (await validCreateRes.json()) as CreateResponse;
-      // Tạo buffer 6MB thực tế
-      const oversizeBuffer = Buffer.alloc(6 * 1024 * 1024, 0x20); // 6MB space characters
-      const oversizeBlob = new Blob([oversizeBuffer], { type: 'text/markdown' });
-
-      const s3Res = await uploadToPresignedPost(
-        validCreateData.uploads.md,
-        oversizeBlob,
-        'report.md',
-      );
-
-      // S3 Policy condition content-length-range phải từ chối (HTTP 400)
-      if (!s3Res.ok) {
-        report(true, 'Case 6: S3 từ chối file > 5MB', `HTTP ${s3Res.status} từ S3`);
-      } else {
-        report(false, 'Case 6: S3 từ chối file > 5MB', 'S3 không từ chối file 6MB');
-      }
-      // Không gọi finalize theo đúng kế hoạch
+      report(false, 'Case 6: S3 từ chối file > 5MB', 'S3 không từ chối file 6MB');
     }
   } catch (err) {
     report(
@@ -360,6 +340,29 @@ export async function runSmokeTest(apiUrl: string): Promise<boolean> {
       err instanceof Error ? err.message : String(err),
     );
   }
+}
+
+export async function runSmokeTest(apiUrl: string): Promise<boolean> {
+  console.log(`[smoke-submit] Bắt đầu smoke test với API: ${apiUrl}`);
+  let allPassed = true;
+
+  const report: ReportFn = (pass, name, detail) => {
+    if (pass) {
+      console.log(`PASS ${name} (${detail})`);
+    } else {
+      console.error(`FAIL ${name} (${detail})`);
+      allPassed = false;
+    }
+  };
+
+  const smokeTeamName = `Smoke ${ulid()}`;
+
+  await testAssignments(apiUrl, report);
+  await testNewSubmission(apiUrl, report, smokeTeamName);
+  await testDuplicateTeamName(apiUrl, report, smokeTeamName);
+  await testClosedAssignment(apiUrl, report);
+  await testOversizeDeclared(apiUrl, report);
+  await testOversizeS3Upload(apiUrl, report);
 
   return allPassed;
 }

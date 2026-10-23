@@ -28,7 +28,7 @@ const shellStyle: CSSProperties = {
 };
 
 function AppContent() {
-  const { t, language, setLanguage } = useLanguage();
+  const { t, language, toggleLanguage } = useLanguage();
   const { mode, toggleMode } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
@@ -67,8 +67,8 @@ function AppContent() {
         }}
         utilities={[
           {
-            type: 'menu-dropdown',
-            text: language === 'en' ? 'English (EN)' : 'Tiếng Việt (VN)',
+            type: 'button',
+            text: language === 'en' ? 'Tiếng Việt' : 'English',
             iconSvg: (
               <svg
                 width="16"
@@ -85,16 +85,9 @@ function AppContent() {
                 <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
               </svg>
             ),
-            ariaLabel: language === 'en' ? 'Language: English' : 'Ngôn ngữ: Tiếng Việt',
-            disableTextCollapse: true,
-            items: [
-              { id: 'en', text: 'English (EN)', disabled: language === 'en' },
-              { id: 'vi', text: 'Tiếng Việt (VN)', disabled: language === 'vi' },
-            ],
-            onItemClick: ({ detail }) => {
-              if (detail.id === 'en' || detail.id === 'vi') {
-                setLanguage(detail.id);
-              }
+            ariaLabel: language === 'en' ? 'Chuyển sang Tiếng Việt' : 'Switch to English',
+            onClick: () => {
+              toggleLanguage();
             },
           },
           {

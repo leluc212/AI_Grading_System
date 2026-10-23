@@ -20,6 +20,8 @@ export interface QuickGradingStackProps extends StackProps {
 }
 
 export class QuickGradingStack extends Stack {
+  public readonly adminApi: AdminApi;
+
   constructor(scope: Construct, id: string, props: QuickGradingStackProps) {
     super(scope, id, props);
     const { config } = props;
@@ -49,7 +51,7 @@ export class QuickGradingStack extends Stack {
     const auth = new Auth(this, 'Auth', { config });
 
     // Admin API Lambda và các routes quản trị được bảo vệ bởi Cognito JWT (Phase 3.1)
-    const adminApi = new AdminApi(this, 'AdminApi', {
+    this.adminApi = new AdminApi(this, 'AdminApi', {
       config,
       table: database.table,
       bucket: storage.bucket,
@@ -57,7 +59,6 @@ export class QuickGradingStack extends Stack {
       authorizer: auth.authorizer,
       gradingQueue: grading.queue,
     });
-    void adminApi;
 
     new CfnOutput(this, 'ApiUrl', { value: publicApi.api.apiEndpoint });
     new CfnOutput(this, 'BucketName', { value: storage.bucket.bucketName });

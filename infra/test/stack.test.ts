@@ -88,50 +88,56 @@ describe('S3 bucket', () => {
   });
 
   it('bucket policy chặn non-TLS', () => {
-    dev.hasResourceProperties('AWS::S3::BucketPolicy', {
-      PolicyDocument: {
-        Statement: Match.arrayWith([
-          Match.objectLike({
-            Effect: 'Deny',
-            Condition: { Bool: { 'aws:SecureTransport': 'false' } },
-          }),
-        ]),
-      },
-    });
+    expect(() => {
+      dev.hasResourceProperties('AWS::S3::BucketPolicy', {
+        PolicyDocument: {
+          Statement: Match.arrayWith([
+            Match.objectLike({
+              Effect: 'Deny',
+              Condition: { Bool: { 'aws:SecureTransport': 'false' } },
+            }),
+          ]),
+        },
+      });
+    }).not.toThrow();
   });
 
   it('CORS theo context allowedOrigins', () => {
     const t = synth({ allowedOrigins: 'https://grading.example.com' });
-    t.hasResourceProperties('AWS::S3::Bucket', {
-      CorsConfiguration: {
-        CorsRules: [Match.objectLike({ AllowedOrigins: ['https://grading.example.com'] })],
-      },
-    });
+    expect(() => {
+      t.hasResourceProperties('AWS::S3::Bucket', {
+        CorsConfiguration: {
+          CorsRules: [Match.objectLike({ AllowedOrigins: ['https://grading.example.com'] })],
+        },
+      });
+    }).not.toThrow();
   });
 });
 
 describe('DynamoDB', () => {
   it('on-demand, PK/SK, GSI1 ALL, TTL, PITR', () => {
-    dev.hasResourceProperties('AWS::DynamoDB::Table', {
-      TableName: 'QuickGrading-dev',
-      BillingMode: 'PAY_PER_REQUEST',
-      KeySchema: [
-        { AttributeName: 'PK', KeyType: 'HASH' },
-        { AttributeName: 'SK', KeyType: 'RANGE' },
-      ],
-      GlobalSecondaryIndexes: [
-        {
-          IndexName: 'GSI1',
-          KeySchema: [
-            { AttributeName: 'GSI1PK', KeyType: 'HASH' },
-            { AttributeName: 'GSI1SK', KeyType: 'RANGE' },
-          ],
-          Projection: { ProjectionType: 'ALL' },
-        },
-      ],
-      TimeToLiveSpecification: { AttributeName: 'ttl', Enabled: true },
-      PointInTimeRecoverySpecification: { PointInTimeRecoveryEnabled: true },
-    });
+    expect(() => {
+      dev.hasResourceProperties('AWS::DynamoDB::Table', {
+        TableName: 'QuickGrading-dev',
+        BillingMode: 'PAY_PER_REQUEST',
+        KeySchema: [
+          { AttributeName: 'PK', KeyType: 'HASH' },
+          { AttributeName: 'SK', KeyType: 'RANGE' },
+        ],
+        GlobalSecondaryIndexes: [
+          {
+            IndexName: 'GSI1',
+            KeySchema: [
+              { AttributeName: 'GSI1PK', KeyType: 'HASH' },
+              { AttributeName: 'GSI1SK', KeyType: 'RANGE' },
+            ],
+            Projection: { ProjectionType: 'ALL' },
+          },
+        ],
+        TimeToLiveSpecification: { AttributeName: 'ttl', Enabled: true },
+        PointInTimeRecoverySpecification: { PointInTimeRecoveryEnabled: true },
+      });
+    }).not.toThrow();
   });
 
   it('removal: dev Delete, prod Retain (bảng và bucket)', () => {
@@ -168,8 +174,10 @@ describe('Lambda public-api', () => {
   });
 
   it('log retention 14 ngày, không có Custom::LogRetention', () => {
-    dev.hasResourceProperties('AWS::Logs::LogGroup', { RetentionInDays: 14 });
-    dev.resourceCountIs('Custom::LogRetention', 0);
+    expect(() => {
+      dev.hasResourceProperties('AWS::Logs::LogGroup', { RetentionInDays: 14 });
+      dev.resourceCountIs('Custom::LogRetention', 0);
+    }).not.toThrow();
   });
 });
 
@@ -261,18 +269,20 @@ describe('IAM least privilege của public-api', () => {
 
 describe('Phase 2 Grading Pipeline (SQS, Worker, DLQ, Alarms)', () => {
   it('tạo đúng 2 SQS queues: main queue và DLQ', () => {
-    dev.resourceCountIs('AWS::SQS::Queue', 2);
-    dev.hasResourceProperties('AWS::SQS::Queue', {
-      QueueName: 'QuickGrading-dev-grading-queue',
-      VisibilityTimeout: 720,
-      RedrivePolicy: Match.objectLike({
-        maxReceiveCount: 4,
-      }),
-    });
-    dev.hasResourceProperties('AWS::SQS::Queue', {
-      QueueName: 'QuickGrading-dev-grading-dlq',
-      MessageRetentionPeriod: 1209600, // 14 days
-    });
+    expect(() => {
+      dev.resourceCountIs('AWS::SQS::Queue', 2);
+      dev.hasResourceProperties('AWS::SQS::Queue', {
+        QueueName: 'QuickGrading-dev-grading-queue',
+        VisibilityTimeout: 720,
+        RedrivePolicy: Match.objectLike({
+          maxReceiveCount: 4,
+        }),
+      });
+      dev.hasResourceProperties('AWS::SQS::Queue', {
+        QueueName: 'QuickGrading-dev-grading-dlq',
+        MessageRetentionPeriod: 1209600, // 14 days
+      });
+    }).not.toThrow();
   });
 
   it('tạo Lambda grading-worker, grading-dlq-handler và admin-api với cấu hình chuẩn', () => {
@@ -296,44 +306,50 @@ describe('Phase 2 Grading Pipeline (SQS, Worker, DLQ, Alarms)', () => {
   });
 
   it('cấu hình 2 EventSourceMapping với SQS batchSize và maxConcurrency', () => {
-    dev.resourceCountIs('AWS::Lambda::EventSourceMapping', 2);
-    dev.hasResourceProperties('AWS::Lambda::EventSourceMapping', {
-      BatchSize: 1,
-      FunctionResponseTypes: ['ReportBatchItemFailures'],
-      ScalingConfig: {
-        MaximumConcurrency: 2,
-      },
-    });
-    dev.hasResourceProperties('AWS::Lambda::EventSourceMapping', {
-      BatchSize: 1,
-    });
+    expect(() => {
+      dev.resourceCountIs('AWS::Lambda::EventSourceMapping', 2);
+      dev.hasResourceProperties('AWS::Lambda::EventSourceMapping', {
+        BatchSize: 1,
+        FunctionResponseTypes: ['ReportBatchItemFailures'],
+        ScalingConfig: {
+          MaximumConcurrency: 2,
+        },
+      });
+      dev.hasResourceProperties('AWS::Lambda::EventSourceMapping', {
+        BatchSize: 1,
+      });
+    }).not.toThrow();
   });
 
   it('cấu hình CloudWatch Alarms cho DLQ messages và Worker errors', () => {
-    dev.hasResourceProperties('AWS::CloudWatch::Alarm', {
-      AlarmName: 'QuickGrading-dev-grading-dlq-messages',
-      ComparisonOperator: 'GreaterThanOrEqualToThreshold',
-      Threshold: 1,
-      EvaluationPeriods: 1,
-    });
-    dev.hasResourceProperties('AWS::CloudWatch::Alarm', {
-      AlarmName: 'QuickGrading-dev-grading-worker-errors',
-      ComparisonOperator: 'GreaterThanOrEqualToThreshold',
-      Threshold: 1,
-      EvaluationPeriods: 1,
-    });
+    expect(() => {
+      dev.hasResourceProperties('AWS::CloudWatch::Alarm', {
+        AlarmName: 'QuickGrading-dev-grading-dlq-messages',
+        ComparisonOperator: 'GreaterThanOrEqualToThreshold',
+        Threshold: 1,
+        EvaluationPeriods: 1,
+      });
+      dev.hasResourceProperties('AWS::CloudWatch::Alarm', {
+        AlarmName: 'QuickGrading-dev-grading-worker-errors',
+        ComparisonOperator: 'GreaterThanOrEqualToThreshold',
+        Threshold: 1,
+        EvaluationPeriods: 1,
+      });
+    }).not.toThrow();
   });
 });
 
 describe('HTTP API', () => {
   it('HTTP API + CORS origin theo context và headers authorization', () => {
-    dev.hasResourceProperties('AWS::ApiGatewayV2::Api', {
-      ProtocolType: 'HTTP',
-      CorsConfiguration: Match.objectLike({
-        AllowOrigins: ['http://localhost:5173', 'http://localhost:5174'],
-        AllowHeaders: ['content-type', 'authorization'],
-      }),
-    });
+    expect(() => {
+      dev.hasResourceProperties('AWS::ApiGatewayV2::Api', {
+        ProtocolType: 'HTTP',
+        CorsConfiguration: Match.objectLike({
+          AllowOrigins: ['http://localhost:5173', 'http://localhost:5174'],
+          AllowHeaders: ['content-type', 'authorization'],
+        }),
+      });
+    }).not.toThrow();
   });
 
   it('đúng các route public (5) và các route admin có bảo vệ', () => {
@@ -401,46 +417,54 @@ describe('HTTP API', () => {
 
 describe('Phase 3.1 Cognito & Admin Auth', () => {
   it('tạo UserPool với AllowAdminCreateUserOnly = true (self-signup tắt)', () => {
-    dev.resourceCountIs('AWS::Cognito::UserPool', 1);
-    dev.hasResourceProperties('AWS::Cognito::UserPool', {
-      UserPoolName: 'QuickGrading-dev-admins',
-      AdminCreateUserConfig: {
-        AllowAdminCreateUserOnly: true,
-      },
-      AliasAttributes: ['email'],
-    });
+    expect(() => {
+      dev.resourceCountIs('AWS::Cognito::UserPool', 1);
+      dev.hasResourceProperties('AWS::Cognito::UserPool', {
+        UserPoolName: 'QuickGrading-dev-admins',
+        AdminCreateUserConfig: {
+          AllowAdminCreateUserOnly: true,
+        },
+        AliasAttributes: ['email'],
+      });
+    }).not.toThrow();
   });
 
   it('tạo UserPoolClient không secret cho SPA web admin', () => {
-    dev.resourceCountIs('AWS::Cognito::UserPoolClient', 1);
-    dev.hasResourceProperties('AWS::Cognito::UserPoolClient', {
-      ClientName: 'QuickGrading-dev-admin-web',
-      GenerateSecret: false,
-      ExplicitAuthFlows: [
-        'ALLOW_USER_PASSWORD_AUTH',
-        'ALLOW_USER_SRP_AUTH',
-        'ALLOW_REFRESH_TOKEN_AUTH',
-      ],
-    });
+    expect(() => {
+      dev.resourceCountIs('AWS::Cognito::UserPoolClient', 1);
+      dev.hasResourceProperties('AWS::Cognito::UserPoolClient', {
+        ClientName: 'QuickGrading-dev-admin-web',
+        GenerateSecret: false,
+        ExplicitAuthFlows: [
+          'ALLOW_USER_PASSWORD_AUTH',
+          'ALLOW_USER_SRP_AUTH',
+          'ALLOW_REFRESH_TOKEN_AUTH',
+        ],
+      });
+    }).not.toThrow();
   });
 
   it('tạo HttpJwtAuthorizer trên API Gateway v2 liên kết UserPool', () => {
-    dev.resourceCountIs('AWS::ApiGatewayV2::Authorizer', 1);
-    dev.hasResourceProperties('AWS::ApiGatewayV2::Authorizer', {
-      AuthorizerType: 'JWT',
-      IdentitySource: ['$request.header.Authorization'],
-    });
+    expect(() => {
+      dev.resourceCountIs('AWS::ApiGatewayV2::Authorizer', 1);
+      dev.hasResourceProperties('AWS::ApiGatewayV2::Authorizer', {
+        AuthorizerType: 'JWT',
+        IdentitySource: ['$request.header.Authorization'],
+      });
+    }).not.toThrow();
   });
 });
 
 describe('Monitoring', () => {
   it('1 topic, 1 subscription email mặc định', () => {
-    dev.resourceCountIs('AWS::SNS::Topic', 1);
-    dev.resourceCountIs('AWS::SNS::Subscription', 1);
-    dev.hasResourceProperties('AWS::SNS::Subscription', {
-      Protocol: 'email',
-      Endpoint: 'swat.lucle@gmail.com',
-    });
+    expect(() => {
+      dev.resourceCountIs('AWS::SNS::Topic', 1);
+      dev.resourceCountIs('AWS::SNS::Subscription', 1);
+      dev.hasResourceProperties('AWS::SNS::Subscription', {
+        Protocol: 'email',
+        Endpoint: 'swat.lucle@gmail.com',
+      });
+    }).not.toThrow();
   });
 
   it('2 email -> 2 subscription, budget có 2 subscriber mỗi ngưỡng', () => {
@@ -480,17 +504,19 @@ describe('Monitoring', () => {
 
   it('alarm 5xx -> SNS', () => {
     const [topicId] = only(dev.findResources('AWS::SNS::Topic'));
-    dev.hasResourceProperties('AWS::CloudWatch::Alarm', {
-      Namespace: 'AWS/ApiGateway',
-      MetricName: '5xx',
-      Statistic: 'Sum',
-      Period: 300,
-      Threshold: 1,
-      ComparisonOperator: 'GreaterThanOrEqualToThreshold',
-      TreatMissingData: 'notBreaching',
-      Dimensions: Match.arrayWith([{ Name: 'Stage', Value: '$default' }]),
-      AlarmActions: [{ Ref: topicId }],
-    });
+    expect(() => {
+      dev.hasResourceProperties('AWS::CloudWatch::Alarm', {
+        Namespace: 'AWS/ApiGateway',
+        MetricName: '5xx',
+        Statistic: 'Sum',
+        Period: 300,
+        Threshold: 1,
+        ComparisonOperator: 'GreaterThanOrEqualToThreshold',
+        TreatMissingData: 'notBreaching',
+        Dimensions: Match.arrayWith([{ Name: 'Stage', Value: '$default' }]),
+        AlarmActions: [{ Ref: topicId }],
+      });
+    }).not.toThrow();
   });
 
   it('> 10 email -> synth lỗi', () => {
@@ -501,20 +527,24 @@ describe('Monitoring', () => {
 
 describe('Tags và Outputs', () => {
   it('bucket, bảng, function có tag Project=QuickGrading', () => {
-    for (const type of ['AWS::S3::Bucket', 'AWS::DynamoDB::Table', 'AWS::Lambda::Function']) {
-      dev.hasResourceProperties(type, {
-        Tags: Match.arrayWith([{ Key: 'Project', Value: 'QuickGrading' }]),
-      });
-    }
+    expect(() => {
+      for (const type of ['AWS::S3::Bucket', 'AWS::DynamoDB::Table', 'AWS::Lambda::Function']) {
+        dev.hasResourceProperties(type, {
+          Tags: Match.arrayWith([{ Key: 'Project', Value: 'QuickGrading' }]),
+        });
+      }
+    }).not.toThrow();
   });
 
   it('có output ApiUrl, BucketName, TableName, GradingQueueUrl, GradingDlqUrl, UserPoolId, UserPoolClientId', () => {
-    dev.hasOutput('ApiUrl', {});
-    dev.hasOutput('BucketName', {});
-    dev.hasOutput('TableName', {});
-    dev.hasOutput('GradingQueueUrl', {});
-    dev.hasOutput('GradingDlqUrl', {});
-    dev.hasOutput('UserPoolId', {});
-    dev.hasOutput('UserPoolClientId', {});
+    expect(() => {
+      dev.hasOutput('ApiUrl', {});
+      dev.hasOutput('BucketName', {});
+      dev.hasOutput('TableName', {});
+      dev.hasOutput('GradingQueueUrl', {});
+      dev.hasOutput('GradingDlqUrl', {});
+      dev.hasOutput('UserPoolId', {});
+      dev.hasOutput('UserPoolClientId', {});
+    }).not.toThrow();
   });
 });

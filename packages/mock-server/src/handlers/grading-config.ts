@@ -21,6 +21,39 @@ function errorResponse(error: DomainError) {
 
 const VALID_MODES: GradingMode[] = ['RUBRIC', 'PROMPT', 'HYBRID'];
 
+function validateGradingConfigInput(
+  mode: unknown,
+  rawPrompt: unknown,
+): {
+  validMode: GradingMode;
+  systemPrompt?: string;
+} {
+  if (typeof mode !== 'string' || !VALID_MODES.includes(mode as GradingMode)) {
+    throw new ValidationError(`mode phải là một trong: ${VALID_MODES.join(', ')}.`, 'mode');
+  }
+  const validMode = mode as GradingMode;
+
+  const isPromptMode = validMode === 'PROMPT' || validMode === 'HYBRID';
+  const hasPrompt = typeof rawPrompt === 'string' && rawPrompt.trim().length > 0;
+
+  if (isPromptMode && !hasPrompt) {
+    throw new ValidationError(
+      `systemPrompt là bắt buộc khi chế độ chấm là ${validMode}.`,
+      'systemPrompt',
+    );
+  }
+
+  let systemPrompt: string | undefined;
+  if (typeof rawPrompt === 'string') {
+    if (rawPrompt.length > 8000) {
+      throw new ValidationError('systemPrompt không được vượt quá 8.000 ký tự.', 'systemPrompt');
+    }
+    systemPrompt = rawPrompt;
+  }
+
+  return { validMode, systemPrompt };
+}
+
 export const gradingConfigHandlers = [
   // GET /api/grading-config/active
   http.get('*/api/grading-config/active', () => {
@@ -40,33 +73,7 @@ export const gradingConfigHandlers = [
   http.post('*/api/grading-config', async ({ request }) => {
     try {
       const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
-      const mode = body.mode as GradingMode | undefined;
-
-      if (!mode || !VALID_MODES.includes(mode)) {
-        throw new ValidationError(`mode phải là một trong: ${VALID_MODES.join(', ')}.`, 'mode');
-      }
-
-      const rawPrompt = body.systemPrompt;
-      if (
-        (mode === 'PROMPT' || mode === 'HYBRID') &&
-        (typeof rawPrompt !== 'string' || rawPrompt.trim().length === 0)
-      ) {
-        throw new ValidationError(
-          `systemPrompt là bắt buộc khi chế độ chấm là ${mode}.`,
-          'systemPrompt',
-        );
-      }
-
-      let systemPrompt: string | undefined;
-      if (typeof rawPrompt === 'string') {
-        if (rawPrompt.length > 8000) {
-          throw new ValidationError(
-            'systemPrompt không được vượt quá 8.000 ký tự.',
-            'systemPrompt',
-          );
-        }
-        systemPrompt = rawPrompt;
-      }
+      const { validMode, systemPrompt } = validateGradingConfigInput(body.mode, body.systemPrompt);
 
       const db = getDb();
       const maxVersion = db.gradingConfigs.reduce((max, c) => Math.max(max, c.version), 0);
@@ -81,7 +88,7 @@ export const gradingConfigHandlers = [
       const newConfig: GradingConfig = {
         configId: 'default',
         version: newVersion,
-        mode,
+        mode: validMode,
         systemPrompt,
         model:
           typeof body.model === 'string' && body.model.trim().length > 0
