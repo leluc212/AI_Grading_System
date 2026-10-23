@@ -221,12 +221,16 @@ describe('TeamsDashboardPage - Chấm hàng loạt (Batch Grading)', () => {
 
     const batchButton = screen.getByRole('button', { name: /Chấm các nhóm đã chọn/ });
     expect(batchButton).toBeDefined();
-    expect(batchButton.getAttribute('aria-disabled') === 'true' || batchButton.hasAttribute('disabled')).toBe(true);
+    expect(
+      batchButton.getAttribute('aria-disabled') === 'true' || batchButton.hasAttribute('disabled'),
+    ).toBe(true);
   });
 
   it('chọn nhóm và gọi triggerGrading tuần tự cho các nhóm đã chọn', async () => {
     const user = userEvent.setup();
-    vi.mocked(gradingApi.triggerGrading).mockResolvedValue(makeGradingResult({ teamId: 't-da-cham' }));
+    vi.mocked(gradingApi.triggerGrading).mockResolvedValue(
+      makeGradingResult({ teamId: 't-da-cham' }),
+    );
 
     renderAppAt('/assignments/a-1/teams');
     await screen.findByText('Nhóm Đã Chấm');
@@ -288,4 +292,3 @@ describe('TeamsDashboardPage - sắp xếp theo Điểm', () => {
     expect(screen.getByText('Nhóm Đã Chấm')).toBeDefined();
   });
 });
-
