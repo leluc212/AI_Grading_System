@@ -170,10 +170,7 @@ function AppContent() {
                       <circle cx="12" cy="7" r="4" />
                     </svg>
                   ),
-                  items: [
-                    { id: 'user-email', text: user.email, disabled: true },
-                    { id: 'signout', text: t('navLogout') },
-                  ],
+                  items: [{ id: 'signout', text: t('navLogout') }],
                   onItemClick: (event: { detail: { id: string } }) => {
                     if (event.detail.id === 'signout') {
                       logout();
