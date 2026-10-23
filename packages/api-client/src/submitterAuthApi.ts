@@ -7,7 +7,7 @@ import type {
   RecordLoginLogRequest,
   SubmitterIdentity,
 } from '@quick-grading/shared-types';
-import { apiFetchJson } from './http.js';
+import { apiFetch } from './http.js';
 
 export interface SubmitterCognitoConfig {
   userPoolClientId: string;
@@ -247,14 +247,14 @@ export const submitterAuthApi = {
     req: RecordLoginLogRequest,
     token?: string,
   ): Promise<{ success: boolean; logId: string }> {
-    return apiFetchJson<{ success: boolean; logId: string }>(
-      '/api/auth/submitter-login-log',
-      'POST',
-      req,
-      {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    return apiFetch<{ success: boolean; logId: string }>('/api/auth/submitter-login-log', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-    );
+      body: JSON.stringify(req),
+    });
   },
 
   /** Truy vấn danh sách nhật ký đăng nhập (Dành cho trang Admin) */
@@ -267,6 +267,6 @@ export const submitterAuthApi = {
     if (params?.nextToken) query.set('nextToken', params.nextToken);
     const qs = query.toString();
     const endpoint = `/api/admin/login-logs${qs ? `?${qs}` : ''}`;
-    return apiFetchJson<ListLoginLogsResponse>(endpoint, 'GET');
+    return apiFetch<ListLoginLogsResponse>(endpoint);
   },
 };
