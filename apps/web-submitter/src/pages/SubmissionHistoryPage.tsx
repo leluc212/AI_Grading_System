@@ -85,7 +85,11 @@ export function SubmissionHistoryPage() {
     <SpaceBetween size="l">
       <Header
         variant="h1"
-        description={t('historySubtitle')}
+        description={
+          user?.email
+            ? `${t('historySubtitle')} • ${language === 'vi' ? 'Tài khoản' : 'Account'}: ${user.email}`
+            : t('historySubtitle')
+        }
         actions={
           <SpaceBetween direction="horizontal" size="xs">
             <Button onClick={fetchHistory} iconName="refresh" loading={loading}>
@@ -148,6 +152,11 @@ export function SubmissionHistoryPage() {
             <Box variant="h2">{t('emptyHistoryTitle')}</Box>
             <Box variant="p" color="text-body-secondary" margin={{ bottom: 'l', top: 'xs' }}>
               {t('emptyHistoryDesc')}
+              {user?.email && (
+                <div style={{ marginTop: '4px', fontWeight: 500 }}>
+                  ({language === 'vi' ? 'Tài khoản' : 'Account'}: {user.email})
+                </div>
+              )}
             </Box>
             <Button variant="primary" onClick={() => navigate('/')}>
               {t('btnBrowseAssignments')}

@@ -125,7 +125,16 @@ export function SubmitterAuthProvider({ children }: { readonly children: ReactNo
 export function useSubmitterAuth() {
   const context = useContext(SubmitterAuthContext);
   if (!context) {
-    throw new Error('useSubmitterAuth phải được sử dụng bên trong SubmitterAuthProvider');
+    return {
+      user: null,
+      token: null,
+      isAuthenticated: false,
+      isLoading: false,
+      loginWithGoogle: async () => {},
+      loginWithMockGoogle: async () => {},
+      refreshSession: () => {},
+      logout: () => {},
+    };
   }
   return context;
 }
