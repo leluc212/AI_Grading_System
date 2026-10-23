@@ -69,6 +69,7 @@ export const TRANSLATIONS = {
     studentCodePlaceholder: 'STU12345',
     btnAddMember: '+ Add Student',
     btnRemoveMember: 'Remove',
+    emptyMembers: 'No members added yet. Click "+ Add Student" to add.',
     mdFileLabel: 'Project Report File (.md)',
     mdFileDesc: 'Markdown file containing your team presentation and project report.',
     xmlFileLabel: 'Architecture/Project File (.xml)',
@@ -79,6 +80,11 @@ export const TRANSLATIONS = {
     assignmentClosedHeader: 'Assignment Closed',
     assignmentClosedError: 'This assignment is closed and no longer accepting submissions.',
     btnChooseOther: 'Choose another assignment',
+    fileUploadButton: 'Choose file',
+    errorLabel: 'Error',
+    warningLabel: 'Warning',
+    limitShowFewer: 'Show fewer',
+    limitShowMore: 'Show more',
 
     // Success Page (Digital Receipt)
     successTitle: 'Submission Confirmed',
@@ -143,7 +149,7 @@ export const TRANSLATIONS = {
     teamNameLabel: 'Tên nhóm',
     teamNameDesc:
       'Tên nhóm phải khác các nhóm đã nộp trong cùng đợt chấm này. Nếu nhóm bạn đã được giảng viên mở khoá nộp lại, hãy nhập đúng tên nhóm cũ để nộp bản mới.',
-    teamNamePlaceholder: 'Ví dụ: Nhóm Rồng Vàng',
+    teamNamePlaceholder: 'Ví dụ: Cloud Rangers',
     membersLabel: 'Thành viên nhóm',
     membersDesc: 'Mỗi nhóm cần ít nhất 1 thành viên. Tên và email là bắt buộc, MSSV tuỳ chọn.',
     studentNameLabel: 'Tên sinh viên',
@@ -154,6 +160,7 @@ export const TRANSLATIONS = {
     studentCodePlaceholder: 'SV001',
     btnAddMember: '+ Thêm sinh viên',
     btnRemoveMember: 'Xoá',
+    emptyMembers: 'Chưa có thành viên nào. Bấm "+ Thêm sinh viên" để thêm.',
     mdFileLabel: 'File bài làm (.md)',
     mdFileDesc: 'File markdown chứa phần trình bày của nhóm.',
     xmlFileLabel: 'File bài làm (.xml)',
@@ -165,6 +172,11 @@ export const TRANSLATIONS = {
     assignmentClosedError:
       'Đợt chấm đã đóng, không thể nộp bài. Vui lòng liên hệ giảng viên nếu nhóm bạn cần nộp muộn.',
     btnChooseOther: 'Chọn đợt chấm khác',
+    fileUploadButton: 'Chọn file',
+    errorLabel: 'Lỗi',
+    warningLabel: 'Cảnh báo',
+    limitShowFewer: 'Hiện ít hơn',
+    limitShowMore: 'Hiện thêm',
 
     // Success Page
     successTitle: 'Nộp bài thành công',
@@ -194,31 +206,27 @@ interface LanguageContextValue {
   t: (key: TranslationKey) => string;
 }
 
-const STORAGE_KEY = 'fcaj-portal-language';
+const STORAGE_KEY = 'fcaj-portal-lang-v2';
 
 const LanguageContext = createContext<LanguageContextValue>({
-  language: 'en',
+  language: 'vi',
   toggleLanguage: () => {},
   setLanguage: () => {},
-  t: (key: TranslationKey) => TRANSLATIONS.en[key] || key,
+  t: (key: TranslationKey) => TRANSLATIONS.vi[key] || key,
 });
 
 export function LanguageProvider({ children }: { readonly children: ReactNode }) {
-  // Mặc định ngôn ngữ cho người dùng là ENG theo yêu cầu; ở môi trường test giữ 'vi' để tương thích test suite
+  // Mặc định ngôn ngữ Tiếng Việt (VI), hỗ trợ lưu trữ và chuyển đổi linh hoạt
   const [language, setLanguage] = useState<Language>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved === 'en' || saved === 'vi') {
         return saved;
       }
-      // Kiểm tra môi trường test
-      if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'test') {
-        return 'vi';
-      }
     } catch {
       // Fallback
     }
-    return 'en';
+    return 'vi';
   });
 
   useEffect(() => {
@@ -239,7 +247,7 @@ export function LanguageProvider({ children }: { readonly children: ReactNode })
 
   const t = useCallback(
     (key: TranslationKey): string => {
-      return TRANSLATIONS[language]?.[key] ?? TRANSLATIONS.en[key] ?? (key as string);
+      return TRANSLATIONS[language]?.[key] ?? TRANSLATIONS.vi[key] ?? (key as string);
     },
     [language],
   );

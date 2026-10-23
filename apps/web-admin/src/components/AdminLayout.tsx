@@ -54,7 +54,7 @@ export function AdminLayout() {
   }, [signOut]);
 
   const breadcrumbs = useMemo(() => {
-    const items = [{ text: 'Console Home', href: '/assignments' }];
+    const items = [{ text: 'Trang chủ', href: '/assignments' }];
     if (location.pathname.startsWith('/assignments/') && location.pathname.endsWith('/teams')) {
       items.push(
         { text: 'Quản lý đợt chấm', href: '/assignments' },

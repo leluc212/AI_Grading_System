@@ -24,6 +24,7 @@ import { useCallback, useMemo } from 'react';
 import type { AttributeEditorProps } from '@cloudscape-design/components/attribute-editor';
 import AttributeEditor from '@cloudscape-design/components/attribute-editor';
 import Input from '@cloudscape-design/components/input';
+import { useLanguage } from '../i18n/LanguageContext';
 import type { MemberDraft, MemberErrorMap } from '../validation';
 import { createEmptyMember } from '../validation';
 
@@ -42,89 +43,147 @@ interface MemberControlProps {
   readonly item: MemberDraft;
   readonly position: number;
   readonly disabled: boolean;
+  readonly placeholder: string;
+  readonly ariaLabel: string;
   readonly onChange: (localId: string, value: string) => void;
 }
 
-function MemberNameControl({ item, position, disabled, onChange }: MemberControlProps) {
+function MemberNameControl({
+  item,
+  disabled,
+  placeholder,
+  ariaLabel,
+  onChange,
+}: MemberControlProps) {
   return (
     <Input
       value={item.memberName}
       disabled={disabled}
-      placeholder="Nguyễn Văn An"
-      ariaLabel={`Tên sinh viên của thành viên thứ ${position.toString()}`}
+      placeholder={placeholder}
+      ariaLabel={ariaLabel}
       onChange={({ detail }) => onChange(item.localId, detail.value)}
     />
   );
 }
 
-function MemberEmailControl({ item, position, disabled, onChange }: MemberControlProps) {
+function MemberEmailControl({
+  item,
+  disabled,
+  placeholder,
+  ariaLabel,
+  onChange,
+}: MemberControlProps) {
   return (
     <Input
       value={item.email}
       disabled={disabled}
       inputMode="email"
-      placeholder="an.nguyen@example.com"
-      ariaLabel={`Email của thành viên thứ ${position.toString()}`}
+      placeholder={placeholder}
+      ariaLabel={ariaLabel}
       onChange={({ detail }) => onChange(item.localId, detail.value)}
     />
   );
 }
 
-function MemberStudentCodeControl({ item, position, disabled, onChange }: MemberControlProps) {
+function MemberStudentCodeControl({
+  item,
+  disabled,
+  placeholder,
+  ariaLabel,
+  onChange,
+}: MemberControlProps) {
   return (
     <Input
       value={item.studentCode}
       disabled={disabled}
-      placeholder="SV001"
-      ariaLabel={`MSSV của thành viên thứ ${position.toString()} (tuỳ chọn)`}
+      placeholder={placeholder}
+      ariaLabel={ariaLabel}
       onChange={({ detail }) => onChange(item.localId, detail.value)}
     />
   );
+}
+
+interface MemberFieldLabels {
+  nameLabel: string;
+  namePlaceholder: string;
+  emailLabel: string;
+  emailPlaceholder: string;
+  codeLabel: string;
+  codePlaceholder: string;
+  isVi: boolean;
 }
 
 function buildMemberDefinitions(
   members: readonly MemberDraft[],
   errors: MemberErrorMap,
   disabled: boolean,
+  labels: MemberFieldLabels,
   handleNameChange: (localId: string, memberName: string) => void,
   handleEmailChange: (localId: string, email: string) => void,
   handleStudentCodeChange: (localId: string, studentCode: string) => void,
 ): AttributeEditorProps.FieldDefinition<MemberDraft>[] {
   return [
     {
-      label: 'Tên sinh viên',
+      label: labels.nameLabel,
       errorText: (item) => errors[item.localId]?.memberName,
-      control: (item) => (
-        <MemberNameControl
-          item={item}
-          position={members.indexOf(item) + 1}
-          disabled={disabled}
-          onChange={handleNameChange}
-        />
-      ),
+      control: (item) => {
+        const pos = members.indexOf(item) + 1;
+        return (
+          <MemberNameControl
+            item={item}
+            position={pos}
+            disabled={disabled}
+            placeholder={labels.namePlaceholder}
+            ariaLabel={
+              labels.isVi
+                ? `Tên sinh viên của thành viên thứ ${pos.toString()}`
+                : `Student name for member ${pos.toString()}`
+            }
+            onChange={handleNameChange}
+          />
+        );
+      },
     },
     {
-      label: 'Email',
+      label: labels.emailLabel,
       errorText: (item) => errors[item.localId]?.email,
-      control: (item) => (
-        <MemberEmailControl
-          item={item}
-          position={members.indexOf(item) + 1}
-          disabled={disabled}
-          onChange={handleEmailChange}
-        />
-      ),
+      control: (item) => {
+        const pos = members.indexOf(item) + 1;
+        return (
+          <MemberEmailControl
+            item={item}
+            position={pos}
+            disabled={disabled}
+            placeholder={labels.emailPlaceholder}
+            ariaLabel={
+              labels.isVi
+                ? `Email của thành viên thứ ${pos.toString()}`
+                : `Email for member ${pos.toString()}`
+            }
+            onChange={handleEmailChange}
+          />
+        );
+      },
     },
     {
-      label: 'MSSV (tuỳ chọn)',
-      control: (item) => (
-        <MemberStudentCodeControl
-          item={item}
-          position={members.indexOf(item) + 1}
-          disabled={disabled}
-          onChange={handleStudentCodeChange}
-        />
-      ),
+      label: labels.codeLabel,
+      control: (item) => {
+        const pos = members.indexOf(item) + 1;
+        return (
+          <MemberStudentCodeControl
+            item={item}
+            position={pos}
+            disabled={disabled}
+            placeholder={labels.codePlaceholder}
+            ariaLabel={
+              labels.isVi
+                ? `MSSV của thành viên thứ ${pos.toString()} (tuỳ chọn)`
+                : `Student ID for member ${pos.toString()} (Optional)`
+            }
+            onChange={handleStudentCodeChange}
+          />
+        );
+      },
     },
   ];
 }
@@ -135,6 +194,9 @@ export function MemberListEditor({
   disabled = false,
   onChange,
 }: MemberListEditorProps) {
+  const { t, language } = useLanguage();
+  const isVi = language === 'vi';
+
   /** Cập nhật 1 field của 1 dòng, giữ nguyên các dòng khác. */
   const updateMember = useCallback(
     (localId: string, patch: Partial<Omit<MemberDraft, 'localId'>>) => {
@@ -179,36 +241,61 @@ export function MemberListEditor({
     [members, onChange],
   );
 
+  const labels = useMemo<MemberFieldLabels>(
+    () => ({
+      nameLabel: t('studentNameLabel'),
+      namePlaceholder: t('studentNamePlaceholder'),
+      emailLabel: t('emailLabel'),
+      emailPlaceholder: t('emailPlaceholder'),
+      codeLabel: t('studentCodeLabel'),
+      codePlaceholder: t('studentCodePlaceholder'),
+      isVi,
+    }),
+    [t, isVi],
+  );
+
   const definitions = useMemo(
     () =>
       buildMemberDefinitions(
         members,
         errors,
         disabled,
+        labels,
         handleNameChange,
         handleEmailChange,
         handleStudentCodeChange,
       ),
-    [members, errors, disabled, handleNameChange, handleEmailChange, handleStudentCodeChange],
+    [
+      members,
+      errors,
+      disabled,
+      labels,
+      handleNameChange,
+      handleEmailChange,
+      handleStudentCodeChange,
+    ],
   );
 
   return (
     <AttributeEditor
       items={members as MemberDraft[]}
-      addButtonText="+ Thêm sinh viên"
-      removeButtonText="Xoá"
+      addButtonText={t('btnAddMember')}
+      removeButtonText={t('btnRemoveMember')}
       onAddButtonClick={addMember}
       onRemoveButtonClick={({ detail }) => removeMember(detail.itemIndex)}
       isItemRemovable={() => members.length > 1}
       removeButtonAriaLabel={(item) => {
         const position = members.indexOf(item) + 1;
         const name = item.memberName.trim();
-        return name.length > 0
-          ? `Xoá thành viên ${name}`
-          : `Xoá thành viên thứ ${position.toString()}`;
+        if (isVi) {
+          return name.length > 0
+            ? `Xoá thành viên ${name}`
+            : `Xoá thành viên thứ ${position.toString()}`;
+        }
+        return name.length > 0 ? `Remove member ${name}` : `Remove member ${position.toString()}`;
       }}
       definition={definitions}
-      empty='Chưa có thành viên nào. Bấm "+ Thêm sinh viên" để thêm.'
+      empty={t('emptyMembers')}
     />
   );
 }

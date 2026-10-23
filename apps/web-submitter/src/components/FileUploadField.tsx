@@ -28,6 +28,7 @@
  */
 import FileUpload from '@cloudscape-design/components/file-upload';
 import FormField from '@cloudscape-design/components/form-field';
+import { useLanguage } from '../i18n/LanguageContext';
 import type { SubmissionFileExtension } from '../validation';
 import { validateSelectedFiles } from '../validation';
 
@@ -43,18 +44,7 @@ export interface FileUploadFieldProps {
   /** Lỗi hiển thị dưới ô; do form truyền xuống. */
   readonly errorText?: string;
   /**
-   * CỐ TÌNH KHÔNG có prop `disabled`: Cloudscape `FileUpload` không hỗ trợ
-   * disable (khác `Input`), nên nếu khai báo ở đây thì đó là prop không có
-   * tác dụng — tệ hơn là không có. Trong lúc form đang gửi request, việc
-   * người dùng đổi file cũng không ảnh hưởng gì vì `FormData` đã được dựng và
-   * gửi đi từ trước.
-   */
-  /**
    * Báo lên form file vừa chọn KÈM lỗi validate (nếu có).
-   *
-   * Gộp 2 thứ vào 1 callback (thay vì `onChange` + `onError` riêng) để form
-   * luôn cập nhật file và lỗi trong cùng 1 lần render — không có khoảnh khắc
-   * state lệch nhau kiểu "đã có file mới nhưng lỗi vẫn của file cũ".
    */
   readonly onChange: (next: { file: File | null; error?: string }) => void;
 }
@@ -67,18 +57,11 @@ export function FileUploadField({
   errorText,
   onChange,
 }: FileUploadFieldProps) {
+  const { t, language } = useLanguage();
+  const isVi = language === 'vi';
+
   return (
-    // `data-testid` trên wrapper: Cloudscape `FileUpload` không nhận
-    // `data-*`, mà `<input type="file">` bên trong bị ẩn. Bọc 1 lớp div cho
-    // test tìm được đúng ô trong 2 ô upload của form.
     <div data-testid={`file-upload-${extension.replace('.', '')}`}>
-      {/*
-        Nhãn + mô tả phải đến từ `FormField`: `FileUpload` CỐ TÌNH không có
-        prop `label`/`description` (nó chỉ nhận `constraintText`/`errorText`),
-        và `FormField` lo phần liên kết nhãn với control cho screen reader.
-        Lỗi thì đặt trên `FileUpload` chứ không phải `FormField` để câu lỗi
-        hiện ngay cạnh danh sách file đã chọn, không bị tách rời khỏi ô.
-      */}
       <FormField label={label} description={description}>
         <FileUpload
           value={value === null ? [] : [value]}
@@ -89,22 +72,26 @@ export function FileUploadField({
               error: validateSelectedFiles(files, extension),
             });
           }}
-          // Nói trước giới hạn để người dùng không phải thử - sai mới biết
-          // (Requirement 2.6, 2.8).
-          constraintText={`Chỉ nhận 1 file ${extension}, kích thước tối đa 5MB.`}
+          constraintText={
+            isVi
+              ? `Chỉ nhận 1 file ${extension}, kích thước tối đa 5MB.`
+              : `Only 1 ${extension} file accepted, max 5MB.`
+          }
           errorText={errorText}
           accept={extension}
           multiple={false}
           showFileSize
           ariaRequired
           i18nStrings={{
-            uploadButtonText: () => 'Chọn file',
-            dropzoneText: () => `Kéo thả file ${extension} vào đây`,
-            removeFileAriaLabel: () => `Xoá file ${extension} đã chọn`,
-            errorIconAriaLabel: 'Lỗi',
-            warningIconAriaLabel: 'Cảnh báo',
-            limitShowFewer: 'Hiện ít hơn',
-            limitShowMore: 'Hiện thêm',
+            uploadButtonText: () => t('fileUploadButton'),
+            dropzoneText: () =>
+              isVi ? `Kéo thả file ${extension} vào đây` : `Drag and drop ${extension} file here`,
+            removeFileAriaLabel: () =>
+              isVi ? `Xoá file ${extension} đã chọn` : `Remove selected ${extension} file`,
+            errorIconAriaLabel: t('errorLabel'),
+            warningIconAriaLabel: t('warningLabel'),
+            limitShowFewer: t('limitShowFewer'),
+            limitShowMore: t('limitShowMore'),
           }}
         />
       </FormField>
