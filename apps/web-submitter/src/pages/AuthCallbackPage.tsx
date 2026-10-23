@@ -13,7 +13,43 @@ import ProgressBar from '@cloudscape-design/components/progress-bar';
 import SpaceBetween from '@cloudscape-design/components/space-between';
 import { useLanguage } from '../i18n/LanguageContext';
 import { submitterAuthApi } from '@quick-grading/api-client';
+import type { SubmitterIdentity } from '@quick-grading/shared-types';
 import { useSubmitterAuth } from '../auth/SubmitterAuthContext';
+
+async function recordAuditSafe(profile: SubmitterIdentity, token: string): Promise<void> {
+  try {
+    await submitterAuthApi.recordLoginAuditLog(
+      {
+        email: profile.email,
+        name: profile.name,
+        userSub: profile.sub,
+        provider: 'Google',
+      },
+      token,
+    );
+  } catch {
+    // Không chặn luồng nếu log gặp lỗi hoặc chưa deploy
+  }
+}
+
+async function resolveAuthSession(
+  idToken: string | null,
+  hashState: string | null,
+  code: string | null,
+  queryState: string | null,
+  isMock: boolean,
+): Promise<{ token: string; profile: SubmitterIdentity }> {
+  if (idToken) {
+    return submitterAuthApi.handleGoogleIdToken(idToken, hashState || undefined);
+  }
+  if (isMock) {
+    return submitterAuthApi.handleAuthCallback('mock-auth-code', queryState || '');
+  }
+  if (code && queryState) {
+    return submitterAuthApi.handleAuthCallback(code, queryState);
+  }
+  throw new Error('Thiếu tham số xác thực từ dịch vụ Google.');
+}
 
 export function AuthCallbackPage() {
   const [searchParams] = useSearchParams();
@@ -27,7 +63,6 @@ export function AuthCallbackPage() {
     let isCancelled = false;
 
     async function processAuth() {
-      // 1. Đọc hash params (từ luồng Google OAuth trực tiếp)
       const rawHash = window.location.hash.startsWith('#')
         ? window.location.hash.substring(1)
         : window.location.hash;
@@ -35,84 +70,22 @@ export function AuthCallbackPage() {
       const idToken = hashParams.get('id_token');
       const hashState = hashParams.get('state');
 
-      // 2. Đọc query params (từ Mock mode hoặc luồng code)
       const code = searchParams.get('code');
       const queryState = searchParams.get('state');
       const isMock = searchParams.get('mock') === 'true';
 
       try {
-        if (idToken) {
-          const { token, profile } = submitterAuthApi.handleGoogleIdToken(
-            idToken,
-            hashState || undefined,
-          );
-          if (isCancelled) return;
-          try {
-            await submitterAuthApi.recordLoginAuditLog(
-              {
-                email: profile.email,
-                name: profile.name,
-                userSub: profile.sub,
-                provider: 'Google',
-              },
-              token,
-            );
-          } catch {
-            // Không chặn luồng nếu log bị trễ
-          }
-          refreshSession();
-          navigate('/', { replace: true });
-          return;
-        }
-
-        if (isMock) {
-          const { token, profile } = await submitterAuthApi.handleAuthCallback(
-            'mock-auth-code',
-            queryState || '',
-          );
-          if (isCancelled) return;
-          try {
-            await submitterAuthApi.recordLoginAuditLog(
-              {
-                email: profile.email,
-                name: profile.name,
-                userSub: profile.sub,
-                provider: 'Google',
-              },
-              token,
-            );
-          } catch {
-            // Không chặn luồng nếu log bị trễ
-          }
-          refreshSession();
-          navigate('/', { replace: true });
-          return;
-        }
-
-        if (code && queryState) {
-          const { token, profile } = await submitterAuthApi.handleAuthCallback(code, queryState);
-          if (isCancelled) return;
-
-          try {
-            await submitterAuthApi.recordLoginAuditLog(
-              {
-                email: profile.email,
-                name: profile.name,
-                userSub: profile.sub,
-                provider: 'Google',
-              },
-              token,
-            );
-          } catch (logErr) {
-            console.warn('[AuthCallback] Ghi log đăng nhập thất bại:', logErr);
-          }
-
-          refreshSession();
-          navigate('/', { replace: true });
-          return;
-        }
-
-        throw new Error('Thiếu tham số xác thực từ dịch vụ Google.');
+        const { token, profile } = await resolveAuthSession(
+          idToken,
+          hashState,
+          code,
+          queryState,
+          isMock,
+        );
+        if (isCancelled) return;
+        await recordAuditSafe(profile, token);
+        refreshSession();
+        navigate('/', { replace: true });
       } catch (err: unknown) {
         if (isCancelled) return;
         const msg = err instanceof Error ? err.message : 'Xác thực tài khoản Google thất bại.';
