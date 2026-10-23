@@ -37,7 +37,6 @@ jobs:
         with:
           # package.json yêu cầu >=18; dùng bản LTS chẵn gần nhất.
           node-version: '20'
-          cache: npm
 
       # `npm ci` thay vì `npm install`: cài đúng theo package-lock.json và
       # fail nếu lock file lệch với package.json, thay vì âm thầm sửa lock.
