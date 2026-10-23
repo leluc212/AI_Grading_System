@@ -45,66 +45,25 @@ function GoogleIcon() {
 function LoginHeader({
   isDark,
   title,
-  subtitle,
 }: {
   readonly isDark: boolean;
   readonly title: string;
-  readonly subtitle: string;
 }) {
-  const badgeBg = isDark ? 'rgba(255, 153, 0, 0.12)' : 'rgba(255, 153, 0, 0.15)';
-  const badgeColor = isDark ? '#ff9900' : '#d97706';
   const headingColor = isDark ? '#f8fafc' : '#0f172a';
-  const subColor = isDark ? '#94a3b8' : '#475569';
 
   return (
-    <div style={{ textAlign: 'center', padding: '24px 20px 12px' }}>
-      <div
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 8,
-          padding: '6px 14px',
-          borderRadius: 20,
-          background: badgeBg,
-          border: '1px solid rgba(255, 153, 0, 0.35)',
-          color: badgeColor,
-          fontSize: '12px',
-          fontWeight: 700,
-          letterSpacing: '0.08em',
-          textTransform: 'uppercase',
-          marginBottom: 16,
-        }}
-      >
-        <span>•</span>
-        <span>AWS First Cloud AI Journey</span>
-        <span>•</span>
-      </div>
-
+    <div style={{ textAlign: 'center', padding: '16px 20px 8px' }}>
       <h2
         style={{
           fontSize: '28px',
           fontWeight: 800,
-          margin: '0 0 10px',
+          margin: 0,
           color: headingColor,
           letterSpacing: '-0.02em',
         }}
       >
         {title}
       </h2>
-
-      <p
-        style={{
-          fontSize: '14px',
-          lineHeight: 1.6,
-          color: subColor,
-          margin: 0,
-          maxWidth: 520,
-          marginLeft: 'auto',
-          marginRight: 'auto',
-        }}
-      >
-        {subtitle}
-      </p>
     </div>
   );
 }
@@ -199,7 +158,7 @@ export function LoginPage() {
     <div style={{ maxWidth: 640, margin: '24px auto 60px' }}>
       <SpaceBetween size="l">
         {/* Banner tiêu đề trang login */}
-        <LoginHeader isDark={isDark} title={t('loginTitle')} subtitle={t('loginSubtitle')} />
+        <LoginHeader isDark={isDark} title={t('loginTitle')} />
 
         {/* Khung đăng nhập chính */}
         <div
