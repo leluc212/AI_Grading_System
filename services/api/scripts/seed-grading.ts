@@ -94,8 +94,10 @@ export async function run() {
 }
 
 if (process.argv[1]?.endsWith('seed-grading.ts')) {
-  run().catch((err) => {
+  try {
+    await run();
+  } catch (err) {
     console.error('[seed-grading] Thất bại:', err);
     process.exit(1);
-  });
+  }
 }

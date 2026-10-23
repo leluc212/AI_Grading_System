@@ -187,9 +187,9 @@ describe('IAM least privilege của public-api', () => {
     const [, apiFn] = Object.entries(fns).find(([id]) => id.includes('PublicApi'))!;
     const roleRef = (apiFn.Properties.Role as { 'Fn::GetAtt': [string, string] })['Fn::GetAtt'][0];
     const role = t.findResources('AWS::IAM::Role')[roleRef];
-    expect((role as { Properties: Record<string, unknown> }).Properties.ManagedPolicyArns).toBe(
-      undefined,
-    );
+    expect(
+      (role as { Properties: Record<string, unknown> }).Properties.ManagedPolicyArns,
+    ).toBeUndefined();
     const policies = Object.values(t.findResources('AWS::IAM::Policy')).filter((p) =>
       JSON.stringify(p.Properties.Roles).includes(roleRef),
     );

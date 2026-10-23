@@ -72,19 +72,22 @@ async function uploadToPresignedPost(
     throw new Error(`Chỉ hỗ trợ giao thức HTTP/HTTPS: ${targetUrl.protocol}`);
   }
 
-  return fetch(targetUrl.toString(), {
+  return await fetch(targetUrl.toString(), {
     method: 'POST',
     body: formData,
   });
 }
 
-type ReportFn = (pass: boolean, name: string, detail: string) => void;
+interface SmokeReporter {
+  pass(name: string, detail: string): void;
+  fail(name: string, detail: string): void;
+}
 
-async function testAssignments(apiUrl: string, report: ReportFn): Promise<void> {
+async function testAssignments(apiUrl: string, report: SmokeReporter): Promise<void> {
   try {
     const res = await fetch(`${apiUrl}/api/assignments`);
     if (!res.ok) {
-      report(false, 'Case 1: GET /api/assignments', `HTTP ${res.status}`);
+      report.fail('Case 1: GET /api/assignments', `HTTP ${res.status}`);
       return;
     }
     const data = (await res.json()) as Array<{ assignmentId: string; status: string }>;
@@ -93,18 +96,18 @@ async function testAssignments(apiUrl: string, report: ReportFn): Promise<void> 
       (a) => a.assignmentId === ASSIGNMENT_CLOSED_ID && a.status === 'CLOSED',
     );
     if (hasOpen && hasClosed) {
-      report(true, 'Case 1: GET /api/assignments', `HTTP ${res.status}, tìm thấy cả 2 đợt`);
+      report.pass('Case 1: GET /api/assignments', `HTTP ${res.status}, tìm thấy cả 2 đợt`);
     } else {
-      report(false, 'Case 1: GET /api/assignments', 'Không tìm thấy đủ 2 đợt đã seed');
+      report.fail('Case 1: GET /api/assignments', 'Không tìm thấy đủ 2 đợt đã seed');
     }
   } catch (err) {
-    report(false, 'Case 1: GET /api/assignments', err instanceof Error ? err.message : String(err));
+    report.fail('Case 1: GET /api/assignments', err instanceof Error ? err.message : String(err));
   }
 }
 
 async function testNewSubmission(
   apiUrl: string,
-  report: ReportFn,
+  report: SmokeReporter,
   smokeTeamName: string,
 ): Promise<void> {
   try {
@@ -134,7 +137,7 @@ async function testNewSubmission(
     });
 
     if (createRes.status !== 201) {
-      report(false, 'Case 2: Nộp bài mới', `Tạo submission thất bại với HTTP ${createRes.status}`);
+      report.fail('Case 2: Nộp bài mới', `Tạo submission thất bại với HTTP ${createRes.status}`);
       return;
     }
 
@@ -147,8 +150,7 @@ async function testNewSubmission(
     );
 
     if (!uploadMdRes.ok || !uploadXmlRes.ok) {
-      report(
-        false,
+      report.fail(
         'Case 2: Nộp bài mới',
         `Upload S3 thất bại: md HTTP ${uploadMdRes.status}, xml HTTP ${uploadXmlRes.status}`,
       );
@@ -167,7 +169,7 @@ async function testNewSubmission(
     });
 
     if (finalizeRes.status !== 201) {
-      report(false, 'Case 2: Nộp bài mới', `Finalize thất bại với HTTP ${finalizeRes.status}`);
+      report.fail('Case 2: Nộp bài mới', `Finalize thất bại với HTTP ${finalizeRes.status}`);
       return;
     }
 
@@ -175,22 +177,21 @@ async function testNewSubmission(
     const statusOk = finalData.team?.status === 'SUBMITTED';
     const filesOk = Array.isArray(finalData.files) && finalData.files.length === 2;
     if (statusOk && filesOk) {
-      report(
-        true,
+      report.pass(
         'Case 2: Nộp bài mới',
         `HTTP 201, teamId=${finalData.team.teamId}, sid=${createData.submissionId}`,
       );
     } else {
-      report(false, 'Case 2: Nộp bài mới', 'Dữ liệu finalize không đúng trạng thái kỳ vọng');
+      report.fail('Case 2: Nộp bài mới', 'Dữ liệu finalize không đúng trạng thái kỳ vọng');
     }
   } catch (err) {
-    report(false, 'Case 2: Nộp bài mới', err instanceof Error ? err.message : String(err));
+    report.fail('Case 2: Nộp bài mới', err instanceof Error ? err.message : String(err));
   }
 }
 
 async function testDuplicateTeamName(
   apiUrl: string,
-  report: ReportFn,
+  report: SmokeReporter,
   smokeTeamName: string,
 ): Promise<void> {
   try {
@@ -212,20 +213,19 @@ async function testDuplicateTeamName(
 
     const dupBody = (await dupRes.json().catch(() => ({}))) as { code?: string };
     if (dupRes.status === 409 && dupBody.code === 'TEAM_NAME_CONFLICT') {
-      report(true, 'Case 3: Trùng tên nhóm', `HTTP 409, code: ${dupBody.code}`);
+      report.pass('Case 3: Trùng tên nhóm', `HTTP 409, code: ${dupBody.code}`);
     } else {
-      report(
-        false,
+      report.fail(
         'Case 3: Trùng tên nhóm',
         `Kỳ vọng 409 TEAM_NAME_CONFLICT, nhận HTTP ${dupRes.status}`,
       );
     }
   } catch (err) {
-    report(false, 'Case 3: Trùng tên nhóm', err instanceof Error ? err.message : String(err));
+    report.fail('Case 3: Trùng tên nhóm', err instanceof Error ? err.message : String(err));
   }
 }
 
-async function testClosedAssignment(apiUrl: string, report: ReportFn): Promise<void> {
+async function testClosedAssignment(apiUrl: string, report: SmokeReporter): Promise<void> {
   try {
     const closedPayload = {
       assignmentId: ASSIGNMENT_CLOSED_ID,
@@ -245,20 +245,19 @@ async function testClosedAssignment(apiUrl: string, report: ReportFn): Promise<v
 
     const closedBody = (await closedRes.json().catch(() => ({}))) as { code?: string };
     if (closedRes.status === 409 && closedBody.code === 'ASSIGNMENT_CLOSED') {
-      report(true, 'Case 4: Nộp vào đợt đã đóng', `HTTP 409, code: ${closedBody.code}`);
+      report.pass('Case 4: Nộp vào đợt đã đóng', `HTTP 409, code: ${closedBody.code}`);
     } else {
-      report(
-        false,
+      report.fail(
         'Case 4: Nộp vào đợt đã đóng',
         `Kỳ vọng 409 ASSIGNMENT_CLOSED, nhận HTTP ${closedRes.status}`,
       );
     }
   } catch (err) {
-    report(false, 'Case 4: Nộp vào đợt đã đóng', err instanceof Error ? err.message : String(err));
+    report.fail('Case 4: Nộp vào đợt đã đóng', err instanceof Error ? err.message : String(err));
   }
 }
 
-async function testOversizeDeclared(apiUrl: string, report: ReportFn): Promise<void> {
+async function testOversizeDeclared(apiUrl: string, report: SmokeReporter): Promise<void> {
   try {
     const oversizePayload = {
       assignmentId: ASSIGNMENT_OPEN_ID,
@@ -278,24 +277,22 @@ async function testOversizeDeclared(apiUrl: string, report: ReportFn): Promise<v
 
     const body = (await res.json().catch(() => ({}))) as { code?: string };
     if (res.status === 400 && body.code === 'VALIDATION_ERROR') {
-      report(true, 'Case 5: Khai báo kích thước file vượt 5MB', `HTTP 400, code: ${body.code}`);
+      report.pass('Case 5: Khai báo kích thước file vượt 5MB', `HTTP 400, code: ${body.code}`);
     } else {
-      report(
-        false,
+      report.fail(
         'Case 5: Khai báo kích thước file vượt 5MB',
         `Kỳ vọng 400 VALIDATION_ERROR, nhận HTTP ${res.status}`,
       );
     }
   } catch (err) {
-    report(
-      false,
+    report.fail(
       'Case 5: Khai báo kích thước file vượt 5MB',
       err instanceof Error ? err.message : String(err),
     );
   }
 }
 
-async function testOversizeS3Upload(apiUrl: string, report: ReportFn): Promise<void> {
+async function testOversizeS3Upload(apiUrl: string, report: SmokeReporter): Promise<void> {
   try {
     const payload = {
       assignmentId: ASSIGNMENT_OPEN_ID,
@@ -314,8 +311,7 @@ async function testOversizeS3Upload(apiUrl: string, report: ReportFn): Promise<v
     });
 
     if (createRes.status !== 201) {
-      report(
-        false,
+      report.fail(
         'Case 6: S3 từ chối file > 5MB',
         `Tạo submission thất bại với HTTP ${createRes.status}`,
       );
@@ -329,16 +325,12 @@ async function testOversizeS3Upload(apiUrl: string, report: ReportFn): Promise<v
     const s3Res = await uploadToPresignedPost(createData.uploads.md, oversizeBlob, 'report.md');
 
     if (!s3Res.ok) {
-      report(true, 'Case 6: S3 từ chối file > 5MB', `HTTP ${s3Res.status} từ S3`);
+      report.pass('Case 6: S3 từ chối file > 5MB', `HTTP ${s3Res.status} từ S3`);
     } else {
-      report(false, 'Case 6: S3 từ chối file > 5MB', 'S3 không từ chối file 6MB');
+      report.fail('Case 6: S3 từ chối file > 5MB', 'S3 không từ chối file 6MB');
     }
   } catch (err) {
-    report(
-      false,
-      'Case 6: S3 từ chối file > 5MB',
-      err instanceof Error ? err.message : String(err),
-    );
+    report.fail('Case 6: S3 từ chối file > 5MB', err instanceof Error ? err.message : String(err));
   }
 }
 
@@ -346,13 +338,18 @@ export async function runSmokeTest(apiUrl: string): Promise<boolean> {
   console.log(`[smoke-submit] Bắt đầu smoke test với API: ${apiUrl}`);
   let allPassed = true;
 
-  const report: ReportFn = (pass, name, detail) => {
-    if (pass) {
-      console.log(`PASS ${name} (${detail})`);
-    } else {
-      console.error(`FAIL ${name} (${detail})`);
+  const report: SmokeReporter = {
+    pass(name: string, detail: string) {
+      const cleanName = name.replace(/[\r\n]/g, '');
+      const cleanDetail = detail.replace(/[\r\n]/g, '');
+      console.log(`PASS ${cleanName} (${cleanDetail})`);
+    },
+    fail(name: string, detail: string) {
+      const cleanName = name.replace(/[\r\n]/g, '');
+      const cleanDetail = detail.replace(/[\r\n]/g, '');
+      console.error(`FAIL ${cleanName} (${cleanDetail})`);
       allPassed = false;
-    }
+    },
   };
 
   const smokeTeamName = `Smoke ${ulid()}`;
@@ -369,7 +366,7 @@ export async function runSmokeTest(apiUrl: string): Promise<boolean> {
 
 // Chạy trực tiếp khi file được gọi
 const isDirectRun =
-  import.meta.url === `file:///${process.argv[1]?.replace(/\\/g, '/')}` ||
+  import.meta.url === `file:///${process.argv[1]?.replaceAll('\\', '/')}` ||
   process.argv[1]?.endsWith('smoke-submit.ts');
 
 if (isDirectRun) {

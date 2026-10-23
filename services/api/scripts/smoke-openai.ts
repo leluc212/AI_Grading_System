@@ -131,8 +131,10 @@ export async function run() {
 }
 
 if (process.argv[1]?.endsWith('smoke-openai.ts')) {
-  run().catch((err) => {
+  try {
+    await run();
+  } catch (err) {
     console.error('[smoke-openai] Kiểm tra thất bại:', err);
     process.exit(1);
-  });
+  }
 }

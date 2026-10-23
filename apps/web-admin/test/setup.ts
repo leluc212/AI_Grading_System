@@ -55,13 +55,8 @@ class NoopObserver {
   }
 }
 
-if (globalThis.ResizeObserver === undefined) {
-  globalThis.ResizeObserver = NoopObserver as unknown as typeof ResizeObserver;
-}
-
-if (globalThis.IntersectionObserver === undefined) {
-  globalThis.IntersectionObserver = NoopObserver as unknown as typeof IntersectionObserver;
-}
+globalThis.ResizeObserver ??= NoopObserver as unknown as typeof ResizeObserver;
+globalThis.IntersectionObserver ??= NoopObserver as unknown as typeof IntersectionObserver;
 
 afterEach(() => {
   cleanup();

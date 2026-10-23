@@ -19,6 +19,7 @@ import ContentLayout from '@cloudscape-design/components/content-layout';
 import Header from '@cloudscape-design/components/header';
 import Link from '@cloudscape-design/components/link';
 import SpaceBetween from '@cloudscape-design/components/space-between';
+import type { TableProps } from '@cloudscape-design/components/table';
 import Table from '@cloudscape-design/components/table';
 import TextFilter from '@cloudscape-design/components/text-filter';
 import { CreateAssignmentModal } from '../components/CreateAssignmentModal';
@@ -93,6 +94,50 @@ function AssignmentActionsCell({
       </Button>
     </SpaceBetween>
   );
+}
+
+function buildAssignmentColumns(
+  navigate: (path: string) => void,
+  togglingId: string | null,
+  exportingId: string | null,
+  onToggleStatus: (item: AssignmentListItem) => void,
+  onExportExcel: (item: AssignmentListItem) => void,
+): TableProps.ColumnDefinition<AssignmentListItem>[] {
+  return [
+    {
+      id: 'assignmentName',
+      header: 'Tên đợt chấm',
+      cell: (item) => <AssignmentNameCell item={item} onNavigate={navigate} />,
+    },
+    {
+      id: 'status',
+      header: 'Trạng thái',
+      cell: (item) => <AssignmentStatusBadge status={item.status} />,
+    },
+    {
+      id: 'submittedTeamCount',
+      header: 'Số nhóm đã nộp',
+      cell: (item) => item.submittedTeamCount,
+    },
+    {
+      id: 'createdAt',
+      header: 'Ngày tạo',
+      cell: (item) => formatDateTime(item.createdAt),
+    },
+    {
+      id: 'actions',
+      header: 'Hành động',
+      cell: (item) => (
+        <AssignmentActionsCell
+          item={item}
+          isToggling={togglingId === item.assignmentId}
+          isExporting={exportingId === item.assignmentId}
+          onToggleStatus={onToggleStatus}
+          onExportExcel={onExportExcel}
+        />
+      ),
+    },
+  ];
 }
 
 export function AssignmentsPage() {
@@ -203,6 +248,32 @@ export function AssignmentsPage() {
     return `(${filteredAssignments.length}/${allAssignments.length})`;
   }, [state.kind, filteredAssignments.length, allAssignments.length]);
 
+  const handleToggleStatus = useCallback(
+    (item: AssignmentListItem) => {
+      void toggleStatus(item);
+    },
+    [toggleStatus],
+  );
+
+  const handleExportExcel = useCallback(
+    (item: AssignmentListItem) => {
+      void exportToExcel(item);
+    },
+    [exportToExcel],
+  );
+
+  const columnDefinitions = useMemo(
+    () =>
+      buildAssignmentColumns(
+        navigate,
+        togglingId,
+        exportingId,
+        handleToggleStatus,
+        handleExportExcel,
+      ),
+    [navigate, togglingId, exportingId, handleToggleStatus, handleExportExcel],
+  );
+
   return (
     <ContentLayout
       header={
@@ -269,41 +340,7 @@ export function AssignmentsPage() {
               />
             ) : undefined
           }
-          columnDefinitions={[
-            {
-              id: 'assignmentName',
-              header: 'Tên đợt chấm',
-              cell: (item) => <AssignmentNameCell item={item} onNavigate={navigate} />,
-            },
-            {
-              id: 'status',
-              header: 'Trạng thái',
-              cell: (item) => <AssignmentStatusBadge status={item.status} />,
-            },
-            {
-              id: 'submittedTeamCount',
-              header: 'Số nhóm đã nộp',
-              cell: (item) => item.submittedTeamCount,
-            },
-            {
-              id: 'createdAt',
-              header: 'Ngày tạo',
-              cell: (item) => formatDateTime(item.createdAt),
-            },
-            {
-              id: 'actions',
-              header: 'Hành động',
-              cell: (item) => (
-                <AssignmentActionsCell
-                  item={item}
-                  isToggling={togglingId === item.assignmentId}
-                  isExporting={exportingId === item.assignmentId}
-                  onToggleStatus={(it) => void toggleStatus(it)}
-                  onExportExcel={(it) => void exportToExcel(it)}
-                />
-              ),
-            },
-          ]}
+          columnDefinitions={columnDefinitions}
           empty={
             <Box textAlign="center" padding="l">
               <SpaceBetween size="xs">

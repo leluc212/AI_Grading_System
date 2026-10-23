@@ -32,6 +32,7 @@ import Link from '@cloudscape-design/components/link';
 import Select from '@cloudscape-design/components/select';
 import type { SelectProps } from '@cloudscape-design/components/select';
 import SpaceBetween from '@cloudscape-design/components/space-between';
+import type { TableProps } from '@cloudscape-design/components/table';
 import Table from '@cloudscape-design/components/table';
 import { GradingStatusBadge, TeamStatusBadge } from '../components/StatusBadge';
 import { assignmentsApi, gradingApi, teamsApi } from '../services';
@@ -88,6 +89,41 @@ function TeamNameCell({
       {teamName}
     </Link>
   );
+}
+
+function buildTeamColumns(
+  navigate: (path: string) => void,
+): TableProps.ColumnDefinition<TeamRow>[] {
+  return [
+    {
+      id: 'teamName',
+      header: 'Tên nhóm',
+      cell: (row) => (
+        <TeamNameCell teamId={row.team.teamId} teamName={row.team.teamName} onNavigate={navigate} />
+      ),
+    },
+    {
+      id: 'memberCount',
+      header: 'Số thành viên',
+      cell: (row) => row.team.members.length,
+    },
+    {
+      id: 'teamStatus',
+      header: 'Trạng thái nộp bài',
+      cell: (row) => <TeamStatusBadge status={row.team.status} />,
+    },
+    {
+      id: 'gradingStatus',
+      header: 'Trạng thái chấm bài',
+      cell: (row) => <GradingStatusBadge status={row.gradingStatus} />,
+    },
+    {
+      id: 'score',
+      header: 'Điểm',
+      // Ưu tiên finalScore nếu đã review (Requirement 7.6).
+      cell: (row) => formatScore(resolveDisplayScore(row.latestGrading)),
+    },
+  ];
 }
 
 export function TeamsDashboardPage() {
@@ -199,6 +235,8 @@ export function TeamsDashboardPage() {
 
   const assignmentName = state.kind === 'ready' ? state.assignment?.assignmentName : undefined;
 
+  const columnDefinitions = useMemo(() => buildTeamColumns(navigate), [navigate]);
+
   return (
     <ContentLayout
       header={
@@ -245,40 +283,7 @@ export function TeamsDashboardPage() {
               onChange={({ detail }) => setSelectedFilter(detail.selectedOption)}
             />
           }
-          columnDefinitions={[
-            {
-              id: 'teamName',
-              header: 'Tên nhóm',
-              cell: (row) => (
-                <TeamNameCell
-                  teamId={row.team.teamId}
-                  teamName={row.team.teamName}
-                  onNavigate={navigate}
-                />
-              ),
-            },
-            {
-              id: 'memberCount',
-              header: 'Số thành viên',
-              cell: (row) => row.team.members.length,
-            },
-            {
-              id: 'teamStatus',
-              header: 'Trạng thái nộp bài',
-              cell: (row) => <TeamStatusBadge status={row.team.status} />,
-            },
-            {
-              id: 'gradingStatus',
-              header: 'Trạng thái chấm bài',
-              cell: (row) => <GradingStatusBadge status={row.gradingStatus} />,
-            },
-            {
-              id: 'score',
-              header: 'Điểm',
-              // Ưu tiên finalScore nếu đã review (Requirement 7.6).
-              cell: (row) => formatScore(resolveDisplayScore(row.latestGrading)),
-            },
-          ]}
+          columnDefinitions={columnDefinitions}
           empty={
             <Box textAlign="center" padding="l">
               <SpaceBetween size="xs">

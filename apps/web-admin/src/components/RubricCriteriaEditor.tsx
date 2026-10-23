@@ -12,7 +12,8 @@
  *
  * _Requirements: 9.1_
  */
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
+import type { AttributeEditorProps } from '@cloudscape-design/components/attribute-editor';
 import AttributeEditor from '@cloudscape-design/components/attribute-editor';
 import Input from '@cloudscape-design/components/input';
 import type { CriterionDraft, CriterionErrorMap } from '../rubricDraft';
@@ -70,6 +71,41 @@ function CriterionWeightControl({
   );
 }
 
+function buildRubricDefinitions(
+  criteria: readonly CriterionDraft[],
+  errors: CriterionErrorMap,
+  disabled: boolean,
+  handleLabelChange: (localId: string, label: string) => void,
+  handleWeightChange: (localId: string, weightText: string) => void,
+): AttributeEditorProps.FieldDefinition<CriterionDraft>[] {
+  return [
+    {
+      label: 'Tên tiêu chí',
+      errorText: (item) => errors[item.localId]?.label,
+      control: (item) => (
+        <CriterionLabelControl
+          item={item}
+          position={criteria.indexOf(item) + 1}
+          disabled={disabled}
+          onChange={handleLabelChange}
+        />
+      ),
+    },
+    {
+      label: 'Trọng số (tuỳ chọn)',
+      errorText: (item) => errors[item.localId]?.weight,
+      control: (item) => (
+        <CriterionWeightControl
+          item={item}
+          position={criteria.indexOf(item) + 1}
+          disabled={disabled}
+          onChange={handleWeightChange}
+        />
+      ),
+    },
+  ];
+}
+
 export function RubricCriteriaEditor({
   criteria,
   errors,
@@ -97,6 +133,11 @@ export function RubricCriteriaEditor({
     [updateCriterion],
   );
 
+  const definitions = useMemo(
+    () => buildRubricDefinitions(criteria, errors, disabled, handleLabelChange, handleWeightChange),
+    [criteria, errors, disabled, handleLabelChange, handleWeightChange],
+  );
+
   return (
     <AttributeEditor
       items={criteria as CriterionDraft[]}
@@ -114,32 +155,7 @@ export function RubricCriteriaEditor({
           ? `Xoá tiêu chí ${label}`
           : `Xoá tiêu chí thứ ${position.toString()}`;
       }}
-      definition={[
-        {
-          label: 'Tên tiêu chí',
-          errorText: (item) => errors[item.localId]?.label,
-          control: (item) => (
-            <CriterionLabelControl
-              item={item}
-              position={criteria.indexOf(item) + 1}
-              disabled={disabled}
-              onChange={handleLabelChange}
-            />
-          ),
-        },
-        {
-          label: 'Trọng số (tuỳ chọn)',
-          errorText: (item) => errors[item.localId]?.weight,
-          control: (item) => (
-            <CriterionWeightControl
-              item={item}
-              position={criteria.indexOf(item) + 1}
-              disabled={disabled}
-              onChange={handleWeightChange}
-            />
-          ),
-        },
-      ]}
+      definition={definitions}
       empty="Chưa có tiêu chí nào."
     />
   );

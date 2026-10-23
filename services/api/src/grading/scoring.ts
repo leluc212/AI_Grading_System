@@ -79,10 +79,7 @@ function calculateRubricScores(
       comment: criterionComment,
     });
 
-    const effectiveWeight =
-      criterion.weight !== undefined && criterion.weight !== null
-        ? criterion.weight
-        : defaultWeight;
+    const effectiveWeight = criterion.weight ?? defaultWeight;
 
     weightedSum += criterionScore * effectiveWeight;
     totalWeight += effectiveWeight;

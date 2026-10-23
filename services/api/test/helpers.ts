@@ -101,5 +101,5 @@ export function body(content: string | Uint8Array) {
   const bytes =
     typeof content === 'string' ? new Uint8Array(Buffer.from(content, 'utf8')) : content;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return { transformToByteArray: async () => bytes } as any;
+  return { transformToByteArray: () => Promise.resolve(bytes) } as any;
 }

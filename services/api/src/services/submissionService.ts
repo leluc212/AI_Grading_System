@@ -145,10 +145,14 @@ export async function finalizeSubmission(
   }
 
   // 1) Kiểm tra cả 2 object trước khi đụng vào bất cứ thứ gì.
-  const verified: Partial<Record<FileType, { etag: string; size: number }>> = {};
-  for (const fileType of FILE_TYPES) {
-    verified[fileType] = await verifyUploadedObject(fileType, session.files[fileType].s3Key);
-  }
+  const verifiedEntries = await Promise.all(
+    FILE_TYPES.map(async (fileType) => {
+      const obj = await verifyUploadedObject(fileType, session.files[fileType].s3Key);
+      return [fileType, obj] as const;
+    }),
+  );
+  const verified: Partial<Record<FileType, { etag: string; size: number }>> =
+    Object.fromEntries(verifiedEntries);
 
   // 2) Re-resolve nhóm tại thời điểm finalize (có thể đã đổi từ lúc tạo phiên).
   const existing = await findTeamByName(session.assignmentId, session.teamNameNormalized);
@@ -161,9 +165,7 @@ export async function finalizeSubmission(
   }
 
   // 3) Gắn tag `final` cho cả 2 file TRƯỚC khi ghi DB.
-  for (const fileType of FILE_TYPES) {
-    await markObjectFinal(session.files[fileType].s3Key);
-  }
+  await Promise.all(FILE_TYPES.map((fileType) => markObjectFinal(session.files[fileType].s3Key)));
 
   // 4) Transaction.
   const submittedAt = new Date(nowMs).toISOString();

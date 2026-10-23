@@ -83,31 +83,33 @@ export async function seedDevAssignments(tableName: string) {
     marshallOptions: { removeUndefinedValues: true },
   });
 
-  for (const seed of SEED_ASSIGNMENTS) {
-    const item = buildAssignmentItem(seed);
-    try {
-      await ddb.send(
-        new PutCommand({
-          TableName: tableName,
-          Item: item,
-          ConditionExpression: 'attribute_not_exists(PK)',
-        }),
-      );
-      console.log(`[seed-dev] Đã tạo đợt ${seed.assignmentId} (${seed.status})`);
-    } catch (err: unknown) {
-      const name = (err as { name?: string })?.name;
-      if (name === 'ConditionalCheckFailedException') {
-        console.log(`[seed-dev] Đợt ${seed.assignmentId} đã tồn tại, bỏ qua.`);
-      } else {
-        throw err;
+  await Promise.all(
+    SEED_ASSIGNMENTS.map(async (seed) => {
+      const item = buildAssignmentItem(seed);
+      try {
+        await ddb.send(
+          new PutCommand({
+            TableName: tableName,
+            Item: item,
+            ConditionExpression: 'attribute_not_exists(PK)',
+          }),
+        );
+        console.log(`[seed-dev] Đã tạo đợt ${seed.assignmentId} (${seed.status})`);
+      } catch (err: unknown) {
+        const name = (err as { name?: string })?.name;
+        if (name === 'ConditionalCheckFailedException') {
+          console.log(`[seed-dev] Đợt ${seed.assignmentId} đã tồn tại, bỏ qua.`);
+        } else {
+          throw err;
+        }
       }
-    }
-  }
+    }),
+  );
 }
 
 // Chạy trực tiếp khi file được gọi qua CLI
 const isDirectRun =
-  import.meta.url === `file:///${process.argv[1]?.replace(/\\/g, '/')}` ||
+  import.meta.url === `file:///${process.argv[1]?.replaceAll('\\', '/')}` ||
   process.argv[1]?.endsWith('seed-dev.ts');
 
 if (isDirectRun) {

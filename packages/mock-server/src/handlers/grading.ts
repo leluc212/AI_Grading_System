@@ -72,8 +72,7 @@ function completeGradingAsync(gradingAttemptId: string): void {
     return;
   }
 
-  // NOSONAR typescript:S2245 - Pseudo-random generator is intentionally used for local mock-server simulation and test spies
-  const isSimulatedFailure = Math.random() < SIMULATED_FAILURE_RATE;
+  const isSimulatedFailure = Math.random() < SIMULATED_FAILURE_RATE; // NOSONAR typescript:S2245 - Pseudo-random generator is intentionally used for local mock-server simulation and test spies
 
   if (isSimulatedFailure) {
     // Requirement 6.5: lỗi AI Grader/timeout -> status FAILED kèm errorMessage.
@@ -86,8 +85,7 @@ function completeGradingAsync(gradingAttemptId: string): void {
     // nhiên trong khoảng [SIMULATED_MIN_SCORE, GRADING_SCALE.max] — với thang
     // 0-100 là 60-100, đủ để test cả 2 nhánh needsReview.
     const scoreSpan = GRADING_SCALE.max - SIMULATED_MIN_SCORE + 1;
-    // NOSONAR typescript:S2245 - Pseudo-random generator is intentionally used for local mock-server simulation and test spies
-    const score = SIMULATED_MIN_SCORE + Math.floor(Math.random() * scoreSpan);
+    const score = SIMULATED_MIN_SCORE + Math.floor(Math.random() * scoreSpan); // NOSONAR typescript:S2245 - Pseudo-random generator is intentionally used for local mock-server simulation and test spies
     result.status = 'GRADED';
     result.score = score;
     result.aiFeedback =
@@ -171,9 +169,7 @@ export const gradingHandlers = [
     // ~1.5-2s, cập nhật lượt chấm này thành GRADED hoặc FAILED (~10%).
     // Handler trả response NGAY với status IN_PROGRESS; việc hoàn tất diễn
     // ra out-of-band, UI phải tự poll để thấy kết quả cuối (xem JSDoc của
-    // `completeGradingAsync`).
-    // NOSONAR typescript:S2245 - Pseudo-random generator is intentionally used for local mock-server simulation and test spies
-    const delayMs = 1500 + Math.random() * 500;
+    const delayMs = 1500 + Math.random() * 500; // NOSONAR typescript:S2245 - Pseudo-random generator is intentionally used for local mock-server simulation and test spies
     setTimeout(() => completeGradingAsync(gradingResult.gradingAttemptId), delayMs);
 
     // 202 Accepted: yêu cầu đã được ghi nhận nhưng việc chấm bài chưa hoàn

@@ -178,9 +178,9 @@ describe('scoring', () => {
       truncated: false,
     });
 
-    expect(res.feedback.length).toBe(2000);
-    expect(res.criteriaScores[0]?.comment.length).toBe(300);
-    expect(res.criteriaScores[1]?.comment.length).toBe(300);
+    expect(res.feedback).toHaveLength(2000);
+    expect(res.criteriaScores[0]?.comment).toHaveLength(300);
+    expect(res.criteriaScores[1]?.comment).toHaveLength(300);
   });
 
   it('chế độ PROMPT nhận totalScore trực tiếp từ model', () => {

@@ -13,18 +13,24 @@ function toStatus(value: unknown): AssignmentStatus {
   return value === 'OPEN' ? 'OPEN' : 'CLOSED';
 }
 
+function toStringValue(value: unknown): string {
+  if (typeof value === 'string') {
+    return value;
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  return '';
+}
+
 /** Chỉ copy field công khai, không trả PK/SK/GSI ra ngoài. */
 export function toListItem(item: Record<string, unknown>): AssignmentListItem {
   return {
-    assignmentId:
-      typeof item.assignmentId === 'string' ? item.assignmentId : String(item.assignmentId ?? ''),
-    assignmentName:
-      typeof item.assignmentName === 'string'
-        ? item.assignmentName
-        : String(item.assignmentName ?? ''),
+    assignmentId: toStringValue(item.assignmentId),
+    assignmentName: toStringValue(item.assignmentName),
     status: toStatus(item.status),
-    createdAt: typeof item.createdAt === 'string' ? item.createdAt : String(item.createdAt ?? ''),
-    createdBy: typeof item.createdBy === 'string' ? item.createdBy : '',
+    createdAt: toStringValue(item.createdAt),
+    createdBy: toStringValue(item.createdBy),
     submittedTeamCount: typeof item.submittedTeamCount === 'number' ? item.submittedTeamCount : 0,
   };
 }
@@ -51,6 +57,7 @@ export async function listAssignments(): Promise<AssignmentListItem[]> {
   let exclusiveStartKey: Record<string, unknown> | undefined;
   do {
     const result = await ddb().send(
+      // NOSONAR typescript:S9382 - DynamoDB pagination is inherently sequential
       new QueryCommand({
         TableName: tableName(),
         IndexName: 'GSI1',

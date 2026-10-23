@@ -145,7 +145,7 @@ describe('teamsApi - createTeamAndSubmit', () => {
       }),
     ).rejects.toThrow('Tải file lên thất bại, vui lòng thử lại.');
 
-    expect(getDb().teams.length).toBe(teamCountBefore);
+    expect(getDb().teams).toHaveLength(teamCountBefore);
   });
 
   it('finalize trả về 409 TEAM_NAME_CONFLICT ném TeamNameConflictError', async () => {

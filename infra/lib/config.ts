@@ -26,7 +26,16 @@ export function parseList(raw: unknown): string[] {
   if (raw === undefined || raw === null) {
     return [];
   }
-  const text = Array.isArray(raw) ? raw.join(',') : typeof raw === 'string' ? raw : String(raw);
+  let text = '';
+  if (Array.isArray(raw)) {
+    text = raw.join(',');
+  } else if (typeof raw === 'string') {
+    text = raw;
+  } else if (typeof raw === 'number' || typeof raw === 'boolean') {
+    text = String(raw);
+  } else {
+    return [];
+  }
   const out: string[] = [];
   for (const part of text.split(',')) {
     const item = part.trim();

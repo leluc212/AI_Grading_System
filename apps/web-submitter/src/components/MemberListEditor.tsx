@@ -20,7 +20,8 @@
  *
  * _Requirements: 2.2, 2.3, 2.4_
  */
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
+import type { AttributeEditorProps } from '@cloudscape-design/components/attribute-editor';
 import AttributeEditor from '@cloudscape-design/components/attribute-editor';
 import Input from '@cloudscape-design/components/input';
 import type { MemberDraft, MemberErrorMap } from '../validation';
@@ -81,6 +82,53 @@ function MemberStudentCodeControl({ item, position, disabled, onChange }: Member
   );
 }
 
+function buildMemberDefinitions(
+  members: readonly MemberDraft[],
+  errors: MemberErrorMap,
+  disabled: boolean,
+  handleNameChange: (localId: string, memberName: string) => void,
+  handleEmailChange: (localId: string, email: string) => void,
+  handleStudentCodeChange: (localId: string, studentCode: string) => void,
+): AttributeEditorProps.FieldDefinition<MemberDraft>[] {
+  return [
+    {
+      label: 'Tên sinh viên',
+      errorText: (item) => errors[item.localId]?.memberName,
+      control: (item) => (
+        <MemberNameControl
+          item={item}
+          position={members.indexOf(item) + 1}
+          disabled={disabled}
+          onChange={handleNameChange}
+        />
+      ),
+    },
+    {
+      label: 'Email',
+      errorText: (item) => errors[item.localId]?.email,
+      control: (item) => (
+        <MemberEmailControl
+          item={item}
+          position={members.indexOf(item) + 1}
+          disabled={disabled}
+          onChange={handleEmailChange}
+        />
+      ),
+    },
+    {
+      label: 'MSSV (tuỳ chọn)',
+      control: (item) => (
+        <MemberStudentCodeControl
+          item={item}
+          position={members.indexOf(item) + 1}
+          disabled={disabled}
+          onChange={handleStudentCodeChange}
+        />
+      ),
+    },
+  ];
+}
+
 export function MemberListEditor({
   members,
   errors,
@@ -131,6 +179,19 @@ export function MemberListEditor({
     [members, onChange],
   );
 
+  const definitions = useMemo(
+    () =>
+      buildMemberDefinitions(
+        members,
+        errors,
+        disabled,
+        handleNameChange,
+        handleEmailChange,
+        handleStudentCodeChange,
+      ),
+    [members, errors, disabled, handleNameChange, handleEmailChange, handleStudentCodeChange],
+  );
+
   return (
     <AttributeEditor
       items={members as MemberDraft[]}
@@ -146,43 +207,7 @@ export function MemberListEditor({
           ? `Xoá thành viên ${name}`
           : `Xoá thành viên thứ ${position.toString()}`;
       }}
-      definition={[
-        {
-          label: 'Tên sinh viên',
-          errorText: (item) => errors[item.localId]?.memberName,
-          control: (item) => (
-            <MemberNameControl
-              item={item}
-              position={members.indexOf(item) + 1}
-              disabled={disabled}
-              onChange={handleNameChange}
-            />
-          ),
-        },
-        {
-          label: 'Email',
-          errorText: (item) => errors[item.localId]?.email,
-          control: (item) => (
-            <MemberEmailControl
-              item={item}
-              position={members.indexOf(item) + 1}
-              disabled={disabled}
-              onChange={handleEmailChange}
-            />
-          ),
-        },
-        {
-          label: 'MSSV (tuỳ chọn)',
-          control: (item) => (
-            <MemberStudentCodeControl
-              item={item}
-              position={members.indexOf(item) + 1}
-              disabled={disabled}
-              onChange={handleStudentCodeChange}
-            />
-          ),
-        },
-      ]}
+      definition={definitions}
       empty='Chưa có thành viên nào. Bấm "+ Thêm sinh viên" để thêm.'
     />
   );

@@ -34,9 +34,9 @@ export class Monitoring extends Construct {
     }
 
     this.topic = new sns.Topic(this, 'AlarmTopic', {
+      // NOSONAR typescript:S6327 - SNS topic uses default encryption; email alert topics should not use KMS
       topicName: `QuickGrading-${config.stage}-alarms`,
       displayName: `QuickGrading ${config.stage} alarms`,
-      // NOSONAR typescript:S6327 - SNS topic uses default encryption; dedicated KMS masterKey not required for non-sensitive alert notifications
     });
     for (const email of config.alarmEmails) {
       this.topic.addSubscription(new subscriptions.EmailSubscription(email));

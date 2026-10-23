@@ -76,6 +76,46 @@ export async function handleTriggerAssignmentGrading(
 
   const teams = await listTeamsByAssignment(assignmentId, 'SUBMITTED');
 
+  const teamOutcomes = await Promise.all(
+    teams.map(async (team) => {
+      try {
+        const res = await triggerGrading({
+          teamId: team.teamId,
+          triggeredBy: username,
+          force: false,
+        });
+
+        if (res.skipped) {
+          return {
+            kind: 'skipped' as const,
+            item: {
+              teamId: team.teamId,
+              status: 'SKIPPED',
+              gradingAttemptId: res.gradingAttemptId,
+            },
+          };
+        }
+        return {
+          kind: 'triggered' as const,
+          item: {
+            teamId: team.teamId,
+            status: 'TRIGGERED',
+            gradingAttemptId: res.gradingAttemptId,
+          },
+        };
+      } catch (err: unknown) {
+        return {
+          kind: 'failed' as const,
+          item: {
+            teamId: team.teamId,
+            status: 'FAILED',
+            error: err instanceof Error ? err.message : String(err),
+          },
+        };
+      }
+    }),
+  );
+
   let triggered = 0;
   let skipped = 0;
   let failed = 0;
@@ -86,37 +126,15 @@ export async function handleTriggerAssignmentGrading(
     error?: string;
   }> = [];
 
-  for (const team of teams) {
-    try {
-      const res = await triggerGrading({
-        teamId: team.teamId,
-        triggeredBy: username,
-        force: false,
-      });
-
-      if (res.skipped) {
-        skipped += 1;
-        results.push({
-          teamId: team.teamId,
-          status: 'SKIPPED',
-          gradingAttemptId: res.gradingAttemptId,
-        });
-      } else {
-        triggered += 1;
-        results.push({
-          teamId: team.teamId,
-          status: 'TRIGGERED',
-          gradingAttemptId: res.gradingAttemptId,
-        });
-      }
-    } catch (err: unknown) {
+  for (const outcome of teamOutcomes) {
+    if (outcome.kind === 'triggered') {
+      triggered += 1;
+    } else if (outcome.kind === 'skipped') {
+      skipped += 1;
+    } else {
       failed += 1;
-      results.push({
-        teamId: team.teamId,
-        status: 'FAILED',
-        error: err instanceof Error ? err.message : String(err),
-      });
     }
+    results.push(outcome.item);
   }
 
   return jsonResponse(202, {
