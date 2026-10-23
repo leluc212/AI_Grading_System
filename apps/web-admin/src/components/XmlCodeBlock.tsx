@@ -200,8 +200,10 @@ function tokenizeTag(tag: string): Token[] {
   }
 
   const prefixEnd = nameMatch[0].length - nameMatch[1].length;
-  tokens.push({ text: tag.slice(0, prefixEnd), kind: 'punctuation' });
-  tokens.push({ text: nameMatch[1], kind: 'tagName' });
+  tokens.push(
+    { text: tag.slice(0, prefixEnd), kind: 'punctuation' },
+    { text: nameMatch[1], kind: 'tagName' },
+  );
 
   const rest = tag.slice(nameMatch[0].length);
   tokenizeTagAttributes(rest, tokens);
@@ -209,7 +211,7 @@ function tokenizeTag(tag: string): Token[] {
   return tokens;
 }
 
-export const XmlCodeBlock = memo(function XmlCodeBlock({ content }: { content: string }) {
+export const XmlCodeBlock = memo(function XmlCodeBlock({ content }: { readonly content: string }) {
   const tokens = useMemo(() => tokenizeXml(content), [content]);
 
   return (
@@ -240,9 +242,7 @@ export const XmlCodeBlock = memo(function XmlCodeBlock({ content }: { content: s
             return token.text;
           }
           return (
-            // Token chỉ phân biệt nhau bằng vị trí trong chuỗi -> index là
-            // key ổn định ở đây (danh sách không bao giờ bị sắp xếp lại).
-            <span key={tokenIndex} style={{ color: COLORS[token.kind] }}>
+            <span key={`xml-tok-${tokenIndex}-${token.kind}`} style={{ color: COLORS[token.kind] }}>
               {token.text}
             </span>
           );

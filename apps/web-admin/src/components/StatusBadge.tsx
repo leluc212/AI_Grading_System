@@ -49,17 +49,17 @@ const GRADING_STATUS: Record<DerivedGradingStatus, IndicatorType> = {
   FAILED: 'error',
 };
 
-export function AssignmentStatusBadge({ status }: { status: AssignmentStatus }) {
+export function AssignmentStatusBadge({ status }: { readonly status: AssignmentStatus }) {
   const { type, label } = ASSIGNMENT_STATUS[status];
   return <StatusIndicator type={type}>{label}</StatusIndicator>;
 }
 
-export function TeamStatusBadge({ status }: { status: TeamStatus }) {
+export function TeamStatusBadge({ status }: { readonly status: TeamStatus }) {
   const { type, label } = TEAM_STATUS[status];
   return <StatusIndicator type={type}>{label}</StatusIndicator>;
 }
 
-export function GradingStatusBadge({ status }: { status: DerivedGradingStatus }) {
+export function GradingStatusBadge({ status }: { readonly status: DerivedGradingStatus }) {
   return (
     <StatusIndicator type={GRADING_STATUS[status]}>
       {DERIVED_GRADING_STATUS_LABELS[status]}

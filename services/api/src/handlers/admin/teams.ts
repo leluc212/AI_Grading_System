@@ -64,7 +64,7 @@ export async function handleGetTeamFiles(
   }
 
   const submission = await getSubmission(teamId, team.latestSubmissionId);
-  if (!submission || !submission.files?.md || !submission.files?.xml) {
+  if (!submission?.files?.md || !submission?.files?.xml) {
     throw new ValidationError('Nhóm chưa nộp đủ 2 file.');
   }
 

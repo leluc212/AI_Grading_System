@@ -33,15 +33,15 @@ import { validateSelectedFiles } from '../validation';
 
 export interface FileUploadFieldProps {
   /** Nhãn hiển thị, ví dụ "File bài làm (.md)". */
-  label: string;
+  readonly label: string;
   /** Mô tả ngắn phía dưới nhãn. */
-  description?: string;
+  readonly description?: string;
   /** Phần mở rộng bắt buộc của ô này. */
-  extension: SubmissionFileExtension;
+  readonly extension: SubmissionFileExtension;
   /** File đang chọn (`null` = chưa chọn). */
-  value: File | null;
+  readonly value: File | null;
   /** Lỗi hiển thị dưới ô; do form truyền xuống. */
-  errorText?: string;
+  readonly errorText?: string;
   /**
    * CỐ TÌNH KHÔNG có prop `disabled`: Cloudscape `FileUpload` không hỗ trợ
    * disable (khác `Input`), nên nếu khai báo ở đây thì đó là prop không có
@@ -56,7 +56,7 @@ export interface FileUploadFieldProps {
    * luôn cập nhật file và lỗi trong cùng 1 lần render — không có khoảnh khắc
    * state lệch nhau kiểu "đã có file mới nhưng lỗi vẫn của file cũ".
    */
-  onChange: (next: { file: File | null; error?: string }) => void;
+  readonly onChange: (next: { file: File | null; error?: string }) => void;
 }
 
 export function FileUploadField({

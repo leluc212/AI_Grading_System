@@ -209,7 +209,7 @@ describe('GradingPanel - tự cập nhật khi lượt chấm hoàn tất', () =
     expect(screen.queryByText(/Đang chấm bài/)).toBeNull();
     const callsAfterResult = listGradingHistory.mock.calls.length;
     await vi.advanceTimersByTimeAsync(1500 * 3);
-    expect(listGradingHistory.mock.calls.length).toBe(callsAfterResult);
+    expect(listGradingHistory.mock.calls).toHaveLength(callsAfterResult);
   });
 
   it('ngừng poll và thông báo khi lượt chấm chạy quá lâu', async () => {

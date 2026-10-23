@@ -72,7 +72,7 @@ export async function triggerGrading({
   // 4. Nếu không ép buộc chấm lại, kiểm tra bài đã chấm gần nhất có cùng cấu hình không
   if (!force) {
     const latestGraded = await getLatestGradedAttempt(teamId);
-    if (latestGraded && latestGraded.idempotencyKey === idempotencyKey) {
+    if (latestGraded?.idempotencyKey === idempotencyKey) {
       return {
         gradingAttemptId: latestGraded.gradingAttemptId,
         status: latestGraded.status,

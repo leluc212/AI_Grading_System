@@ -28,13 +28,57 @@ import { createEmptyMember } from '../validation';
 
 export interface MemberListEditorProps {
   /** Danh sách thành viên đang nhập (state do form sở hữu). */
-  members: MemberDraft[];
+  readonly members: readonly MemberDraft[];
   /** Lỗi theo `localId` của từng dòng; `{}` nghĩa là chưa validate / không lỗi. */
-  errors: MemberErrorMap;
+  readonly errors: MemberErrorMap;
   /** Vô hiệu hoá toàn bộ ô nhập + nút (ví dụ trong lúc đang gửi request). */
-  disabled?: boolean;
+  readonly disabled?: boolean;
   /** Báo danh sách mới cho form sau mỗi lần sửa / thêm / xoá. */
-  onChange: (members: MemberDraft[]) => void;
+  readonly onChange: (members: MemberDraft[]) => void;
+}
+
+interface MemberControlProps {
+  readonly item: MemberDraft;
+  readonly position: number;
+  readonly disabled: boolean;
+  readonly onChange: (localId: string, value: string) => void;
+}
+
+function MemberNameControl({ item, position, disabled, onChange }: MemberControlProps) {
+  return (
+    <Input
+      value={item.memberName}
+      disabled={disabled}
+      placeholder="Nguyễn Văn An"
+      ariaLabel={`Tên sinh viên của thành viên thứ ${position.toString()}`}
+      onChange={({ detail }) => onChange(item.localId, detail.value)}
+    />
+  );
+}
+
+function MemberEmailControl({ item, position, disabled, onChange }: MemberControlProps) {
+  return (
+    <Input
+      value={item.email}
+      disabled={disabled}
+      inputMode="email"
+      placeholder="an.nguyen@example.com"
+      ariaLabel={`Email của thành viên thứ ${position.toString()}`}
+      onChange={({ detail }) => onChange(item.localId, detail.value)}
+    />
+  );
+}
+
+function MemberStudentCodeControl({ item, position, disabled, onChange }: MemberControlProps) {
+  return (
+    <Input
+      value={item.studentCode}
+      disabled={disabled}
+      placeholder="SV001"
+      ariaLabel={`MSSV của thành viên thứ ${position.toString()} (tuỳ chọn)`}
+      onChange={({ detail }) => onChange(item.localId, detail.value)}
+    />
+  );
 }
 
 export function MemberListEditor({
@@ -53,6 +97,27 @@ export function MemberListEditor({
     [members, onChange],
   );
 
+  const handleNameChange = useCallback(
+    (localId: string, memberName: string) => {
+      updateMember(localId, { memberName });
+    },
+    [updateMember],
+  );
+
+  const handleEmailChange = useCallback(
+    (localId: string, email: string) => {
+      updateMember(localId, { email });
+    },
+    [updateMember],
+  );
+
+  const handleStudentCodeChange = useCallback(
+    (localId: string, studentCode: string) => {
+      updateMember(localId, { studentCode });
+    },
+    [updateMember],
+  );
+
   const addMember = useCallback(() => {
     // Requirement 2.3: không giới hạn số thành viên.
     onChange([...members, createEmptyMember()]);
@@ -68,17 +133,11 @@ export function MemberListEditor({
 
   return (
     <AttributeEditor
-      items={members}
+      items={members as MemberDraft[]}
       addButtonText="+ Thêm sinh viên"
       removeButtonText="Xoá"
       onAddButtonClick={addMember}
       onRemoveButtonClick={({ detail }) => removeMember(detail.itemIndex)}
-      // Requirement 2.3: nhóm phải còn tối thiểu 1 thành viên -> dòng duy
-      // nhất còn lại không được xoá. Chặn ngay ở đây rõ ràng hơn là để người
-      // dùng xoá hết rồi mới báo lỗi khi nộp.
-      //
-      // Lưu ý hành vi Cloudscape: khi hàm này trả `false`, nút xoá bị ẨN HẲN
-      // (không phải render ra rồi disable).
       isItemRemovable={() => members.length > 1}
       removeButtonAriaLabel={(item) => {
         const position = members.indexOf(item) + 1;
@@ -91,63 +150,37 @@ export function MemberListEditor({
         {
           label: 'Tên sinh viên',
           errorText: (item) => errors[item.localId]?.memberName,
-          control: (item) => {
-            const position = members.indexOf(item) + 1;
-            return (
-              <Input
-                value={item.memberName}
-                disabled={disabled}
-                placeholder="Nguyễn Văn An"
-                // Nhãn cột chỉ hiện 1 lần cho cả danh sách, nên từng ô cần
-                // aria-label riêng kèm số thứ tự dòng để screen reader (và
-                // test) phân biệt được các ô cùng loại.
-                ariaLabel={`Tên sinh viên của thành viên thứ ${position.toString()}`}
-                onChange={({ detail }) => updateMember(item.localId, { memberName: detail.value })}
-              />
-            );
-          },
+          control: (item) => (
+            <MemberNameControl
+              item={item}
+              position={members.indexOf(item) + 1}
+              disabled={disabled}
+              onChange={handleNameChange}
+            />
+          ),
         },
         {
           label: 'Email',
           errorText: (item) => errors[item.localId]?.email,
-          control: (item) => {
-            const position = members.indexOf(item) + 1;
-            return (
-              <Input
-                value={item.email}
-                disabled={disabled}
-                // CỐ TÌNH KHÔNG dùng `type="email"`. Với `type="email"`, giá
-                // trị sai định dạng làm constraint validation của trình duyệt
-                // CHẶN luôn sự kiện submit của form: `handleSubmit` không chạy,
-                // nên lỗi Cloudscape của ta không bao giờ hiện và người dùng
-                // chỉ thấy tooltip mặc định của trình duyệt — trái với
-                // design.md > Error Handling (lỗi hiển thị qua Cloudscape, UI
-                // tự kiểm soát thông báo). `inputMode="email"` vẫn giữ được
-                // bàn phím phù hợp trên thiết bị di động.
-                inputMode="email"
-                placeholder="an.nguyen@example.com"
-                ariaLabel={`Email của thành viên thứ ${position.toString()}`}
-                onChange={({ detail }) => updateMember(item.localId, { email: detail.value })}
-              />
-            );
-          },
+          control: (item) => (
+            <MemberEmailControl
+              item={item}
+              position={members.indexOf(item) + 1}
+              disabled={disabled}
+              onChange={handleEmailChange}
+            />
+          ),
         },
         {
-          // Requirement 2.2: MSSV tuỳ chọn -> nói rõ trên nhãn để người nhập
-          // không tưởng là bắt buộc.
           label: 'MSSV (tuỳ chọn)',
-          control: (item) => {
-            const position = members.indexOf(item) + 1;
-            return (
-              <Input
-                value={item.studentCode}
-                disabled={disabled}
-                placeholder="SV001"
-                ariaLabel={`MSSV của thành viên thứ ${position.toString()} (tuỳ chọn)`}
-                onChange={({ detail }) => updateMember(item.localId, { studentCode: detail.value })}
-              />
-            );
-          },
+          control: (item) => (
+            <MemberStudentCodeControl
+              item={item}
+              position={members.indexOf(item) + 1}
+              disabled={disabled}
+              onChange={handleStudentCodeChange}
+            />
+          ),
         },
       ]}
       empty='Chưa có thành viên nào. Bấm "+ Thêm sinh viên" để thêm.'

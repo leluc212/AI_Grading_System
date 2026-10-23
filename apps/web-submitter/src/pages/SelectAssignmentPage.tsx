@@ -102,8 +102,7 @@ export function SelectAssignmentPage() {
       <section className="fcaj-hero-section">
         <div className="fcaj-hero-content">
           <div className="fcaj-hero-badge">
-            <span className="fcaj-hero-badge-dot" />
-            AWS FIRST CLOUD AI JOURNEY
+            <span className="fcaj-hero-badge-dot" /> AWS FIRST CLOUD AI JOURNEY
           </div>
           <h1 className="fcaj-hero-title">
             {t('heroHeadlinePart1')}{' '}
@@ -224,6 +223,8 @@ export function SelectAssignmentPage() {
                             fill="none"
                             stroke="currentColor"
                             strokeWidth="2"
+                            aria-hidden="true"
+                            role="presentation"
                           >
                             <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                             <line x1="16" y1="2" x2="16" y2="6" />
@@ -242,6 +243,8 @@ export function SelectAssignmentPage() {
                             fill="none"
                             stroke="currentColor"
                             strokeWidth="2"
+                            aria-hidden="true"
+                            role="presentation"
                           >
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                             <polyline points="14 2 14 8 20 8" />

@@ -33,6 +33,68 @@ type LoadState =
   | { kind: 'error'; message: string }
   | { kind: 'ready'; assignments: AssignmentListItem[] };
 
+function AssignmentNameCell({
+  item,
+  onNavigate,
+}: {
+  readonly item: AssignmentListItem;
+  readonly onNavigate: (path: string) => void;
+}) {
+  return (
+    <Link
+      href={`/assignments/${item.assignmentId}/teams`}
+      onFollow={(event) => {
+        event.preventDefault();
+        onNavigate(`/assignments/${item.assignmentId}/teams`);
+      }}
+    >
+      <span style={{ fontWeight: 600 }}>{item.assignmentName}</span>
+    </Link>
+  );
+}
+
+function AssignmentActionsCell({
+  item,
+  isToggling,
+  isExporting,
+  onToggleStatus,
+  onExportExcel,
+}: {
+  readonly item: AssignmentListItem;
+  readonly isToggling: boolean;
+  readonly isExporting: boolean;
+  readonly onToggleStatus: (item: AssignmentListItem) => void;
+  readonly onExportExcel: (item: AssignmentListItem) => void;
+}) {
+  return (
+    <SpaceBetween direction="horizontal" size="xs">
+      <Button
+        ariaLabel={
+          item.status === 'OPEN'
+            ? `Đóng đợt chấm ${item.assignmentName}`
+            : `Mở lại đợt chấm ${item.assignmentName}`
+        }
+        loading={isToggling}
+        onClick={() => {
+          onToggleStatus(item);
+        }}
+      >
+        {item.status === 'OPEN' ? 'Đóng' : 'Mở lại'}
+      </Button>
+      <Button
+        iconName="download"
+        ariaLabel={`Xuất Excel đợt chấm ${item.assignmentName}`}
+        loading={isExporting}
+        onClick={() => {
+          onExportExcel(item);
+        }}
+      >
+        Xuất Excel
+      </Button>
+    </SpaceBetween>
+  );
+}
+
 export function AssignmentsPage() {
   const navigate = useNavigate();
   const [state, setState] = useState<LoadState>({ kind: 'loading' });
@@ -131,6 +193,16 @@ export function AssignmentsPage() {
     return allAssignments.filter((item) => item.assignmentName.toLowerCase().includes(query));
   }, [allAssignments, filteringText]);
 
+  const counterText = useMemo(() => {
+    if (state.kind !== 'ready') {
+      return undefined;
+    }
+    if (filteredAssignments.length === allAssignments.length) {
+      return `(${allAssignments.length})`;
+    }
+    return `(${filteredAssignments.length}/${allAssignments.length})`;
+  }, [state.kind, filteredAssignments.length, allAssignments.length]);
+
   return (
     <ContentLayout
       header={
@@ -184,16 +256,7 @@ export function AssignmentsPage() {
           variant="container"
           trackBy="assignmentId"
           header={
-            <Header
-              variant="h2"
-              counter={
-                state.kind === 'ready'
-                  ? filteredAssignments.length === allAssignments.length
-                    ? `(${allAssignments.length})`
-                    : `(${filteredAssignments.length}/${allAssignments.length})`
-                  : undefined
-              }
-            >
+            <Header variant="h2" counter={counterText}>
               Danh sách đợt chấm
             </Header>
           }
@@ -210,17 +273,7 @@ export function AssignmentsPage() {
             {
               id: 'assignmentName',
               header: 'Tên đợt chấm',
-              cell: (item) => (
-                <Link
-                  href={`/assignments/${item.assignmentId}/teams`}
-                  onFollow={(event) => {
-                    event.preventDefault();
-                    navigate(`/assignments/${item.assignmentId}/teams`);
-                  }}
-                >
-                  <span style={{ fontWeight: 600 }}>{item.assignmentName}</span>
-                </Link>
-              ),
+              cell: (item) => <AssignmentNameCell item={item} onNavigate={navigate} />,
             },
             {
               id: 'status',
@@ -241,31 +294,13 @@ export function AssignmentsPage() {
               id: 'actions',
               header: 'Hành động',
               cell: (item) => (
-                <SpaceBetween direction="horizontal" size="xs">
-                  <Button
-                    ariaLabel={
-                      item.status === 'OPEN'
-                        ? `Đóng đợt chấm ${item.assignmentName}`
-                        : `Mở lại đợt chấm ${item.assignmentName}`
-                    }
-                    loading={togglingId === item.assignmentId}
-                    onClick={() => {
-                      void toggleStatus(item);
-                    }}
-                  >
-                    {item.status === 'OPEN' ? 'Đóng' : 'Mở lại'}
-                  </Button>
-                  <Button
-                    iconName="download"
-                    ariaLabel={`Xuất Excel đợt chấm ${item.assignmentName}`}
-                    loading={exportingId === item.assignmentId}
-                    onClick={() => {
-                      void exportToExcel(item);
-                    }}
-                  >
-                    Xuất Excel
-                  </Button>
-                </SpaceBetween>
+                <AssignmentActionsCell
+                  item={item}
+                  isToggling={togglingId === item.assignmentId}
+                  isExporting={exportingId === item.assignmentId}
+                  onToggleStatus={(it) => void toggleStatus(it)}
+                  onExportExcel={(it) => void exportToExcel(it)}
+                />
               ),
             },
           ]}

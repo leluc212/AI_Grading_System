@@ -24,10 +24,10 @@ import { assignmentsApi } from '../services';
 import { toDisplayMessage } from '../errorMessage';
 
 export interface CreateAssignmentModalProps {
-  visible: boolean;
-  onDismiss: () => void;
+  readonly visible: boolean;
+  readonly onDismiss: () => void;
   /** Gọi sau khi tạo thành công, để trang cha tải lại danh sách. */
-  onCreated: (assignmentName: string) => void;
+  readonly onCreated: (assignmentName: string) => void;
 }
 
 export function CreateAssignmentModal({

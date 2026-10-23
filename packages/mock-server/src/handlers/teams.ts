@@ -29,7 +29,7 @@ function errorResponse(error: NotFoundError) {
   );
 }
 
-const VALID_TEAM_STATUSES: TeamStatus[] = ['OPEN', 'SUBMITTED', 'RESUBMISSION_ALLOWED'];
+const VALID_TEAM_STATUSES = new Set<TeamStatus>(['OPEN', 'SUBMITTED', 'RESUBMISSION_ALLOWED']);
 
 /** Chuẩn hoá tên nhóm để so khớp (lowercase + trim) — giống logic seed ở `db.ts` */
 function normalizeTeamName(teamName: string): string {
@@ -53,7 +53,7 @@ export const teamHandlers = [
     if (statusParam !== null) {
       // Bỏ qua giá trị status không hợp lệ (coi như không filter) — tránh
       // 400 cho 1 query param optional, việc validate chặt hơn thuộc UI.
-      if (VALID_TEAM_STATUSES.includes(statusParam as TeamStatus)) {
+      if (VALID_TEAM_STATUSES.has(statusParam as TeamStatus)) {
         teams = teams.filter((team) => team.status === statusParam);
       }
     }
@@ -81,14 +81,14 @@ export const teamHandlers = [
     const teamName = url.searchParams.get('teamName') ?? '';
     const normalized = normalizeTeamName(teamName);
 
-    const conflictingTeam = getDb().teams.find(
+    const hasConflict = getDb().teams.some(
       (team) =>
         team.assignmentId === assignmentId &&
         team.teamNameNormalized === normalized &&
         team.status === 'SUBMITTED',
     );
 
-    return HttpResponse.json({ available: !conflictingTeam }, { status: 200 });
+    return HttpResponse.json({ available: !hasConflict }, { status: 200 });
   }),
 
   // GET /api/teams/:teamId

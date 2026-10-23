@@ -12,7 +12,7 @@ import type { GradingConfig, GradingMode } from '@quick-grading/shared-types';
 import { formatDateTime } from '../format';
 
 export interface PromptVersionHistoryProps {
-  versions: GradingConfig[];
+  readonly versions: readonly GradingConfig[];
 }
 
 function modeLabel(mode: GradingMode): {

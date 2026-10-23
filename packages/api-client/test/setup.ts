@@ -17,7 +17,7 @@ import { handlers } from '@quick-grading/mock-server';
 
 /** Polyfill `localStorage` tối thiểu, đủ cho session + persist mock store. */
 class LocalStorageMock {
-  private store = new Map<string, string>();
+  private readonly store = new Map<string, string>();
 
   get length(): number {
     return this.store.size;
@@ -44,7 +44,7 @@ class LocalStorageMock {
   }
 }
 
-if (typeof globalThis.localStorage === 'undefined') {
+if (globalThis.localStorage === undefined) {
   Object.defineProperty(globalThis, 'localStorage', {
     value: new LocalStorageMock(),
     configurable: true,
@@ -64,7 +64,7 @@ if (typeof globalThis.localStorage === 'undefined') {
  * để MSW resolve `/api/...` thành `http://localhost/api/...` khớp đúng request
  * mà api-client gửi đi.
  */
-if (typeof globalThis.location === 'undefined') {
+if (globalThis.location === undefined) {
   Object.defineProperty(globalThis, 'location', {
     value: new URL('http://localhost/'),
     configurable: true,

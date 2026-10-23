@@ -42,11 +42,11 @@ const { min: MIN_SCORE, max: MAX_SCORE } = GRADING_SCALE;
 
 export interface ReviewPanelProps {
   /** Lượt chấm đang cần review. */
-  grading: GradingResult;
+  readonly grading: GradingResult;
   /** Tên Admin đang đăng nhập, ghi vào `reviewedBy`. */
-  reviewedBy: string;
+  readonly reviewedBy: string;
   /** Gọi sau khi review thành công để trang cha tải lại lịch sử chấm. */
-  onReviewed: () => void;
+  readonly onReviewed: () => void;
 }
 
 type Decision = 'KEEP' | 'OVERRIDE';

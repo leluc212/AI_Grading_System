@@ -50,7 +50,7 @@ export interface AdminAuthContextValue {
 
 const AdminAuthContext = createContext<AdminAuthContextValue | null>(null);
 
-export function AdminAuthProvider({ children }: { children: ReactNode }) {
+export function AdminAuthProvider({ children }: { readonly children: ReactNode }) {
   /**
    * Khởi tạo TỪ `localStorage` ngay trong initializer của `useState` (không
    * phải trong `useEffect`). Lý do: route guard đọc `isAuthenticated` ở lần

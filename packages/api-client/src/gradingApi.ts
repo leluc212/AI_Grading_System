@@ -60,7 +60,7 @@ export const gradingApi = {
    */
   async getLatestGrading(teamId: string): Promise<GradingResult | null> {
     const history = await gradingApi.listGradingHistory(teamId);
-    return history.length > 0 ? history[history.length - 1] : null;
+    return history.at(-1) ?? null;
   },
 
   /**

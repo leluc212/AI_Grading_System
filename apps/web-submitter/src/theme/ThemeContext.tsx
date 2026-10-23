@@ -1,7 +1,15 @@
 /**
  * Theme Context quản lý Dark/Light mode chuẩn AWS Visual Refresh cho web-submitter.
  */
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useCallback,
+  type ReactNode,
+} from 'react';
 import { applyMode, Mode, setThemeClass, Theme } from '@cloudscape-design/global-styles';
 
 export type ThemeMode = 'light' | 'dark';
@@ -20,8 +28,8 @@ const ThemeContext = createContext<ThemeContextValue>({
 
 const STORAGE_KEY = 'quick-grading-theme-mode';
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [mode, setModeState] = useState<ThemeMode>(() => {
+export function ThemeProvider({ children }: { readonly children: ReactNode }) {
+  const [mode, setMode] = useState<ThemeMode>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved === 'dark' || saved === 'light') {
@@ -50,17 +58,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
   }, [mode]);
 
-  const toggleMode = () => {
-    setModeState((current) => (current === 'light' ? 'dark' : 'light'));
-  };
+  const toggleMode = useCallback(() => {
+    setMode((current) => (current === 'light' ? 'dark' : 'light'));
+  }, []);
 
-  const setMode = (next: ThemeMode) => {
-    setModeState(next);
-  };
+  const value = useMemo(() => ({ mode, toggleMode, setMode }), [mode, toggleMode]);
 
-  return (
-    <ThemeContext.Provider value={{ mode, toggleMode, setMode }}>{children}</ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
 export function useTheme() {

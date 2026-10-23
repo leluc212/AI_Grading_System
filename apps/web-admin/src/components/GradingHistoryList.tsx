@@ -32,17 +32,33 @@ import { GradingStatusBadge } from './StatusBadge';
 
 export interface GradingHistoryListProps {
   /** Lịch sử chấm theo thứ tự thời gian TĂNG dần (đúng như service layer trả về). */
-  history: GradingResult[];
+  readonly history: readonly GradingResult[];
 }
 
 /** 1 ô "nhãn — giá trị" dùng lại nhiều lần trong khối chi tiết. */
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  children,
+}: {
+  readonly label: string;
+  readonly children: React.ReactNode;
+}) {
   return (
     <div>
       <Box variant="awsui-key-label">{label}</Box>
       <div>{children}</div>
     </div>
   );
+}
+
+function ReviewStatusIndicator({ status }: { readonly status?: string | null }) {
+  if (status === 'REVIEWED') {
+    return <StatusIndicator type="success">Đã review</StatusIndicator>;
+  }
+  if (status === 'PENDING_REVIEW') {
+    return <StatusIndicator type="warning">Chờ review</StatusIndicator>;
+  }
+  return <StatusIndicator type="info">Không cần review</StatusIndicator>;
 }
 
 export function GradingHistoryList({ history }: GradingHistoryListProps) {
@@ -101,13 +117,7 @@ export function GradingHistoryList({ history }: GradingHistoryListProps) {
                     <Field label="Điểm AI">{formatScore(attempt.score)}</Field>
                     <Field label="Điểm sau review">{formatScore(attempt.finalScore)}</Field>
                     <Field label="Trạng thái review">
-                      {attempt.reviewStatus === 'REVIEWED' ? (
-                        <StatusIndicator type="success">Đã review</StatusIndicator>
-                      ) : attempt.reviewStatus === 'PENDING_REVIEW' ? (
-                        <StatusIndicator type="warning">Chờ review</StatusIndicator>
-                      ) : (
-                        <StatusIndicator type="info">Không cần review</StatusIndicator>
-                      )}
+                      <ReviewStatusIndicator status={attempt.reviewStatus} />
                     </Field>
                     <Field label="Rubric version">
                       {attempt.rubricVersion !== undefined ? `v${attempt.rubricVersion}` : '—'}

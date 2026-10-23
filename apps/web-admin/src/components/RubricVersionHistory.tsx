@@ -25,7 +25,7 @@ import { formatDateTime } from '../format';
 
 export interface RubricVersionHistoryProps {
   /** Toàn bộ phiên bản, đã sort tăng dần theo `version` (service layer lo việc đó). */
-  versions: Rubric[];
+  readonly versions: readonly Rubric[];
 }
 
 export function RubricVersionHistory({ versions }: RubricVersionHistoryProps) {

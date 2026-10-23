@@ -1,7 +1,15 @@
 /**
  * Hệ thống đa ngôn ngữ (i18n): Mặc định Tiếng Anh (ENG), hỗ trợ chuyển đổi sang Tiếng Việt (VN).
  */
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 
 export type Language = 'en' | 'vi';
 
@@ -195,9 +203,9 @@ const LanguageContext = createContext<LanguageContextValue>({
   t: (key: TranslationKey) => TRANSLATIONS.en[key] || key,
 });
 
-export function LanguageProvider({ children }: { children: ReactNode }) {
+export function LanguageProvider({ children }: { readonly children: ReactNode }) {
   // Mặc định ngôn ngữ cho người dùng là ENG theo yêu cầu; ở môi trường test giữ 'vi' để tương thích test suite
-  const [language, setLanguageState] = useState<Language>(() => {
+  const [language, setLanguage] = useState<Language>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved === 'en' || saved === 'vi') {
@@ -221,23 +229,32 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     }
   }, [language]);
 
-  const toggleLanguage = () => {
-    setLanguageState((curr) => (curr === 'en' ? 'vi' : 'en'));
-  };
+  const toggleLanguage = useCallback(() => {
+    setLanguage((curr) => (curr === 'en' ? 'vi' : 'en'));
+  }, []);
 
-  const setLanguage = (lang: Language) => {
-    setLanguageState(lang);
-  };
+  const handleSetLanguage = useCallback((lang: Language) => {
+    setLanguage(lang);
+  }, []);
 
-  const t = (key: TranslationKey): string => {
-    return TRANSLATIONS[language]?.[key] ?? TRANSLATIONS.en[key] ?? (key as string);
-  };
-
-  return (
-    <LanguageContext.Provider value={{ language, toggleLanguage, setLanguage, t }}>
-      {children}
-    </LanguageContext.Provider>
+  const t = useCallback(
+    (key: TranslationKey): string => {
+      return TRANSLATIONS[language]?.[key] ?? TRANSLATIONS.en[key] ?? (key as string);
+    },
+    [language],
   );
+
+  const contextValue = useMemo(
+    () => ({
+      language,
+      toggleLanguage,
+      setLanguage: handleSetLanguage,
+      t,
+    }),
+    [language, toggleLanguage, handleSetLanguage, t],
+  );
+
+  return <LanguageContext.Provider value={contextValue}>{children}</LanguageContext.Provider>;
 }
 
 export function useLanguage() {

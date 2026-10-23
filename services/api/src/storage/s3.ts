@@ -92,7 +92,7 @@ export async function headSubmissionObject(key: string): Promise<ObjectHead | un
     const result = await s3().send(new HeadObjectCommand({ Bucket: bucketName(), Key: key }));
     return {
       size: result.ContentLength ?? 0,
-      etag: (result.ETag ?? '').replace(/"/g, ''),
+      etag: (result.ETag ?? '').replaceAll('"', ''),
       contentType: result.ContentType ?? '',
     };
   } catch (err) {

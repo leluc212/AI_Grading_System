@@ -11,9 +11,7 @@ export type RouteHandler = (
 
 export function createRouter(routes: Record<string, RouteHandler>): RouteHandler {
   return async (event) => {
-    const handler = Object.prototype.hasOwnProperty.call(routes, event.routeKey)
-      ? routes[event.routeKey]
-      : undefined;
+    const handler = Object.hasOwn(routes, event.routeKey) ? routes[event.routeKey] : undefined;
     if (handler === undefined) {
       throw new NotFoundError('Route', event.routeKey, 'Không tìm thấy đường dẫn yêu cầu.');
     }

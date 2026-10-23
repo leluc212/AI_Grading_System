@@ -67,7 +67,7 @@ function getLatestGradingResult(
   if (teamResults.length === 0) {
     return null;
   }
-  return teamResults[teamResults.length - 1];
+  return teamResults.at(-1) ?? null;
 }
 
 export const exportHandlers = [
@@ -90,7 +90,7 @@ export const exportHandlers = [
       // ở trạng thái GRADED (IN_PROGRESS/FAILED/PENDING) -> thể hiện rõ
       // "CHƯA CHẤM", không để trống/0 gây nhầm lẫn.
       const finalDisplayScore: ExportRow['finalDisplayScore'] =
-        latest && latest.status === 'GRADED'
+        latest?.status === 'GRADED'
           ? (latest.finalScore ?? latest.score ?? NOT_GRADED_LABEL)
           : NOT_GRADED_LABEL;
 

@@ -82,8 +82,8 @@ export const teamFilesHandlers = [
   http.get('/api/teams/:teamId/files', async ({ params }) => {
     const teamId = params.teamId as string;
 
-    const team = getDb().teams.find((t) => t.teamId === teamId);
-    if (!team) {
+    const teamExists = getDb().teams.some((t) => t.teamId === teamId);
+    if (!teamExists) {
       return errorResponse(new NotFoundError('Team', teamId));
     }
 

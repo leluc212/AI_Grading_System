@@ -122,8 +122,8 @@ export function buildExcelFileName(assignmentName: string, now: Date = new Date(
   let cleanSlug = assignmentName
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'D')
+    .replaceAll('đ', 'd')
+    .replaceAll('Đ', 'D')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-');
 

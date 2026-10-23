@@ -28,12 +28,7 @@ export async function handleListGradingConfigVersions(): Promise<APIGatewayProxy
   return jsonResponse(200, configs);
 }
 
-export async function handleCreateGradingConfig(
-  event: APIGatewayProxyEventV2,
-  username: string,
-): Promise<APIGatewayProxyStructuredResultV2> {
-  const body = parseJsonBody(event) as Record<string, unknown> | undefined;
-
+function parseMode(body?: Record<string, unknown>): GradingMode {
   const mode = body?.mode as GradingMode | undefined;
   if (!mode || !VALID_MODES.includes(mode)) {
     throw new ValidationError(
@@ -41,8 +36,10 @@ export async function handleCreateGradingConfig(
       'mode',
     );
   }
+  return mode;
+}
 
-  const rawPrompt = body?.systemPrompt;
+function parseSystemPrompt(rawPrompt: unknown, mode: GradingMode): string | undefined {
   if (
     (mode === 'PROMPT' || mode === 'HYBRID') &&
     (typeof rawPrompt !== 'string' || rawPrompt.trim().length === 0)
@@ -53,24 +50,38 @@ export async function handleCreateGradingConfig(
     );
   }
 
-  let systemPrompt: string | undefined;
   if (typeof rawPrompt === 'string') {
     if (rawPrompt.length > 8000) {
       throw new ValidationError('systemPrompt không được vượt quá 8.000 ký tự.', 'systemPrompt');
     }
-    systemPrompt = rawPrompt;
+    return rawPrompt;
   }
+
+  return undefined;
+}
+
+function parseReasoningEffort(effort: unknown): 'low' | 'medium' | undefined {
+  if (effort === undefined) {
+    return undefined;
+  }
+  if (effort !== 'low' && effort !== 'medium') {
+    throw new ValidationError("reasoningEffort phải là 'low' hoặc 'medium'.", 'reasoningEffort');
+  }
+  return effort;
+}
+
+export async function handleCreateGradingConfig(
+  event: APIGatewayProxyEventV2,
+  username: string,
+): Promise<APIGatewayProxyStructuredResultV2> {
+  const body = parseJsonBody(event) as Record<string, unknown> | undefined;
+
+  const mode = parseMode(body);
+  const systemPrompt = parseSystemPrompt(body?.systemPrompt, mode);
+  const reasoningEffort = parseReasoningEffort(body?.reasoningEffort);
 
   const model =
     typeof body?.model === 'string' && body.model.trim().length > 0 ? body.model.trim() : undefined;
-
-  let reasoningEffort: 'low' | 'medium' | undefined;
-  if (body?.reasoningEffort !== undefined) {
-    if (body.reasoningEffort !== 'low' && body.reasoningEffort !== 'medium') {
-      throw new ValidationError("reasoningEffort phải là 'low' hoặc 'medium'.", 'reasoningEffort');
-    }
-    reasoningEffort = body.reasoningEffort;
-  }
 
   const maxInputTokens =
     typeof body?.maxInputTokens === 'number' && body.maxInputTokens > 0

@@ -30,7 +30,7 @@ import {
 } from '../domain/keys.js';
 import { ddb, tableName } from './ddb.js';
 
-const TEAM_STATUSES: readonly TeamStatus[] = ['OPEN', 'SUBMITTED', 'RESUBMISSION_ALLOWED'];
+const TEAM_STATUSES = new Set<TeamStatus>(['OPEN', 'SUBMITTED', 'RESUBMISSION_ALLOWED']);
 
 function optionalString(value: unknown): string | undefined {
   return typeof value === 'string' ? value : undefined;
@@ -39,9 +39,9 @@ function optionalString(value: unknown): string | undefined {
 function toMember(value: unknown): TeamMember {
   const m = (value ?? {}) as Record<string, unknown>;
   const member: TeamMember = {
-    memberId: String(m.memberId ?? ''),
-    memberName: String(m.memberName ?? ''),
-    email: String(m.email ?? ''),
+    memberId: typeof m.memberId === 'string' ? m.memberId : '',
+    memberName: typeof m.memberName === 'string' ? m.memberName : '',
+    email: typeof m.email === 'string' ? m.email : '',
   };
   const studentCode = optionalString(m.studentCode);
   if (studentCode !== undefined) {
@@ -52,7 +52,7 @@ function toMember(value: unknown): TeamMember {
 
 /** Chỉ copy field của `Team` (bỏ PK/SK/GSI/latestSubmissionId/grading...). */
 export function toPublicTeam(item: Record<string, unknown>): Team {
-  const status = TEAM_STATUSES.includes(item.status as TeamStatus)
+  const status = TEAM_STATUSES.has(item.status as TeamStatus)
     ? (item.status as TeamStatus)
     : 'SUBMITTED';
   const team: Team = {
@@ -322,7 +322,7 @@ export async function listTeamsByAssignment(
   );
 
   let teams = (result.Items ?? []).map(toPublicTeam);
-  if (statusFilter && TEAM_STATUSES.includes(statusFilter)) {
+  if (statusFilter && TEAM_STATUSES.has(statusFilter)) {
     teams = teams.filter((t) => t.status === statusFilter);
   }
   return teams;

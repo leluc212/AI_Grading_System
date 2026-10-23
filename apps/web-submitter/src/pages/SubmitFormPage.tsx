@@ -273,9 +273,9 @@ type SubmitState =
   | { kind: 'failed'; header: string; message: string; blocking: boolean };
 
 interface TeamSubmissionFormProps {
-  assignment: Assignment;
-  onCancel: () => void;
-  onSubmitted: (successState: SubmitSuccessState) => void;
+  readonly assignment: Assignment;
+  readonly onCancel: () => void;
+  readonly onSubmitted: (successState: SubmitSuccessState) => void;
 }
 
 /** Lỗi rỗng ban đầu — chưa validate gì nên không ô nào bị đánh dấu. */

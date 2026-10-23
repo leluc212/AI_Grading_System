@@ -68,6 +68,28 @@ const FILTER_OPTIONS: SelectProps.Option[] = [
   })),
 ];
 
+function TeamNameCell({
+  teamId,
+  teamName,
+  onNavigate,
+}: {
+  readonly teamId: string;
+  readonly teamName: string;
+  readonly onNavigate: (path: string) => void;
+}) {
+  return (
+    <Link
+      href={`/teams/${teamId}`}
+      onFollow={(event) => {
+        event.preventDefault();
+        onNavigate(`/teams/${teamId}`);
+      }}
+    >
+      {teamName}
+    </Link>
+  );
+}
+
 export function TeamsDashboardPage() {
   const { assignmentId } = useParams<{ assignmentId: string }>();
   const navigate = useNavigate();
@@ -165,6 +187,16 @@ export function TeamsDashboardPage() {
     return allRows.filter((row) => row.gradingStatus === value);
   }, [allRows, selectedFilter]);
 
+  const counterText = useMemo(() => {
+    if (state.kind !== 'ready') {
+      return undefined;
+    }
+    if (visibleRows.length === allRows.length) {
+      return `(${allRows.length})`;
+    }
+    return `(${visibleRows.length}/${allRows.length})`;
+  }, [state.kind, visibleRows.length, allRows.length]);
+
   const assignmentName = state.kind === 'ready' ? state.assignment?.assignmentName : undefined;
 
   return (
@@ -204,19 +236,7 @@ export function TeamsDashboardPage() {
           loadingText="Đang tải danh sách nhóm..."
           variant="container"
           trackBy={(row) => row.team.teamId}
-          header={
-            <Header
-              counter={
-                state.kind === 'ready'
-                  ? visibleRows.length === allRows.length
-                    ? `(${allRows.length})`
-                    : `(${visibleRows.length}/${allRows.length})`
-                  : undefined
-              }
-            >
-              Nhóm
-            </Header>
-          }
+          header={<Header counter={counterText}>Nhóm</Header>}
           filter={
             <Select
               selectedOption={selectedFilter}
@@ -230,15 +250,11 @@ export function TeamsDashboardPage() {
               id: 'teamName',
               header: 'Tên nhóm',
               cell: (row) => (
-                <Link
-                  href={`/teams/${row.team.teamId}`}
-                  onFollow={(event) => {
-                    event.preventDefault();
-                    navigate(`/teams/${row.team.teamId}`);
-                  }}
-                >
-                  {row.team.teamName}
-                </Link>
+                <TeamNameCell
+                  teamId={row.team.teamId}
+                  teamName={row.team.teamName}
+                  onNavigate={navigate}
+                />
               ),
             },
             {

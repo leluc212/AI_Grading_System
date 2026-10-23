@@ -11,11 +11,14 @@
  *
  * See design.md > Mock Server Design (Giai đoạn 1).
  */
-import type { Assignment } from '@quick-grading/shared-types';
-import type { GradingResult } from '@quick-grading/shared-types';
-import type { Rubric, GradingConfig } from '@quick-grading/shared-types';
-import type { SubmissionFile } from '@quick-grading/shared-types';
-import type { Team } from '@quick-grading/shared-types';
+import type {
+  Assignment,
+  GradingConfig,
+  GradingResult,
+  Rubric,
+  SubmissionFile,
+  Team,
+} from '@quick-grading/shared-types';
 
 /** Toàn bộ "bảng" dữ liệu mock, tương đương các DynamoDB table ở giai đoạn 2 */
 export interface MockDb {

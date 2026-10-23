@@ -55,11 +55,11 @@ class NoopObserver {
   }
 }
 
-if (typeof globalThis.ResizeObserver === 'undefined') {
+if (globalThis.ResizeObserver === undefined) {
   globalThis.ResizeObserver = NoopObserver as unknown as typeof ResizeObserver;
 }
 
-if (typeof globalThis.IntersectionObserver === 'undefined') {
+if (globalThis.IntersectionObserver === undefined) {
   globalThis.IntersectionObserver = NoopObserver as unknown as typeof IntersectionObserver;
 }
 

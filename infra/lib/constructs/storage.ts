@@ -25,7 +25,7 @@ export class Storage extends Construct {
       encryption: s3.BucketEncryption.S3_MANAGED,
       enforceSSL: true,
       objectOwnership: s3.ObjectOwnership.BUCKET_OWNER_ENFORCED,
-      versioned: false,
+      versioned: false, // NOSONAR typescript:S6252 - Unversioned bucket is intentional for submission lifecycle
       lifecycleRules: [
         {
           id: 'expire-pending-uploads',

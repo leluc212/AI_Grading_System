@@ -19,10 +19,55 @@ import type { CriterionDraft, CriterionErrorMap } from '../rubricDraft';
 import { createEmptyCriterion } from '../rubricDraft';
 
 export interface RubricCriteriaEditorProps {
-  criteria: CriterionDraft[];
-  errors: CriterionErrorMap;
-  disabled?: boolean;
-  onChange: (criteria: CriterionDraft[]) => void;
+  readonly criteria: readonly CriterionDraft[];
+  readonly errors: CriterionErrorMap;
+  readonly disabled?: boolean;
+  readonly onChange: (criteria: CriterionDraft[]) => void;
+}
+
+interface CriterionLabelControlProps {
+  readonly item: CriterionDraft;
+  readonly position: number;
+  readonly disabled: boolean;
+  readonly onChange: (localId: string, label: string) => void;
+}
+
+function CriterionLabelControl({ item, position, disabled, onChange }: CriterionLabelControlProps) {
+  return (
+    <Input
+      value={item.label}
+      disabled={disabled}
+      placeholder="Tính đúng đắn"
+      ariaLabel={`Tên tiêu chí thứ ${position.toString()}`}
+      onChange={({ detail }) => onChange(item.localId, detail.value)}
+    />
+  );
+}
+
+interface CriterionWeightControlProps {
+  readonly item: CriterionDraft;
+  readonly position: number;
+  readonly disabled: boolean;
+  readonly onChange: (localId: string, weightText: string) => void;
+}
+
+function CriterionWeightControl({
+  item,
+  position,
+  disabled,
+  onChange,
+}: CriterionWeightControlProps) {
+  return (
+    <Input
+      value={item.weightText}
+      disabled={disabled}
+      type="number"
+      inputMode="decimal"
+      placeholder="60"
+      ariaLabel={`Trọng số của tiêu chí thứ ${position.toString()} (tuỳ chọn)`}
+      onChange={({ detail }) => onChange(item.localId, detail.value)}
+    />
+  );
 }
 
 export function RubricCriteriaEditor({
@@ -38,18 +83,29 @@ export function RubricCriteriaEditor({
     [criteria, onChange],
   );
 
+  const handleLabelChange = useCallback(
+    (localId: string, label: string) => {
+      updateCriterion(localId, { label });
+    },
+    [updateCriterion],
+  );
+
+  const handleWeightChange = useCallback(
+    (localId: string, weightText: string) => {
+      updateCriterion(localId, { weightText });
+    },
+    [updateCriterion],
+  );
+
   return (
     <AttributeEditor
-      items={criteria}
+      items={criteria as CriterionDraft[]}
       addButtonText="+ Thêm tiêu chí"
       removeButtonText="Xoá"
       onAddButtonClick={() => onChange([...criteria, createEmptyCriterion()])}
       onRemoveButtonClick={({ detail }) =>
         onChange(criteria.filter((_, index) => index !== detail.itemIndex))
       }
-      // Rubric phải có tối thiểu 1 tiêu chí (server từ chối `criteria` rỗng),
-      // nên dòng cuối cùng không cho xoá. Lưu ý: khi hàm này trả `false`,
-      // Cloudscape ẨN HẲN nút xoá thay vì render rồi disable.
       isItemRemovable={() => criteria.length > 1}
       removeButtonAriaLabel={(item) => {
         const label = item.label.trim();
@@ -62,41 +118,26 @@ export function RubricCriteriaEditor({
         {
           label: 'Tên tiêu chí',
           errorText: (item) => errors[item.localId]?.label,
-          control: (item) => {
-            const position = criteria.indexOf(item) + 1;
-            return (
-              <Input
-                value={item.label}
-                disabled={disabled}
-                placeholder="Tính đúng đắn"
-                // Nhãn cột chỉ render 1 lần cho cả danh sách -> từng ô cần
-                // aria-label riêng kèm số thứ tự để screen reader (và test)
-                // phân biệt được.
-                ariaLabel={`Tên tiêu chí thứ ${position.toString()}`}
-                onChange={({ detail }) => updateCriterion(item.localId, { label: detail.value })}
-              />
-            );
-          },
+          control: (item) => (
+            <CriterionLabelControl
+              item={item}
+              position={criteria.indexOf(item) + 1}
+              disabled={disabled}
+              onChange={handleLabelChange}
+            />
+          ),
         },
         {
           label: 'Trọng số (tuỳ chọn)',
           errorText: (item) => errors[item.localId]?.weight,
-          control: (item) => {
-            const position = criteria.indexOf(item) + 1;
-            return (
-              <Input
-                value={item.weightText}
-                disabled={disabled}
-                type="number"
-                inputMode="decimal"
-                placeholder="60"
-                ariaLabel={`Trọng số của tiêu chí thứ ${position.toString()} (tuỳ chọn)`}
-                onChange={({ detail }) =>
-                  updateCriterion(item.localId, { weightText: detail.value })
-                }
-              />
-            );
-          },
+          control: (item) => (
+            <CriterionWeightControl
+              item={item}
+              position={criteria.indexOf(item) + 1}
+              disabled={disabled}
+              onChange={handleWeightChange}
+            />
+          ),
         },
       ]}
       empty="Chưa có tiêu chí nào."

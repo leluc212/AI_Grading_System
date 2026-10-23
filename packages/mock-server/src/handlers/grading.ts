@@ -72,6 +72,7 @@ function completeGradingAsync(gradingAttemptId: string): void {
     return;
   }
 
+  // NOSONAR typescript:S2245 - Pseudo-random generator is intentionally used for local mock-server simulation and test spies
   const isSimulatedFailure = Math.random() < SIMULATED_FAILURE_RATE;
 
   if (isSimulatedFailure) {
@@ -85,6 +86,7 @@ function completeGradingAsync(gradingAttemptId: string): void {
     // nhiên trong khoảng [SIMULATED_MIN_SCORE, GRADING_SCALE.max] — với thang
     // 0-100 là 60-100, đủ để test cả 2 nhánh needsReview.
     const scoreSpan = GRADING_SCALE.max - SIMULATED_MIN_SCORE + 1;
+    // NOSONAR typescript:S2245 - Pseudo-random generator is intentionally used for local mock-server simulation and test spies
     const score = SIMULATED_MIN_SCORE + Math.floor(Math.random() * scoreSpan);
     result.status = 'GRADED';
     result.score = score;
@@ -105,8 +107,8 @@ export const gradingHandlers = [
   http.post('/api/teams/:teamId/grading', async ({ params, request }) => {
     const teamId = params.teamId as string;
 
-    const team = getDb().teams.find((t) => t.teamId === teamId);
-    if (!team) {
+    const teamExists = getDb().teams.some((t) => t.teamId === teamId);
+    if (!teamExists) {
       return errorResponse(new NotFoundError('Team', teamId));
     }
 
@@ -136,7 +138,7 @@ export const gradingHandlers = [
     // `await` nào giữa check và commit dưới đây) nên không có khoảng hở
     // race condition trong nội bộ 1 lần gọi — giống nguyên tắc atomic-commit
     // đã áp dụng ở `submissions.ts`.
-    const inProgress = getDb().gradingResults.find(
+    const inProgress = getDb().gradingResults.some(
       (g) => g.teamId === teamId && g.status === 'IN_PROGRESS',
     );
     if (inProgress) {
@@ -170,6 +172,7 @@ export const gradingHandlers = [
     // Handler trả response NGAY với status IN_PROGRESS; việc hoàn tất diễn
     // ra out-of-band, UI phải tự poll để thấy kết quả cuối (xem JSDoc của
     // `completeGradingAsync`).
+    // NOSONAR typescript:S2245 - Pseudo-random generator is intentionally used for local mock-server simulation and test spies
     const delayMs = 1500 + Math.random() * 500;
     setTimeout(() => completeGradingAsync(gradingResult.gradingAttemptId), delayMs);
 
@@ -183,8 +186,8 @@ export const gradingHandlers = [
   http.get('/api/teams/:teamId/grading/history', ({ params }) => {
     const teamId = params.teamId as string;
 
-    const team = getDb().teams.find((t) => t.teamId === teamId);
-    if (!team) {
+    const teamExists = getDb().teams.some((t) => t.teamId === teamId);
+    if (!teamExists) {
       return errorResponse(new NotFoundError('Team', teamId));
     }
 
@@ -203,8 +206,8 @@ export const gradingHandlers = [
     const teamId = params.teamId as string;
     const gradingAttemptId = params.gradingAttemptId as string;
 
-    const team = getDb().teams.find((t) => t.teamId === teamId);
-    if (!team) {
+    const teamExists = getDb().teams.some((t) => t.teamId === teamId);
+    if (!teamExists) {
       return errorResponse(new NotFoundError('Team', teamId));
     }
 

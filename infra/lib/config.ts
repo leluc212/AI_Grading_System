@@ -26,7 +26,7 @@ export function parseList(raw: unknown): string[] {
   if (raw === undefined || raw === null) {
     return [];
   }
-  const text = Array.isArray(raw) ? raw.join(',') : String(raw);
+  const text = Array.isArray(raw) ? raw.join(',') : typeof raw === 'string' ? raw : String(raw);
   const out: string[] = [];
   for (const part of text.split(',')) {
     const item = part.trim();
@@ -77,15 +77,18 @@ export function parseAllowedOrigins(raw: unknown): string[] {
 }
 
 export function buildStackConfig(ctx: (key: string) => unknown): StackConfig {
-  const stage = String(ctx('stage') ?? '');
+  const rawStage = ctx('stage');
+  const stage = typeof rawStage === 'string' ? rawStage : '';
   if (!STAGE_PATTERN.test(stage)) {
     throw new Error(`Context "stage" is invalid: "${stage}".`);
   }
-  const account = String(ctx('account') ?? '');
+  const rawAccount = ctx('account');
+  const account = typeof rawAccount === 'string' ? rawAccount : '';
   if (!ACCOUNT_PATTERN.test(account)) {
     throw new Error(`Context "account" is invalid: "${account}".`);
   }
-  const region = String(ctx('region') ?? '');
+  const rawRegion = ctx('region');
+  const region = typeof rawRegion === 'string' ? rawRegion : '';
   if (!REGION_PATTERN.test(region)) {
     throw new Error(`Context "region" is invalid: "${region}".`);
   }

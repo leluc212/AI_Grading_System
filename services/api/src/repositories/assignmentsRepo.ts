@@ -16,11 +16,15 @@ function toStatus(value: unknown): AssignmentStatus {
 /** Chỉ copy field công khai, không trả PK/SK/GSI ra ngoài. */
 export function toListItem(item: Record<string, unknown>): AssignmentListItem {
   return {
-    assignmentId: String(item.assignmentId),
-    assignmentName: String(item.assignmentName),
+    assignmentId:
+      typeof item.assignmentId === 'string' ? item.assignmentId : String(item.assignmentId ?? ''),
+    assignmentName:
+      typeof item.assignmentName === 'string'
+        ? item.assignmentName
+        : String(item.assignmentName ?? ''),
     status: toStatus(item.status),
-    createdAt: String(item.createdAt),
-    createdBy: String(item.createdBy ?? ''),
+    createdAt: typeof item.createdAt === 'string' ? item.createdAt : String(item.createdAt ?? ''),
+    createdBy: typeof item.createdBy === 'string' ? item.createdBy : '',
     submittedTeamCount: typeof item.submittedTeamCount === 'number' ? item.submittedTeamCount : 0,
   };
 }

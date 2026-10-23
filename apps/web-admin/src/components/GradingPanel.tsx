@@ -29,24 +29,24 @@ import { resolveDisplayScore } from '../gradingStatus';
 
 export interface GradingPanelProps {
   /** Lượt chấm gần nhất, `null` nếu nhóm chưa từng được chấm. */
-  latest: GradingResult | null;
+  readonly latest: GradingResult | null;
   /** True khi lượt gần nhất đang `PENDING`/`IN_PROGRESS`. */
-  isGrading: boolean;
+  readonly isGrading: boolean;
   /** True trong lúc request `triggerGrading` đang bay. */
-  triggering: boolean;
+  readonly triggering: boolean;
   /**
    * False khi nhóm chưa nộp đủ 2 file — Requirement 6.2 chỉ cho chấm nhóm đã
    * nộp đủ. Server cũng kiểm lại; đây chỉ là phần UX chặn sớm.
    */
-  canGrade: boolean;
+  readonly canGrade: boolean;
   /** Lỗi của lần bấm "Chấm bài" gần nhất. */
-  triggerError?: string;
+  readonly triggerError?: string;
   /**
    * True khi đã poll quá lâu mà lượt chấm vẫn `IN_PROGRESS` — không kết luận
    * là thất bại (lượt chấm có thể vẫn đang chạy), chỉ ngừng tự cập nhật.
    */
-  pollTimedOut: boolean;
-  onTrigger: () => void;
+  readonly pollTimedOut: boolean;
+  readonly onTrigger: () => void;
 }
 
 export function GradingPanel({

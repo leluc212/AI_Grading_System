@@ -35,6 +35,19 @@ export interface AssignmentExportData {
   rows: ExportRow[];
 }
 
+function computeDisplayScore(attempt: {
+  finalScore?: number;
+  score?: number;
+}): number | typeof NOT_GRADED_LABEL {
+  if (typeof attempt.finalScore === 'number') {
+    return attempt.finalScore;
+  }
+  if (typeof attempt.score === 'number') {
+    return attempt.score;
+  }
+  return NOT_GRADED_LABEL;
+}
+
 export async function handleExportAssignmentData(
   event: APIGatewayProxyEventV2,
 ): Promise<APIGatewayProxyStructuredResultV2> {
@@ -55,13 +68,8 @@ export async function handleExportAssignmentData(
       let reviewStatus: ReviewStatus | null = null;
       let gradedAt: string | null = null;
 
-      if (latestGraded && latestGraded.status === 'GRADED') {
-        finalDisplayScore =
-          typeof latestGraded.finalScore === 'number'
-            ? latestGraded.finalScore
-            : typeof latestGraded.score === 'number'
-              ? latestGraded.score
-              : NOT_GRADED_LABEL;
+      if (latestGraded?.status === 'GRADED') {
+        finalDisplayScore = computeDisplayScore(latestGraded);
         reviewStatus = latestGraded.reviewStatus ?? null;
         gradedAt = latestGraded.gradedAt ?? null;
       }
