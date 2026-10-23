@@ -11,6 +11,7 @@ import Box from '@cloudscape-design/components/box';
 import Tabs from '@cloudscape-design/components/tabs';
 import Markdown from 'react-markdown';
 import { XmlCodeBlock } from './XmlCodeBlock';
+import { ArchitectureViewer } from './ArchitectureViewer';
 
 export interface FileViewerProps {
   /** Nội dung file `.md` (đã lấy từ `teamsApi.getTeamFiles`). */
@@ -58,6 +59,15 @@ export const FileViewer = memo(function FileViewer({
                 <XmlCodeBlock content={xmlContent} />
               </div>
             </Box>
+          ),
+        },
+        {
+          id: 'architecture',
+          label: 'Architecture',
+          content: (
+            <div data-testid="architecture-tab-content">
+              <ArchitectureViewer xmlContent={xmlContent} />
+            </div>
           ),
         },
       ]}
