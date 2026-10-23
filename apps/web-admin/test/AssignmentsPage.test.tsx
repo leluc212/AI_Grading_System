@@ -56,6 +56,36 @@ describe('AssignmentsPage - danh sách (Requirement 1.3)', () => {
     expect(screen.getByText('7')).toBeDefined();
   });
 
+  it('sắp xếp danh sách đợt chấm theo thứ tự ưu tiên: Đang mở -> mới nhất -> cũ nhất', async () => {
+    const closedOld = makeAssignment({
+      assignmentId: 'a1',
+      assignmentName: 'Đợt Cũ Đã Đóng',
+      status: 'CLOSED',
+      createdAt: '2024-09-01T15:00:00.000Z',
+    });
+    const closedNew = makeAssignment({
+      assignmentId: 'a2',
+      assignmentName: 'Đợt Mới Đã Đóng',
+      status: 'CLOSED',
+      createdAt: '2024-09-01T15:00:01.000Z',
+    });
+    const openAssignment = makeAssignment({
+      assignmentId: 'a3',
+      assignmentName: 'Đợt Đang Mở',
+      status: 'OPEN',
+      createdAt: '2026-10-22T14:15:21.000Z',
+    });
+
+    listAssignments.mockResolvedValue([closedOld, closedNew, openAssignment]);
+    renderAppAt('/assignments');
+
+    expect(await screen.findByText('Đợt Đang Mở')).toBeDefined();
+    const rows = screen.getAllByRole('row');
+    expect(rows[1]?.textContent).toContain('Đợt Đang Mở');
+    expect(rows[2]?.textContent).toContain('Đợt Mới Đã Đóng');
+    expect(rows[3]?.textContent).toContain('Đợt Cũ Đã Đóng');
+  });
+
   it('hiển thị empty state khi chưa có đợt chấm nào', async () => {
     listAssignments.mockResolvedValue([]);
 

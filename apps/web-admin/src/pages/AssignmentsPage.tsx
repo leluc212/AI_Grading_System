@@ -96,6 +96,23 @@ function AssignmentActionsCell({
   );
 }
 
+/**
+ * So sánh sắp xếp danh sách đợt chấm theo thứ tự ưu tiên:
+ * 1. Đang mở (OPEN) trước Đã đóng (CLOSED).
+ * 2. Cùng trạng thái: mới nhất đến cũ nhất theo ngày tạo (`createdAt` giảm dần).
+ */
+export function compareAssignments(a: AssignmentListItem, b: AssignmentListItem): number {
+  if (a.status !== b.status) {
+    return a.status === 'OPEN' ? -1 : 1;
+  }
+  const timeA = new Date(a.createdAt).getTime();
+  const timeB = new Date(b.createdAt).getTime();
+  if (Number.isNaN(timeA) || Number.isNaN(timeB)) {
+    return 0;
+  }
+  return timeB - timeA;
+}
+
 function buildAssignmentColumns(
   navigate: (path: string) => void,
   togglingId: string | null,
@@ -108,21 +125,26 @@ function buildAssignmentColumns(
       id: 'assignmentName',
       header: 'Tên đợt chấm',
       cell: (item) => <AssignmentNameCell item={item} onNavigate={navigate} />,
+      sortingField: 'assignmentName',
     },
     {
       id: 'status',
       header: 'Trạng thái',
       cell: (item) => <AssignmentStatusBadge status={item.status} />,
+      sortingField: 'status',
     },
     {
       id: 'submittedTeamCount',
       header: 'Số nhóm đã nộp',
       cell: (item) => item.submittedTeamCount,
+      sortingField: 'submittedTeamCount',
     },
     {
       id: 'createdAt',
       header: 'Ngày tạo',
       cell: (item) => formatDateTime(item.createdAt),
+      sortingComparator: (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
     },
     {
       id: 'actions',
@@ -228,7 +250,12 @@ export function AssignmentsPage() {
     }
   }, []);
 
-  const allAssignments = useMemo(() => (state.kind === 'ready' ? state.assignments : []), [state]);
+  const allAssignments = useMemo(() => {
+    if (state.kind !== 'ready') {
+      return [];
+    }
+    return [...state.assignments].sort(compareAssignments);
+  }, [state]);
 
   const filteredAssignments = useMemo(() => {
     if (!filteringText.trim()) {

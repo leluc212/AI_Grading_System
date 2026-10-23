@@ -48,7 +48,9 @@ export function SelectAssignmentPage() {
         }
         setState({
           kind: 'ready',
-          openAssignments: assignments.filter((assignment) => assignment.status === 'OPEN'),
+          openAssignments: assignments
+            .filter((assignment) => assignment.status === 'OPEN')
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
         });
       })
       .catch((error: unknown) => {

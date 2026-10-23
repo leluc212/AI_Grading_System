@@ -60,7 +60,14 @@ const VALID_STATUSES: AssignmentStatus[] = ['OPEN', 'CLOSED'];
 export const assignmentHandlers = [
   // GET /api/assignments — Requirement 1.3
   http.get('/api/assignments', () => {
-    const items = getDb().assignments.map(toListItem);
+    const items = getDb()
+      .assignments.map(toListItem)
+      .sort((a, b) => {
+        if (a.status !== b.status) {
+          return a.status === 'OPEN' ? -1 : 1;
+        }
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
     return HttpResponse.json(items, { status: 200 });
   }),
 

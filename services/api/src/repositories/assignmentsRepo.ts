@@ -87,7 +87,13 @@ export async function listAssignments(): Promise<AssignmentListItem[]> {
     return fetchAll(nextKey, combined);
   }
 
-  return fetchAll();
+  const all = await fetchAll();
+  return all.sort((a, b) => {
+    if (a.status !== b.status) {
+      return a.status === 'OPEN' ? -1 : 1;
+    }
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
 }
 
 export async function createAssignment(params: {
