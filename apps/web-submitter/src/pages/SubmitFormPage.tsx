@@ -286,14 +286,8 @@ function TeamSubmissionForm({ assignment, onCancel, onSubmitted }: TeamSubmissio
   const { t, language } = useLanguage();
   const { user } = useSubmitterAuth();
   const [teamName, setTeamName] = useState('');
-  // Requirement 2.3: mở form là đã có sẵn 1 dòng thành viên để điền (tự động điền email của tài khoản đang đăng nhập).
-  const [members, setMembers] = useState<MemberDraft[]>(() => [
-    {
-      ...createEmptyMember(),
-      memberName: user?.name || '',
-      email: user?.email || '',
-    },
-  ]);
+  // Requirement 2.3: mở form là đã có sẵn 1 dòng thành viên để điền.
+  const [members, setMembers] = useState<MemberDraft[]>(() => [createEmptyMember()]);
   const [mdFile, setMdFile] = useState<File | null>(null);
   const [xmlFile, setXmlFile] = useState<File | null>(null);
   const [errors, setErrors] = useState<SubmitFormErrors>(NO_ERRORS);
