@@ -6,8 +6,10 @@
  *
  * _Requirements: 5.3, 5.4, 11.4_
  */
-import { memo } from 'react';
+import { memo, useCallback, useState } from 'react';
 import Box from '@cloudscape-design/components/box';
+import Button from '@cloudscape-design/components/button';
+import SpaceBetween from '@cloudscape-design/components/space-between';
 import Tabs from '@cloudscape-design/components/tabs';
 import Markdown from 'react-markdown';
 import { XmlCodeBlock } from './XmlCodeBlock';
@@ -24,6 +26,18 @@ export const FileViewer = memo(function FileViewer({
   markdownContent,
   xmlContent,
 }: FileViewerProps) {
+  const [copiedXml, setCopiedXml] = useState(false);
+
+  const handleCopyXml = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(xmlContent);
+      setCopiedXml(true);
+      setTimeout(() => setCopiedXml(false), 2000);
+    } catch (err) {
+      console.error('Không thể sao chép XML:', err);
+    }
+  }, [xmlContent]);
+
   return (
     <Tabs
       tabs={[
@@ -55,9 +69,21 @@ export const FileViewer = memo(function FileViewer({
           label: 'Bài làm (.xml)',
           content: (
             <Box padding={{ top: 's' }}>
-              <div data-testid="xml-content">
-                <XmlCodeBlock content={xmlContent} />
-              </div>
+              <SpaceBetween size="xs">
+                <Box textAlign="right">
+                  <Button
+                    iconName={copiedXml ? 'status-positive' : 'copy'}
+                    variant="inline-icon"
+                    ariaLabel="Sao chép toàn bộ mã XML"
+                    onClick={handleCopyXml}
+                  >
+                    {copiedXml ? 'Đã sao chép' : 'Sao chép XML'}
+                  </Button>
+                </Box>
+                <div data-testid="xml-content">
+                  <XmlCodeBlock content={xmlContent} />
+                </div>
+              </SpaceBetween>
             </Box>
           ),
         },

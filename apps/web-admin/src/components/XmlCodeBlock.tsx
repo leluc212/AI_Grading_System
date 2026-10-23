@@ -221,7 +221,8 @@ export const XmlCodeBlock = memo(function XmlCodeBlock({ content }: { readonly c
         margin: 0,
         padding: spaceScaledS,
         overflow: 'auto',
-        maxHeight: 480,
+        minHeight: 450,
+        maxHeight: 700,
         // `pre-wrap` để dòng dài tự ngắt thay vì tạo scroll ngang vô tận,
         // nhưng vẫn giữ nguyên khoảng trắng — quan trọng với XML.
         whiteSpace: 'pre-wrap',

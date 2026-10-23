@@ -35,6 +35,7 @@ import SpaceBetween from '@cloudscape-design/components/space-between';
 import type { TableProps } from '@cloudscape-design/components/table';
 import Table from '@cloudscape-design/components/table';
 import { GradingStatusBadge, TeamStatusBadge } from '../components/StatusBadge';
+import { useAdminAuth } from '../auth/AdminAuthContext';
 import { assignmentsApi, gradingApi, teamsApi } from '../services';
 import { toDisplayMessage } from '../errorMessage';
 import { formatScore } from '../format';
@@ -47,7 +48,7 @@ import {
 } from '../gradingStatus';
 
 /** 1 dòng trong bảng: Team ghép với lượt chấm gần nhất của nó. */
-interface TeamRow {
+export interface TeamRow {
   team: Team;
   latestGrading: GradingResult | null;
   gradingStatus: DerivedGradingStatus;
@@ -93,11 +94,13 @@ function TeamNameCell({
 
 function buildTeamColumns(
   navigate: (path: string) => void,
+  onFilterStatus: (status: DerivedGradingStatus) => void,
 ): TableProps.ColumnDefinition<TeamRow>[] {
   return [
     {
       id: 'teamName',
       header: 'Tên nhóm',
+      sortingField: 'teamName',
       cell: (row) => (
         <TeamNameCell teamId={row.team.teamId} teamName={row.team.teamName} onNavigate={navigate} />
       ),
@@ -105,21 +108,47 @@ function buildTeamColumns(
     {
       id: 'memberCount',
       header: 'Số thành viên',
+      sortingField: 'memberCount',
       cell: (row) => row.team.members.length,
     },
     {
       id: 'teamStatus',
       header: 'Trạng thái nộp bài',
+      sortingField: 'teamStatus',
       cell: (row) => <TeamStatusBadge status={row.team.status} />,
     },
     {
       id: 'gradingStatus',
       header: 'Trạng thái chấm bài',
-      cell: (row) => <GradingStatusBadge status={row.gradingStatus} />,
+      sortingField: 'gradingStatus',
+      cell: (row) => (
+        <div
+          role="button"
+          tabIndex={0}
+          title={`Bấm để lọc theo trạng thái: ${DERIVED_GRADING_STATUS_LABELS[row.gradingStatus]}`}
+          style={{
+            cursor: 'pointer',
+            display: 'inline-block',
+            padding: '2px 4px',
+            borderRadius: '4px',
+          }}
+          className="aws-smooth-card"
+          onClick={() => onFilterStatus(row.gradingStatus)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              onFilterStatus(row.gradingStatus);
+            }
+          }}
+        >
+          <GradingStatusBadge status={row.gradingStatus} />
+        </div>
+      ),
     },
     {
       id: 'score',
       header: 'Điểm',
+      sortingField: 'score',
       // Ưu tiên finalScore nếu đã review (Requirement 7.6).
       cell: (row) => formatScore(resolveDisplayScore(row.latestGrading)),
     },
@@ -129,9 +158,24 @@ function buildTeamColumns(
 export function TeamsDashboardPage() {
   const { assignmentId } = useParams<{ assignmentId: string }>();
   const navigate = useNavigate();
+  const { admin } = useAdminAuth();
+  const adminUsername = admin?.username ?? 'admin';
+
   const [state, setState] = useState<LoadState>({ kind: 'loading' });
   const [reloadToken, setReloadToken] = useState(0);
   const [selectedFilter, setSelectedFilter] = useState<SelectProps.Option>(FILTER_OPTIONS[0]);
+
+  // Sắp xếp cột (Requirement: sort Điểm từ cao đến thấp / từ thấp đến cao)
+  const [sortingColumn, setSortingColumn] = useState<TableProps.SortingColumn<TeamRow> | undefined>(
+    undefined,
+  );
+  const [isDescending, setIsDescending] = useState<boolean>(true);
+
+  // Chọn nhóm và chấm hàng loạt
+  const [selectedRows, setSelectedRows] = useState<TeamRow[]>([]);
+  const [batchGrading, setBatchGrading] = useState(false);
+  const [batchNotice, setBatchNotice] = useState<string | undefined>(undefined);
+  const [batchError, setBatchError] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     let cancelled = false;
@@ -203,17 +247,47 @@ export function TeamsDashboardPage() {
 
   /**
    * Toàn bộ dòng, hoặc mảng rỗng khi chưa tải xong.
-   *
-   * Phải bọc `useMemo`: nếu viết thẳng `state.kind === 'ready' ? state.rows : []`
-   * thì nhánh `[]` tạo mảng MỚI mỗi lần render, làm dependency của `useMemo`
-   * lọc bên dưới đổi liên tục và việc memo hoá trở nên vô nghĩa.
    */
   const allRows = useMemo(() => (state.kind === 'ready' ? state.rows : []), [state]);
 
+  /** Tự động poll mỗi 3 giây khi có bài đang chấm (IN_PROGRESS) */
+  const hasInProgress = useMemo(
+    () => allRows.some((row) => row.gradingStatus === 'IN_PROGRESS'),
+    [allRows],
+  );
+
+  useEffect(() => {
+    if (!hasInProgress) {
+      return;
+    }
+    const intervalId = setInterval(() => {
+      reload();
+    }, 3000);
+
+    return () => clearInterval(intervalId);
+  }, [hasInProgress, reload]);
+
+  /**
+   * Lọc nhanh theo Trạng thái chấm bài khi click vào badge trạng thái trong cell.
+   * Nếu đang lọc đúng trạng thái đó rồi thì click lại sẽ huỷ lọc (quay về ALL).
+   */
+  const handleFilterStatus = useCallback(
+    (status: DerivedGradingStatus) => {
+      if (selectedFilter.value === status) {
+        setSelectedFilter(FILTER_OPTIONS[0]);
+      } else {
+        const option = FILTER_OPTIONS.find((opt) => opt.value === status);
+        if (option) {
+          setSelectedFilter(option);
+        }
+      }
+    },
+    [selectedFilter.value],
+  );
+
   /**
    * Lọc ở client (Requirement 5.2). Dữ liệu trạng thái chấm bài đã được tính
-   * sẵn ở trên nên lọc tại đây là tức thì; lọc ở server sẽ cần endpoint mới
-   * mà vẫn phải tải lại trạng thái chấm của từng nhóm.
+   * sẵn ở trên nên lọc tại đây là tức thì.
    */
   const visibleRows = useMemo(() => {
     const value = selectedFilter.value;
@@ -222,6 +296,105 @@ export function TeamsDashboardPage() {
     }
     return allRows.filter((row) => row.gradingStatus === value);
   }, [allRows, selectedFilter]);
+
+  /**
+   * Sắp xếp các dòng đã lọc theo cột và chiều được chọn.
+   * Xử lý thông minh cho cột Điểm: các bài chưa có điểm (null/—) luôn nằm ở cuối bảng.
+   */
+  const sortedRows = useMemo(() => {
+    if (!sortingColumn) {
+      return visibleRows;
+    }
+
+    const { sortingField } = sortingColumn;
+    const isDesc = isDescending;
+
+    return [...visibleRows].sort((a, b) => {
+      if (sortingField === 'score') {
+        const scoreA = resolveDisplayScore(a.latestGrading);
+        const scoreB = resolveDisplayScore(b.latestGrading);
+        if (scoreA === null && scoreB === null) return 0;
+        if (scoreA === null) return 1; // null luôn ở cuối
+        if (scoreB === null) return -1; // null luôn ở cuối
+        return isDesc ? scoreB - scoreA : scoreA - scoreB;
+      }
+      if (sortingField === 'gradingStatus') {
+        const cmp = a.gradingStatus.localeCompare(b.gradingStatus);
+        return isDesc ? -cmp : cmp;
+      }
+      if (sortingField === 'teamName') {
+        const cmp = a.team.teamName.localeCompare(b.team.teamName);
+        return isDesc ? -cmp : cmp;
+      }
+      if (sortingField === 'memberCount') {
+        const diff = a.team.members.length - b.team.members.length;
+        return isDesc ? -diff : diff;
+      }
+      if (sortingField === 'teamStatus') {
+        const cmp = a.team.status.localeCompare(b.team.status);
+        return isDesc ? -cmp : cmp;
+      }
+      return 0;
+    });
+  }, [visibleRows, sortingColumn, isDescending]);
+
+  /**
+   * Danh sách nhóm được chọn hợp lệ để chấm (chỉ các nhóm đã nộp và không đang chấm).
+   */
+  const eligibleSelectedRows = useMemo(
+    () =>
+      selectedRows.filter(
+        (row) => row.team.status === 'SUBMITTED' && row.gradingStatus !== 'IN_PROGRESS',
+      ),
+    [selectedRows],
+  );
+
+  /**
+   * Chấm tất cả các nhóm đã chọn:
+   * Đưa vào queue SQS tuần tự từng nhóm, mỗi bài 1 phiên AI riêng biệt để chống hallucination.
+   */
+  const handleBatchGrade = useCallback(async () => {
+    if (eligibleSelectedRows.length === 0) {
+      return;
+    }
+
+    setBatchGrading(true);
+    setBatchError(undefined);
+    setBatchNotice(undefined);
+
+    const total = eligibleSelectedRows.length;
+    let successCount = 0;
+    const failedTeams: string[] = [];
+
+    for (const row of eligibleSelectedRows) {
+      try {
+        await gradingApi.triggerGrading(row.team.teamId, adminUsername);
+        successCount += 1;
+        // Delay nhẹ 100ms giữa các dispatch để đường truyền mạng ổn định
+        if (total > 1) {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+      } catch (err) {
+        console.error(`[TeamsDashboardPage] Lỗi khi gửi chấm nhóm ${row.team.teamName}:`, err);
+        failedTeams.push(row.team.teamName);
+      }
+    }
+
+    setBatchGrading(false);
+    setSelectedRows([]);
+
+    if (failedTeams.length > 0) {
+      setBatchError(
+        `Đã đưa ${successCount}/${total} nhóm vào hàng đợi. Có ${failedTeams.length} nhóm gặp lỗi: ${failedTeams.join(', ')}.`,
+      );
+    } else {
+      setBatchNotice(
+        `Đã đưa toàn bộ ${successCount} nhóm vào hàng đợi chấm bài thành công! Mỗi bài sẽ được AI chấm riêng biệt trong phiên độc lập để tránh hallucination.`,
+      );
+    }
+
+    reload();
+  }, [adminUsername, eligibleSelectedRows, reload]);
 
   const counterText = useMemo(() => {
     if (state.kind !== 'ready') {
@@ -235,7 +408,10 @@ export function TeamsDashboardPage() {
 
   const assignmentName = state.kind === 'ready' ? state.assignment?.assignmentName : undefined;
 
-  const columnDefinitions = useMemo(() => buildTeamColumns(navigate), [navigate]);
+  const columnDefinitions = useMemo(
+    () => buildTeamColumns(navigate, handleFilterStatus),
+    [navigate, handleFilterStatus],
+  );
 
   return (
     <ContentLayout
@@ -248,9 +424,21 @@ export function TeamsDashboardPage() {
               : 'Danh sách nhóm theo đợt chấm'
           }
           actions={
-            <Button iconName="refresh" ariaLabel="Tải lại danh sách nhóm" onClick={reload}>
-              Tải lại
-            </Button>
+            <SpaceBetween direction="horizontal" size="xs">
+              <Button iconName="refresh" ariaLabel="Tải lại danh sách nhóm" onClick={reload}>
+                Tải lại
+              </Button>
+              <Button
+                variant="primary"
+                disabled={eligibleSelectedRows.length === 0 || batchGrading}
+                loading={batchGrading}
+                onClick={handleBatchGrade}
+              >
+                {eligibleSelectedRows.length > 0
+                  ? `Chấm các nhóm đã chọn (${eligibleSelectedRows.length})`
+                  : 'Chấm các nhóm đã chọn'}
+              </Button>
+            </SpaceBetween>
           }
         >
           Danh sách nhóm
@@ -258,6 +446,21 @@ export function TeamsDashboardPage() {
       }
     >
       <SpaceBetween size="m">
+        {batchNotice !== undefined && (
+          <Alert type="success" dismissible onDismiss={() => setBatchNotice(undefined)}>
+            {batchNotice}
+          </Alert>
+        )}
+        {batchError !== undefined && (
+          <Alert
+            type="error"
+            header="Chấm bài hàng loạt có lỗi"
+            dismissible
+            onDismiss={() => setBatchError(undefined)}
+          >
+            {batchError}
+          </Alert>
+        )}
         {state.kind === 'error' && (
           <Alert
             type="error"
@@ -269,11 +472,23 @@ export function TeamsDashboardPage() {
         )}
 
         <Table
-          items={visibleRows}
+          items={sortedRows}
           loading={state.kind === 'loading'}
           loadingText="Đang tải danh sách nhóm..."
           variant="container"
           trackBy={(row) => row.team.teamId}
+          selectionType="multi"
+          selectedItems={selectedRows}
+          onSelectionChange={({ detail }) => setSelectedRows(detail.selectedItems)}
+          isItemDisabled={(row) =>
+            row.team.status !== 'SUBMITTED' || row.gradingStatus === 'IN_PROGRESS'
+          }
+          sortingColumn={sortingColumn}
+          sortingDescending={isDescending}
+          onSortingChange={({ detail }) => {
+            setSortingColumn(detail.sortingColumn);
+            setIsDescending(detail.isDescending ?? false);
+          }}
           header={<Header counter={counterText}>Nhóm</Header>}
           filter={
             <Select

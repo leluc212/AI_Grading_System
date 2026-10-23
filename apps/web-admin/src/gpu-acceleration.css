@@ -39,7 +39,7 @@ body.awsui-dark-mode {
 .gpu-code-container {
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
-  contain: strict;
+  contain: content;
   will-change: scroll-position;
 }
 

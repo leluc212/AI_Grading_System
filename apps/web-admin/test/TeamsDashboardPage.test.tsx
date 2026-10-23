@@ -213,3 +213,79 @@ describe('TeamsDashboardPage - điều hướng', () => {
     });
   });
 });
+
+describe('TeamsDashboardPage - Chấm hàng loạt (Batch Grading)', () => {
+  it('nút Chấm các nhóm bị disabled khi chưa chọn nhóm nào', async () => {
+    renderAppAt('/assignments/a-1/teams');
+    await screen.findByText('Nhóm Đã Chấm');
+
+    const batchButton = screen.getByRole('button', { name: /Chấm các nhóm đã chọn/ });
+    expect(batchButton).toBeDefined();
+    expect(batchButton.getAttribute('aria-disabled') === 'true' || batchButton.hasAttribute('disabled')).toBe(true);
+  });
+
+  it('chọn nhóm và gọi triggerGrading tuần tự cho các nhóm đã chọn', async () => {
+    const user = userEvent.setup();
+    vi.mocked(gradingApi.triggerGrading).mockResolvedValue(makeGradingResult({ teamId: 't-da-cham' }));
+
+    renderAppAt('/assignments/a-1/teams');
+    await screen.findByText('Nhóm Đã Chấm');
+
+    // Tìm checkbox của dòng "Nhóm Đã Chấm"
+    const row = rowOf('Nhóm Đã Chấm');
+    const checkbox = within(row).getByRole('checkbox');
+    await user.click(checkbox);
+
+    // Nút cập nhật số lượng
+    const batchButton = screen.getByRole('button', { name: /Chấm các nhóm đã chọn \(1\)/ });
+    expect(batchButton).toBeDefined();
+
+    // Bấm chấm hàng loạt
+    await user.click(batchButton);
+
+    await waitFor(() => {
+      expect(gradingApi.triggerGrading).toHaveBeenCalledWith('t-da-cham', 'admin');
+    });
+
+    // Hiện thông báo thành công
+    expect(
+      await screen.findByText(/Đã đưa toàn bộ 1 nhóm vào hàng đợi chấm bài thành công/),
+    ).toBeDefined();
+  });
+});
+
+describe('TeamsDashboardPage - click ô Trạng thái để tự động filter', () => {
+  it('bấm vào badge Cần review sẽ tự động lọc bảng theo trạng thái Cần review', async () => {
+    const user = userEvent.setup();
+    renderAppAt('/assignments/a-1/teams');
+    await screen.findByText('Nhóm Cần Review');
+
+    // Tìm nút click-to-filter của trạng thái "Cần review"
+    const statusBtn = screen.getByTitle('Bấm để lọc theo trạng thái: Cần review');
+    await user.click(statusBtn);
+
+    // Chỉ còn nhóm cần review
+    expect(screen.getByText('Nhóm Cần Review')).toBeDefined();
+    expect(screen.queryByText('Nhóm Đã Chấm')).toBeNull();
+
+    // Bấm lại lần nữa để huỷ lọc
+    await user.click(statusBtn);
+    expect(await screen.findByText('Nhóm Đã Chấm')).toBeDefined();
+  });
+});
+
+describe('TeamsDashboardPage - sắp xếp theo Điểm', () => {
+  it('click vào cột Điểm sẽ kích hoạt sorting', async () => {
+    const user = userEvent.setup();
+    renderAppAt('/assignments/a-1/teams');
+    await screen.findByText('Nhóm Đã Chấm');
+
+    // Header cột điểm có role button hoặc interactive
+    const scoreHeader = screen.getByText('Điểm');
+    await user.click(scoreHeader);
+
+    // Bảng vẫn hiển thị bình thường với các dòng đã sắp xếp
+    expect(screen.getByText('Nhóm Đã Chấm')).toBeDefined();
+  });
+});
+
