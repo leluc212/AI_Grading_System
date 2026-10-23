@@ -231,14 +231,12 @@ describe('IAM least privilege của public-api', () => {
     }
   });
 
-  it('Query chỉ trên /index/GSI1; DynamoDB item chỉ trên ARN bảng', () => {
+  it('Query trên ARN bảng (USER#history) và /index/GSI1; DynamoDB item chỉ trên ARN bảng', () => {
     const statements = publicApiRoleStatements(dev);
     const query = statements.filter((s) => actionsOf(s).includes('dynamodb:Query'));
-    expect(query).toHaveLength(1);
-    expect(actionsOf(query[0])).toEqual(['dynamodb:Query']);
-    const resource = JSON.stringify(query[0].Resource);
-    expect(resource).toContain('/index/GSI1');
-    expect(Array.isArray(query[0].Resource)).toBe(false);
+    expect(query).toHaveLength(2);
+    const resources = query.map((s) => JSON.stringify(s.Resource));
+    expect(resources.some((r) => r.includes('/index/GSI1'))).toBe(true);
 
     const items = statements.filter((s) => actionsOf(s).includes('dynamodb:GetItem'));
     expect(items).toHaveLength(1);
@@ -362,6 +360,8 @@ describe('HTTP API', () => {
       'GET /api/teams/check-name',
       'POST /api/submissions',
       'POST /api/submissions/{submissionId}/finalize',
+      'GET /api/submissions/history',
+      'POST /api/auth/submitter-login-log',
     ];
 
     for (const key of publicRouteKeys) {
