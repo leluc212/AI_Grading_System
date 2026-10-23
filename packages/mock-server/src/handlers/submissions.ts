@@ -24,7 +24,12 @@
  * _Requirements: 1.7, 1.8, 2.1-2.13, 3.2, 11.3_
  */
 import { http, HttpResponse } from 'msw';
-import type { SubmissionFile, Team, TeamMember } from '@quick-grading/shared-types';
+import type {
+  SubmissionFile,
+  SubmissionHistoryItem,
+  Team,
+  TeamMember,
+} from '@quick-grading/shared-types';
 import {
   AssignmentClosedError,
   DomainError,
@@ -252,6 +257,27 @@ export function commitSubmission(params: {
     },
   ];
 
+  const assignmentName = assignment.assignmentName;
+  const historyItem: SubmissionHistoryItem = {
+    submissionId: (files[0]?.s3Key || now).replace(/^.*\//, '') || now,
+    assignmentId,
+    assignmentName,
+    teamId,
+    teamName,
+    submittedAt: now,
+    status: 'SUBMITTED',
+    resubmitted: Boolean(existingTeam),
+    members: teamMembers,
+    files: [
+      { fileName: mdFile.name, fileType: 'md', size: mdFile.size },
+      { fileName: xmlFile.name, fileType: 'xml', size: xmlFile.size },
+    ],
+  };
+  if (!getDb().submissionHistory) {
+    getDb().submissionHistory = [];
+  }
+  getDb().submissionHistory.unshift(historyItem);
+
   if (existingTeam) {
     for (const file of getDb().submissionFiles) {
       if (file.teamId === teamId) {
@@ -351,5 +377,19 @@ export const submissionHandlers = [
     }
 
     return HttpResponse.json(commitResult.body, { status: commitResult.status });
+  }),
+
+  // GET /api/submissions/history
+  http.get('/api/submissions/history', ({ request }) => {
+    const url = new URL(request.url);
+    const email = url.searchParams.get('email')?.trim().toLowerCase() ?? '';
+    if (!email) {
+      return errorResponse(new ValidationError('Email không hợp lệ.', 'email'));
+    }
+    const all = getDb().submissionHistory ?? [];
+    const matched = all.filter((item) =>
+      item.members.some((m) => m.email.trim().toLowerCase() === email),
+    );
+    return HttpResponse.json(matched);
   }),
 ];

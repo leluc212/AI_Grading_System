@@ -77,7 +77,7 @@ function transactItems() {
 }
 
 function cancelledAt(index: number) {
-  const reasons = Array.from({ length: 5 }, (_, i) => ({
+  const reasons = Array.from({ length: 6 }, (_, i) => ({
     Code: i === index ? 'ConditionalCheckFailed' : 'None',
   }));
   return new TransactionCanceledException({
@@ -132,7 +132,7 @@ describe('finalizeSubmission - thành công', () => {
     ]);
 
     const items = transactItems();
-    expect(items).toHaveLength(5);
+    expect(items).toHaveLength(6);
     expect(items[0].Put?.Item).toMatchObject({
       PK: `ASSIGNMENT#${ASSIGNMENT_ID}`,
       SK: 'TEAMNAME#nhóm a',
@@ -159,6 +159,11 @@ describe('finalizeSubmission - thành công', () => {
     expect(items[3].Update?.ConditionExpression).toBe('#status = :open');
     expect(items[4].Update?.Key).toEqual({ PK: `UPLOAD#${SUBMISSION_ID}`, SK: 'META' });
     expect(items[4].Update?.ConditionExpression).toBe('#state = :pending');
+    expect(items[5].Put?.Item).toMatchObject({
+      PK: 'USER#a@example.com',
+      assignmentId: ASSIGNMENT_ID,
+      teamName: 'Nhóm A',
+    });
   });
 
   it('RESUBMISSION_ALLOWED -> 200, resubmitted, cùng teamId, cập nhật members, KHÔNG tăng đếm', async () => {

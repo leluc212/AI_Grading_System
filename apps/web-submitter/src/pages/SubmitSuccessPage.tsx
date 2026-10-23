@@ -135,14 +135,23 @@ export function SubmitSuccessPage() {
               {t('successNote')}
             </Box>
 
-            <Button
-              variant="primary"
-              onClick={() => {
-                navigate('/');
-              }}
-            >
-              {t('btnBackHome')}
-            </Button>
+            <SpaceBetween direction="horizontal" size="xs">
+              <Button
+                variant="primary"
+                onClick={() => {
+                  navigate('/history');
+                }}
+              >
+                {t('viewHistoryBtn')}
+              </Button>
+              <Button
+                onClick={() => {
+                  navigate('/');
+                }}
+              >
+                {t('btnBackHome')}
+              </Button>
+            </SpaceBetween>
           </SpaceBetween>
         </div>
       </div>

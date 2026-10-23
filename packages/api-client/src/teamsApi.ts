@@ -23,6 +23,7 @@ import type {
   FinalizeSubmissionResponse,
   PresignedPost,
   SubmissionFile,
+  SubmissionHistoryItem,
   Team,
   TeamMember,
   TeamStatus,
@@ -161,5 +162,13 @@ export const teamsApi = {
    */
   getTeamFiles(teamId: string): Promise<{ md: string; xml: string }> {
     return apiFetch<{ md: string; xml: string }>(`/api/teams/${encodeURIComponent(teamId)}/files`);
+  },
+
+  /**
+   * Lấy danh sách lịch sử biên nhận bài nộp của tài khoản sinh viên theo email.
+   */
+  getSubmissionHistory(email: string): Promise<SubmissionHistoryItem[]> {
+    const query = buildQuery({ email });
+    return apiFetch<SubmissionHistoryItem[]>(`/api/submissions/history${query}`);
   },
 };

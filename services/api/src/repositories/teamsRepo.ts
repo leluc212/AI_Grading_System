@@ -13,7 +13,14 @@ import {
   TransactWriteCommand,
   UpdateCommand,
 } from '@aws-sdk/lib-dynamodb';
-import type { FileType, Team, TeamMember, TeamStatus } from '@quick-grading/shared-types';
+import type {
+  FileType,
+  SubmissionHistoryFile,
+  SubmissionHistoryItem,
+  Team,
+  TeamMember,
+  TeamStatus,
+} from '@quick-grading/shared-types';
 import {
   AssignmentClosedError,
   NotFoundError,
@@ -154,6 +161,45 @@ function submissionPut(team: Team, submission: SubmissionRecord) {
   };
 }
 
+function userSubmissionHistoryPuts(
+  team: Team,
+  submission: SubmissionRecord,
+  assignmentName: string,
+) {
+  const uniqueEmails = Array.from(
+    new Set(
+      team.members.map((m) => m.email.trim().toLowerCase()).filter((email) => email.length > 0),
+    ),
+  );
+
+  const filesList: SubmissionHistoryFile[] = (['md', 'xml'] as const)
+    .filter((ext) => Boolean(submission.files[ext]))
+    .map((ext) => ({
+      fileName: submission.files[ext].fileName,
+      fileType: ext,
+      size: submission.files[ext].size,
+    }));
+
+  return uniqueEmails.map((email) => ({
+    Put: {
+      TableName: tableName(),
+      Item: {
+        PK: `USER#${email}`,
+        SK: `SUBMISSION#${submission.submittedAt}#${submission.submissionId}`,
+        submissionId: submission.submissionId,
+        assignmentId: team.assignmentId,
+        assignmentName,
+        teamId: team.teamId,
+        teamName: team.teamName,
+        submittedAt: submission.submittedAt,
+        status: team.status,
+        members: team.members,
+        files: filesList,
+      },
+    },
+  }));
+}
+
 function sessionDone(submissionId: string) {
   return {
     Update: {
@@ -226,7 +272,11 @@ async function runFinalizeTransaction(
 }
 
 /** Nhóm mới: khoá tên + Team + Submission + tăng đếm + đóng phiên, nguyên tử. */
-export async function finalizeNewTeam(team: Team, submission: SubmissionRecord): Promise<void> {
+export async function finalizeNewTeam(
+  team: Team,
+  submission: SubmissionRecord,
+  assignmentName = '',
+): Promise<void> {
   const items = [
     {
       Put: {
@@ -255,6 +305,7 @@ export async function finalizeNewTeam(team: Team, submission: SubmissionRecord):
     submissionPut(team, submission),
     assignmentIncrement(team.assignmentId),
     sessionDone(submission.submissionId),
+    ...userSubmissionHistoryPuts(team, submission, assignmentName),
   ];
   await runFinalizeTransaction(items, team, submission.submissionId);
 }
@@ -269,6 +320,7 @@ export async function finalizeExistingTeam(
   team: Team,
   observedStatus: 'OPEN' | 'RESUBMISSION_ALLOWED',
   submission: SubmissionRecord,
+  assignmentName = '',
 ): Promise<void> {
   const items = [
     {
@@ -301,8 +353,43 @@ export async function finalizeExistingTeam(
       ? assignmentIncrement(team.assignmentId)
       : assignmentOpenCheck(team.assignmentId),
     sessionDone(submission.submissionId),
+    ...userSubmissionHistoryPuts(team, submission, assignmentName),
   ];
   await runFinalizeTransaction(items, team, submission.submissionId);
+}
+
+/** Lấy lịch sử các bài nộp của tài khoản email sinh viên. */
+export async function getSubmissionHistoryForUser(email: string): Promise<SubmissionHistoryItem[]> {
+  const normEmail = email.trim().toLowerCase();
+  const res = await ddb().send(
+    new QueryCommand({
+      TableName: tableName(),
+      KeyConditionExpression: 'PK = :pk AND begins_with(SK, :skPrefix)',
+      ExpressionAttributeValues: {
+        ':pk': `USER#${normEmail}`,
+        ':skPrefix': 'SUBMISSION#',
+      },
+      ScanIndexForward: false,
+    }),
+  );
+
+  return (res.Items ?? []).map((item) => ({
+    submissionId: String(item.submissionId),
+    assignmentId: String(item.assignmentId),
+    assignmentName: String(item.assignmentName || ''),
+    teamId: String(item.teamId),
+    teamName: String(item.teamName),
+    submittedAt: String(item.submittedAt),
+    status: String(item.status || 'SUBMITTED'),
+    members: Array.isArray(item.members) ? item.members.map(toMember) : [],
+    files: Array.isArray(item.files)
+      ? item.files.map((f: Record<string, unknown>) => ({
+          fileName: String(f.fileName),
+          fileType: f.fileType as FileType,
+          size: Number(f.size) || 0,
+        }))
+      : [],
+  }));
 }
 
 export async function listTeamsByAssignment(

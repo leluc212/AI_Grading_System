@@ -19,8 +19,10 @@ import type {
   SubmissionFile,
   Team,
   TeamMember,
+  SubmissionHistoryItem,
 } from '@quick-grading/shared-types';
 import {
+  EMAIL_PATTERN,
   MAX_MD_FILE_SIZE_BYTES,
   MAX_XML_FILE_SIZE_BYTES,
   MIN_FILE_SIZE_BYTES,
@@ -38,6 +40,7 @@ import {
   finalizeExistingTeam,
   finalizeNewTeam,
   findTeamByName,
+  getSubmissionHistoryForUser,
   type StoredFileMeta,
   type SubmissionRecord,
 } from '../repositories/teamsRepo.js';
@@ -185,6 +188,9 @@ export async function finalizeSubmission(
   const submission: SubmissionRecord = { submissionId, submittedAt, files: storedFiles };
   const members: TeamMember[] = session.members.map((m) => ({ ...m, memberId: randomUUID() }));
 
+  const assignment = await getAssignment(session.assignmentId);
+  const assignmentName = assignment?.assignmentName ?? session.assignmentId;
+
   let team: Team;
   let status: 200 | 201;
   if (existing === undefined) {
@@ -197,12 +203,12 @@ export async function finalizeSubmission(
       status: 'SUBMITTED',
       createdAt: submittedAt,
     };
-    await finalizeNewTeam(team, submission);
+    await finalizeNewTeam(team, submission, assignmentName);
     status = 201;
   } else {
     const observed = existing.status as 'OPEN' | 'RESUBMISSION_ALLOWED';
     team = { ...existing, members, teamName: session.teamName, status: 'SUBMITTED' };
-    await finalizeExistingTeam(team, observed, submission);
+    await finalizeExistingTeam(team, observed, submission, assignmentName);
     status = 200;
   }
 
@@ -238,4 +244,13 @@ export async function checkTeamName(
 ): Promise<{ available: boolean }> {
   const team = await findTeamByName(assignmentId, normalizeTeamName(teamName));
   return { available: !(team !== undefined && team.status === 'SUBMITTED') };
+}
+
+/** Lấy lịch sử nộp bài của sinh viên theo địa chỉ email */
+export async function getSubmissionHistory(email: string): Promise<SubmissionHistoryItem[]> {
+  const cleanEmail = email.trim();
+  if (!cleanEmail || !EMAIL_PATTERN.test(cleanEmail)) {
+    throw new ValidationError('Email không hợp lệ.', 'email');
+  }
+  return getSubmissionHistoryForUser(cleanEmail);
 }

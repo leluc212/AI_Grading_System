@@ -57,3 +57,24 @@ export type FinalizeSubmissionResponse = {
   files: SubmissionFile[];
   resubmitted: boolean;
 };
+
+/** Tệp trong biên nhận lịch sử nộp bài */
+export interface SubmissionHistoryFile {
+  fileName: string;
+  fileType: FileType;
+  size: number;
+}
+
+/** Biên nhận lịch sử nộp bài của sinh viên */
+export interface SubmissionHistoryItem {
+  submissionId: string;
+  assignmentId: string;
+  assignmentName: string;
+  teamId: string;
+  teamName: string;
+  submittedAt: string;
+  status: string;
+  resubmitted?: boolean;
+  members: TeamMember[];
+  files: SubmissionHistoryFile[];
+}

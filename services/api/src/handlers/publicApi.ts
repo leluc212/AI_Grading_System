@@ -31,6 +31,7 @@ import {
   checkTeamName,
   createSubmission,
   finalizeSubmission,
+  getSubmissionHistory,
 } from '../services/submissionService.js';
 
 /** Id an toàn để log (đã qua validate), gắn trong lúc xử lý. */
@@ -81,6 +82,14 @@ function buildRouter(ids: LogIds) {
         files: result.files,
         resubmitted: result.resubmitted,
       });
+    },
+
+    'GET /api/submissions/history': async (event) => {
+      const email =
+        typeof event.queryStringParameters?.email === 'string'
+          ? event.queryStringParameters.email
+          : '';
+      return jsonResponse(200, await getSubmissionHistory(email));
     },
 
     'POST /api/auth/submitter-login-log': async (event) => {

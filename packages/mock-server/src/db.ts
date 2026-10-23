@@ -17,6 +17,7 @@ import type {
   GradingResult,
   Rubric,
   SubmissionFile,
+  SubmissionHistoryItem,
   Team,
 } from '@quick-grading/shared-types';
 
@@ -25,6 +26,7 @@ export interface MockDb {
   assignments: Assignment[];
   teams: Team[];
   submissionFiles: SubmissionFile[];
+  submissionHistory: SubmissionHistoryItem[];
   gradingResults: GradingResult[];
   rubrics: Rubric[];
   gradingConfigs: GradingConfig[];
@@ -246,7 +248,15 @@ function createSeedDb(): MockDb {
     },
   ];
 
-  return { assignments, teams, submissionFiles, gradingResults, rubrics, gradingConfigs };
+  return {
+    assignments,
+    teams,
+    submissionFiles,
+    submissionHistory: [],
+    gradingResults,
+    rubrics,
+    gradingConfigs,
+  };
 }
 
 /** True nếu `localStorage` khả dụng trong môi trường hiện tại (trình duyệt) */
@@ -277,6 +287,9 @@ function loadDb(): MockDb {
         const parsed = JSON.parse(raw) as MockDb;
         if (!parsed.gradingConfigs) {
           parsed.gradingConfigs = createSeedDb().gradingConfigs;
+        }
+        if (!parsed.submissionHistory) {
+          parsed.submissionHistory = [];
         }
         return parsed;
       }

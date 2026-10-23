@@ -21,6 +21,7 @@ import { AuthCallbackPage } from './pages/AuthCallbackPage';
 import { LoginPage } from './pages/LoginPage';
 import { SelectAssignmentPage } from './pages/SelectAssignmentPage';
 import { SubmitFormPage } from './pages/SubmitFormPage';
+import { SubmissionHistoryPage } from './pages/SubmissionHistoryPage';
 import { SubmitSuccessPage } from './pages/SubmitSuccessPage';
 import { ThemeProvider, useTheme } from './theme/ThemeContext';
 
@@ -55,6 +56,11 @@ function AppContent() {
       items.push({
         text: isEng ? 'Submission Successful' : 'Nộp bài thành công',
         href: '/submit-success',
+      });
+    } else if (location.pathname === '/history') {
+      items.push({
+        text: t('navHistory'),
+        href: '/history',
       });
     }
     return items;
@@ -169,9 +175,14 @@ function AppContent() {
                       <circle cx="12" cy="7" r="4" />
                     </svg>
                   ),
-                  items: [{ id: 'signout', text: t('navLogout') }],
+                  items: [
+                    { id: 'history', text: t('navHistory') },
+                    { id: 'signout', text: t('navLogout') },
+                  ],
                   onItemClick: (event: { detail: { id: string } }) => {
-                    if (event.detail.id === 'signout') {
+                    if (event.detail.id === 'history') {
+                      navigate('/history');
+                    } else if (event.detail.id === 'signout') {
                       logout();
                       navigate('/');
                     }
@@ -248,6 +259,14 @@ function AppContent() {
             element={
               <RequireSubmitterAuth>
                 <SubmitFormPage />
+              </RequireSubmitterAuth>
+            }
+          />
+          <Route
+            path="/history"
+            element={
+              <RequireSubmitterAuth>
+                <SubmissionHistoryPage />
               </RequireSubmitterAuth>
             }
           />

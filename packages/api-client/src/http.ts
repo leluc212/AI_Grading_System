@@ -184,11 +184,13 @@ async function throwTypedError(response: Response): Promise<never> {
 }
 
 const ADMIN_SESSION_KEY = 'quick-grading-admin-session';
+const SUBMITTER_SESSION_KEY = 'quick-grading-submitter-session';
 
 function resolveAuthHeaders(customHeaders?: HeadersInit): Headers {
   const headers = new Headers(customHeaders);
   if (typeof localStorage !== 'undefined' && !headers.has('Authorization')) {
-    const raw = localStorage.getItem(ADMIN_SESSION_KEY);
+    const raw =
+      localStorage.getItem(ADMIN_SESSION_KEY) || localStorage.getItem(SUBMITTER_SESSION_KEY);
     if (raw) {
       try {
         const session = JSON.parse(raw) as { token?: string };
