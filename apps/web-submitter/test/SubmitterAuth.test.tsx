@@ -92,13 +92,11 @@ describe('Submitter Authentication & Anti-Spam Guard', () => {
     await screen.findByText('Đợt chấm: Đợt 1 - Lập trình Web - K21');
   });
 
-  it('đăng nhập demo mode chuyển hướng thành công về trang nộp bài', async () => {
+  it('hiển thị nút Tiếp tục với Google trên trang đăng nhập', async () => {
     renderAppAt('/login', { from: '/submit/a1111111-1111-4111-8111-111111111111' });
 
-    const demoBtn = screen.getByRole('button', { name: /Đăng nhập thử nghiệm/i });
-    fireEvent.click(demoBtn);
-
-    // Sau khi bấm demo, form nộp bài được hiển thị
-    expect(screen.getByRole('heading', { level: 2, name: 'Nộp bài' })).toBeDefined();
+    const googleBtn = screen.getByRole('button', { name: /Tiếp tục với Google/i });
+    expect(googleBtn).toBeDefined();
+    fireEvent.click(googleBtn);
   });
 });
