@@ -43,10 +43,10 @@ async function resolveAuthSession(
     return submitterAuthApi.handleGoogleIdToken(idToken, hashState || undefined);
   }
   if (isMock) {
-    return submitterAuthApi.handleAuthCallback('mock-auth-code', queryState || '');
+    return await submitterAuthApi.handleAuthCallback('mock-auth-code', queryState || '');
   }
   if (code && queryState) {
-    return submitterAuthApi.handleAuthCallback(code, queryState);
+    return await submitterAuthApi.handleAuthCallback(code, queryState);
   }
   throw new Error('Thiếu tham số xác thực từ dịch vụ Google.');
 }
