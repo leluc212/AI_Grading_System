@@ -37,7 +37,6 @@ import Input from '@cloudscape-design/components/input';
 import SpaceBetween from '@cloudscape-design/components/space-between';
 import Spinner from '@cloudscape-design/components/spinner';
 import { useLanguage } from '../i18n/LanguageContext';
-import { useSubmitterAuth } from '../auth/SubmitterAuthContext';
 import { FileUploadField } from '../components/FileUploadField';
 import { MemberListEditor } from '../components/MemberListEditor';
 import { assignmentsApi, teamsApi } from '../services';
@@ -284,7 +283,6 @@ const NO_ERRORS: SubmitFormErrors = { members: {} };
 
 function TeamSubmissionForm({ assignment, onCancel, onSubmitted }: TeamSubmissionFormProps) {
   const { t, language } = useLanguage();
-  const { user } = useSubmitterAuth();
   const [teamName, setTeamName] = useState('');
   // Requirement 2.3: mở form là đã có sẵn 1 dòng thành viên để điền.
   const [members, setMembers] = useState<MemberDraft[]>(() => [createEmptyMember()]);
