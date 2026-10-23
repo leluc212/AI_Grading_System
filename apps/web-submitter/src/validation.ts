@@ -155,13 +155,15 @@ export function toApiMembers(members: MemberDraft[]): Omit<TeamMember, 'memberId
 /* ------------------------------------------------------------------------ */
 
 /**
- * Kích thước tối đa cho MỖI file: 5MB.
+ * Kích thước tối đa cho từng loại file:
+ * - File markdown (.md): 2MB.
+ * - File dữ liệu (.xml): 5MB.
  *
- * Requirement 11.3 yêu cầu chặn ở CẢ client và server, nên con số này cố
- * tình trùng khớp `MAX_FILE_SIZE_BYTES` ở mock handler
- * (`submissions.ts`). Chặn ở client để người dùng biết ngay mà không phải
- * chờ upload xong file 50MB; chặn ở server vì client không đáng tin.
+ * Requirement 11.3 yêu cầu chặn ở CẢ client và server. Chặn ở client để người dùng
+ * biết ngay mà không phải chờ upload xong file lớn; chặn ở server vì client không đáng tin.
  */
+export const MAX_MD_FILE_SIZE_BYTES = 2 * 1024 * 1024;
+export const MAX_XML_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 export const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 
 /** Hai loại file duy nhất được nhận (Requirement 2.6). */
@@ -220,9 +222,12 @@ export function validateSubmissionFile(
     return `File phải có phần mở rộng ${extension}.`;
   }
 
-  if (file.size > MAX_FILE_SIZE_BYTES) {
+  const maxSize = extension === '.md' ? MAX_MD_FILE_SIZE_BYTES : MAX_XML_FILE_SIZE_BYTES;
+  const maxMbStr = extension === '.md' ? '2MB' : '5MB';
+
+  if (file.size > maxSize) {
     // Requirement 2.8, 11.3
-    return `File nặng ${formatFileSizeMb(file.size)}, vượt quá kích thước tối đa 5MB.`;
+    return `File nặng ${formatFileSizeMb(file.size)}, vượt quá kích thước tối đa ${maxMbStr}.`;
   }
 
   return undefined;

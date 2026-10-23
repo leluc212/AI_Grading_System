@@ -24,6 +24,7 @@ import {
   commitSubmission,
   errorResponse,
   MAX_FILE_SIZE_BYTES,
+  MAX_MD_FILE_SIZE_BYTES,
   normalizeTeamName,
   validateFile,
   validateMembersArray,
@@ -95,7 +96,7 @@ export const uploadHandlers = [
       !mdMeta.fileName.toLowerCase().endsWith('.md') ||
       typeof mdMeta.size !== 'number' ||
       mdMeta.size <= 0 ||
-      mdMeta.size > MAX_FILE_SIZE_BYTES
+      mdMeta.size > MAX_MD_FILE_SIZE_BYTES
     ) {
       return errorResponse(new ValidationError('File md không hợp lệ.', 'files.md'));
     }
@@ -184,7 +185,10 @@ export const uploadHandlers = [
     }
 
     const file = formData.get('file');
-    if (!(file instanceof File) || file.size > MAX_FILE_SIZE_BYTES) {
+    const maxSize = key.toLowerCase().endsWith('.md')
+      ? MAX_MD_FILE_SIZE_BYTES
+      : MAX_FILE_SIZE_BYTES;
+    if (!(file instanceof File) || file.size > maxSize) {
       return new HttpResponse(
         '<Error><Code>EntityTooLarge</Code><Message>File is missing or too large</Message></Error>',
         { status: 400, headers: { 'Content-Type': 'application/xml' } },

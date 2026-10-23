@@ -21,7 +21,8 @@ import type {
   TeamMember,
 } from '@quick-grading/shared-types';
 import {
-  MAX_FILE_SIZE_BYTES,
+  MAX_MD_FILE_SIZE_BYTES,
+  MAX_XML_FILE_SIZE_BYTES,
   MIN_FILE_SIZE_BYTES,
   NotFoundError,
   PRESIGNED_POST_EXPIRES_SECONDS,
@@ -113,8 +114,10 @@ async function verifyUploadedObject(
   if (head === undefined) {
     throw new ValidationError(`Thiếu file ${ext}, vui lòng tải lên lại.`, field);
   }
-  if (head.size < MIN_FILE_SIZE_BYTES || head.size > MAX_FILE_SIZE_BYTES) {
-    throw new ValidationError(`File ${ext} phải lớn hơn 0 và không vượt quá 5MB.`, field);
+  const maxSize = fileType === 'md' ? MAX_MD_FILE_SIZE_BYTES : MAX_XML_FILE_SIZE_BYTES;
+  const maxMbStr = fileType === 'md' ? '2MB' : '5MB';
+  if (head.size < MIN_FILE_SIZE_BYTES || head.size > maxSize) {
+    throw new ValidationError(`File ${ext} phải lớn hơn 0 và không vượt quá ${maxMbStr}.`, field);
   }
   if (head.contentType !== SUBMISSION_CONTENT_TYPES[fileType]) {
     throw new ValidationError(`File ${ext} không đúng định dạng.`, field);

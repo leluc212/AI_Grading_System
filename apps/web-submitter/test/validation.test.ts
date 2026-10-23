@@ -6,7 +6,8 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
-  MAX_FILE_SIZE_BYTES,
+  MAX_MD_FILE_SIZE_BYTES,
+  MAX_XML_FILE_SIZE_BYTES,
   createEmptyMember,
   hasMemberErrors,
   hasSubmitFormErrors,
@@ -157,16 +158,28 @@ describe('validateSubmissionFile', () => {
     );
   });
 
-  it('từ chối file vượt 5MB và nêu kích thước thật (Requirement 2.8, 11.3)', () => {
-    const error = validateSubmissionFile(makeFile('to.md', 6 * 1024 * 1024), '.md');
-    expect(error).toBe('File nặng 6.0MB, vượt quá kích thước tối đa 5MB.');
+  it('từ chối file vượt giới hạn (2MB đối với .md, 5MB đối với .xml) và nêu kích thước thật', () => {
+    const errorMd = validateSubmissionFile(makeFile('to.md', 3 * 1024 * 1024), '.md');
+    expect(errorMd).toBe('File nặng 3.0MB, vượt quá kích thước tối đa 2MB.');
+
+    const errorXml = validateSubmissionFile(makeFile('to.xml', 6 * 1024 * 1024), '.xml');
+    expect(errorXml).toBe('File nặng 6.0MB, vượt quá kích thước tối đa 5MB.');
   });
 
-  it('chấp nhận file đúng bằng ngưỡng 5MB, từ chối khi hơn 1 byte', () => {
-    expect(validateSubmissionFile(makeFile('bien.md', MAX_FILE_SIZE_BYTES), '.md')).toBeUndefined();
+  it('chấp nhận file đúng bằng ngưỡng biên, từ chối khi hơn 1 byte', () => {
     expect(
-      validateSubmissionFile(makeFile('bien.md', MAX_FILE_SIZE_BYTES + 1), '.md'),
-    ).toBeDefined();
+      validateSubmissionFile(makeFile('bien.md', MAX_MD_FILE_SIZE_BYTES), '.md'),
+    ).toBeUndefined();
+    expect(validateSubmissionFile(makeFile('bien.md', MAX_MD_FILE_SIZE_BYTES + 1), '.md')).toBe(
+      'File nặng 2.0MB, vượt quá kích thước tối đa 2MB.',
+    );
+
+    expect(
+      validateSubmissionFile(makeFile('bien.xml', MAX_XML_FILE_SIZE_BYTES), '.xml'),
+    ).toBeUndefined();
+    expect(validateSubmissionFile(makeFile('bien.xml', MAX_XML_FILE_SIZE_BYTES + 1), '.xml')).toBe(
+      'File nặng 5.0MB, vượt quá kích thước tối đa 5MB.',
+    );
   });
 
   it('báo sai loại trước khi báo quá kích thước', () => {

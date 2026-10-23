@@ -102,11 +102,15 @@ describe('parseCreateSubmissionRequest', () => {
     ).toBe('BAI.MD');
   });
 
-  it('size 0 / 5_242_881 / 1.5 / chuỗi', () => {
+  it('size 0 / vượt giới hạn / 1.5 / chuỗi', () => {
     expectInvalid(withBody((b) => (file(b, 'md').size = 0)));
+    expectInvalid(withBody((b) => (file(b, 'md').size = 2_097_153)));
     expectInvalid(withBody((b) => (file(b, 'xml').size = 5_242_881)));
     expectInvalid(withBody((b) => (file(b, 'md').size = 1.5)));
     expectInvalid(withBody((b) => (file(b, 'md').size = '100')));
+    expect(
+      parseCreateSubmissionRequest(withBody((b) => (file(b, 'md').size = 2_097_152))).files.md.size,
+    ).toBe(2_097_152);
     expect(
       parseCreateSubmissionRequest(withBody((b) => (file(b, 'xml').size = 5_242_880))).files.xml
         .size,

@@ -21,7 +21,7 @@ import {
   ValidationError,
 } from '@quick-grading/shared-types';
 import { assignmentsApi, teamsApi } from '../src/services';
-import { MAX_FILE_SIZE_BYTES } from '../src/validation';
+import { MAX_FILE_SIZE_BYTES, MAX_MD_FILE_SIZE_BYTES } from '../src/validation';
 import { makeAssignment, makeFile, makeSubmissionFile, makeTeam } from './fixtures';
 import { selectFiles } from './fileUploadTestUtils';
 import { renderAppAt } from './renderApp';
@@ -165,7 +165,7 @@ describe('Form nộp bài - chặn tại client trước khi gọi API (Requirem
     expect(screen.getByText('File phải có phần mở rộng .md.')).toBeDefined();
   });
 
-  it('không gọi API khi file vượt 5MB (Requirement 2.8)', async () => {
+  it('không gọi API khi file vượt 5MB với xml (Requirement 2.8)', async () => {
     const user = userEvent.setup();
     await openForm();
 
@@ -176,6 +176,19 @@ describe('Form nộp bài - chặn tại client trước khi gọi API (Requirem
 
     expect(createTeamAndSubmit).not.toHaveBeenCalled();
     expect(screen.getByText('File nặng 5.0MB, vượt quá kích thước tối đa 5MB.')).toBeDefined();
+  });
+
+  it('không gọi API khi file vượt 2MB với md (Requirement 2.8)', async () => {
+    const user = userEvent.setup();
+    await openForm();
+
+    await fillValidForm(user);
+    selectFiles('md', [makeFile('qua-lon.md', MAX_MD_FILE_SIZE_BYTES + 1)]);
+
+    await clickSubmit(user);
+
+    expect(createTeamAndSubmit).not.toHaveBeenCalled();
+    expect(screen.getByText('File nặng 2.0MB, vượt quá kích thước tối đa 2MB.')).toBeDefined();
   });
 });
 

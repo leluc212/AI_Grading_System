@@ -4,7 +4,11 @@
  * Server (`services/api`) luôn tự validate lại theo các hằng số này, không tin
  * client. `EMAIL_PATTERN` giống hệt `apps/web-submitter/src/validation.ts`.
  */
-/** Kích thước tối đa 1 file nộp bài: 5MB. */
+/** Kích thước tối đa file markdown (.md): 2MB. */
+export const MAX_MD_FILE_SIZE_BYTES = 2 * 1024 * 1024;
+/** Kích thước tối đa file dữ liệu/cấu hình (.xml): 5MB. */
+export const MAX_XML_FILE_SIZE_BYTES = 5 * 1024 * 1024;
+/** Kích thước tối đa 1 file nộp bài mặc định: 5MB. */
 export const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 /** File rỗng bị từ chối. */
 export const MIN_FILE_SIZE_BYTES = 1;

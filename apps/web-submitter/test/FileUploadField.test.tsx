@@ -11,7 +11,11 @@ import { useState } from 'react';
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { FileUploadField } from '../src/components/FileUploadField';
-import { MAX_FILE_SIZE_BYTES, type SubmissionFileExtension } from '../src/validation';
+import {
+  MAX_FILE_SIZE_BYTES,
+  MAX_MD_FILE_SIZE_BYTES,
+  type SubmissionFileExtension,
+} from '../src/validation';
 import { makeFile } from './fixtures';
 import { selectFiles } from './fileUploadTestUtils';
 
@@ -38,11 +42,15 @@ function Harness({ extension }: { extension: SubmissionFileExtension }) {
 
 describe('FileUploadField', () => {
   it('hiển thị nhãn và ràng buộc về loại + kích thước file', () => {
-    render(<Harness extension=".md" />);
+    const { unmount } = render(<Harness extension=".md" />);
 
     expect(screen.getByText('File bài làm (.md)')).toBeDefined();
     // Requirement 2.6, 2.8: nói trước giới hạn thay vì để người dùng thử-sai.
-    expect(screen.getByText('Chỉ nhận 1 file .md, kích thước tối đa 5MB.')).toBeDefined();
+    expect(screen.getByText('Chỉ nhận 1 file .md, kích thước tối đa 2MB.')).toBeDefined();
+
+    unmount();
+    render(<Harness extension=".xml" />);
+    expect(screen.getByText('Chỉ nhận 1 file .xml, kích thước tối đa 5MB.')).toBeDefined();
   });
 
   it('nhận file đúng loại và đúng kích thước mà không báo lỗi', () => {
@@ -71,21 +79,29 @@ describe('FileUploadField', () => {
     expect(screen.getByText('File phải có phần mở rộng .xml.')).toBeDefined();
   });
 
-  it('báo lỗi khi file vượt quá 5MB, kèm kích thước thật (Requirement 2.8, 11.3)', () => {
+  it('báo lỗi khi file vượt quá 2MB đối với .md, kèm kích thước thật (Requirement 2.8, 11.3)', () => {
     render(<Harness extension=".md" />);
 
-    selectFiles('md', [makeFile('qua-lon.md', MAX_FILE_SIZE_BYTES + 1)]);
+    selectFiles('md', [makeFile('qua-lon.md', MAX_MD_FILE_SIZE_BYTES + 1)]);
 
-    expect(screen.getByText('File nặng 5.0MB, vượt quá kích thước tối đa 5MB.')).toBeDefined();
+    expect(screen.getByText('File nặng 2.0MB, vượt quá kích thước tối đa 2MB.')).toBeDefined();
   });
 
-  it('chấp nhận file đúng bằng ngưỡng 5MB (biên không bị chặn)', () => {
+  it('chấp nhận file đúng bằng ngưỡng 2MB đối với .md (biên không bị chặn)', () => {
     render(<Harness extension=".md" />);
 
-    selectFiles('md', [makeFile('vua-du.md', MAX_FILE_SIZE_BYTES)]);
+    selectFiles('md', [makeFile('vua-du.md', MAX_MD_FILE_SIZE_BYTES)]);
 
     expect(screen.queryByText(/vượt quá kích thước/)).toBeNull();
     expect(screen.getByTestId('file-name').textContent).toBe('vua-du.md');
+  });
+
+  it('báo lỗi khi file vượt quá 5MB đối với .xml, kèm kích thước thật (Requirement 2.8, 11.3)', () => {
+    render(<Harness extension=".xml" />);
+
+    selectFiles('xml', [makeFile('qua-lon.xml', MAX_FILE_SIZE_BYTES + 1)]);
+
+    expect(screen.getByText('File nặng 5.0MB, vượt quá kích thước tối đa 5MB.')).toBeDefined();
   });
 
   it('chỉ nhận 1 file dù người dùng chọn nhiều file (Requirement 2.7)', () => {

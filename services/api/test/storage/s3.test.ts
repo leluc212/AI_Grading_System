@@ -50,7 +50,8 @@ describe('createSubmissionUploadPost (ký thật bằng credential giả)', () =
     expect(post.fields.tagging).toBe(PENDING_TAGGING_XML);
     expect(PENDING_TAGGING_XML).toContain('<Key>state</Key><Value>pending</Value>');
 
-    expect(policy.conditions).toContainEqual(['content-length-range', 1, 5_242_880]);
+    const expectedMaxSize = fileType === 'md' ? 2_097_152 : 5_242_880;
+    expect(policy.conditions).toContainEqual(['content-length-range', 1, expectedMaxSize]);
     expect(policy.conditions).toContainEqual(['eq', '$Content-Type', contentType]);
     expect(policy.conditions).toContainEqual(['eq', '$tagging', PENDING_TAGGING_XML]);
     expect(policy.conditions).toContainEqual({ key });

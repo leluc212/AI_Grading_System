@@ -48,6 +48,8 @@ export function normalizeTeamName(teamName: string): string {
 }
 
 /** Kích thước tối đa 1 file được nhận — Requirement 2.8, 11.3 */
+export const MAX_MD_FILE_SIZE_BYTES = 2 * 1024 * 1024;
+export const MAX_XML_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 export const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 
 /** Regex email "đủ tốt" cho mock — không cần RFC-đầy đủ, chỉ chặn input rõ sai định dạng */
@@ -162,10 +164,15 @@ export function validateFile(
       ),
     };
   }
-  if (file.size > MAX_FILE_SIZE_BYTES) {
-    // Requirement 2.8, 11.3: giới hạn kích thước tối đa 5MB/file.
+  const maxSize = expectedExtension === '.md' ? MAX_MD_FILE_SIZE_BYTES : MAX_XML_FILE_SIZE_BYTES;
+  const maxMbStr = expectedExtension === '.md' ? '2MB' : '5MB';
+  if (file.size > maxSize) {
+    // Requirement 2.8, 11.3
     return {
-      error: new ValidationError(`File ${fieldName} vượt quá kích thước tối đa 5MB.`, fieldName),
+      error: new ValidationError(
+        `File ${fieldName} vượt quá kích thước tối đa ${maxMbStr}.`,
+        fieldName,
+      ),
     };
   }
 

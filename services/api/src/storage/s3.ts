@@ -15,7 +15,8 @@ import {
 import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
 import type { FileType, PresignedPost } from '@quick-grading/shared-types';
 import {
-  MAX_FILE_SIZE_BYTES,
+  MAX_MD_FILE_SIZE_BYTES,
+  MAX_XML_FILE_SIZE_BYTES,
   MIN_FILE_SIZE_BYTES,
   PRESIGNED_POST_EXPIRES_SECONDS,
 } from '@quick-grading/shared-types';
@@ -54,7 +55,11 @@ export async function createSubmissionUploadPost(params: {
     Bucket: bucketName(),
     Key: params.key,
     Conditions: [
-      ['content-length-range', MIN_FILE_SIZE_BYTES, MAX_FILE_SIZE_BYTES],
+      [
+        'content-length-range',
+        MIN_FILE_SIZE_BYTES,
+        params.fileType === 'md' ? MAX_MD_FILE_SIZE_BYTES : MAX_XML_FILE_SIZE_BYTES,
+      ],
       ['eq', '$Content-Type', contentType],
       ['eq', '$tagging', PENDING_TAGGING_XML],
     ],

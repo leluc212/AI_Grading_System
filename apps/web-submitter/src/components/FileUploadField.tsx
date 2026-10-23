@@ -81,9 +81,13 @@ export function FileUploadField({
             });
           }}
           constraintText={
-            isVi
-              ? `Chỉ nhận 1 file ${extension}, kích thước tối đa 5MB.`
-              : `Only 1 ${extension} file accepted, max 5MB.`
+            extension === '.md'
+              ? isVi
+                ? 'Chỉ nhận 1 file .md, kích thước tối đa 2MB.'
+                : 'Only 1 .md file accepted, max 2MB.'
+              : isVi
+                ? 'Chỉ nhận 1 file .xml, kích thước tối đa 5MB.'
+                : 'Only 1 .xml file accepted, max 5MB.'
           }
           errorText={errorText}
           accept={extension}

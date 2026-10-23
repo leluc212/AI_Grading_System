@@ -259,9 +259,9 @@ describe('finalizeSubmission - file không hợp lệ -> 400', () => {
     expect(ddbMock.commandCalls(TransactWriteCommand)).toHaveLength(0);
   });
 
-  it('size > 5MB', async () => {
+  it('size > 2MB (md)', async () => {
     givenSession();
-    givenObjects({ mdSize: 5_242_881 });
+    givenObjects({ mdSize: 2_097_153 });
     await expect(finalizeSubmission(SUBMISSION_ID)).rejects.toBeInstanceOf(ValidationError);
     expect(ddbMock.commandCalls(TransactWriteCommand)).toHaveLength(0);
   });

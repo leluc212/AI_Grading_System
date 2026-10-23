@@ -12,7 +12,8 @@ import {
   EMAIL_MAX_LENGTH,
   EMAIL_PATTERN,
   FILE_NAME_MAX_LENGTH,
-  MAX_FILE_SIZE_BYTES,
+  MAX_MD_FILE_SIZE_BYTES,
+  MAX_XML_FILE_SIZE_BYTES,
   MEMBER_NAME_MAX_LENGTH,
   MEMBERS_MAX,
   MEMBERS_MIN,
@@ -169,13 +170,15 @@ function parseFileMeta(value: unknown, fileType: FileType): UploadFileMeta {
   if (!fileName.toLowerCase().endsWith(ext)) {
     throw new ValidationError(`File phải có phần mở rộng ${ext}.`, field);
   }
+  const maxSize = ext === '.md' ? MAX_MD_FILE_SIZE_BYTES : MAX_XML_FILE_SIZE_BYTES;
+  const maxMbStr = ext === '.md' ? '2MB' : '5MB';
   if (
     typeof size !== 'number' ||
     !Number.isInteger(size) ||
     size < MIN_FILE_SIZE_BYTES ||
-    size > MAX_FILE_SIZE_BYTES
+    size > maxSize
   ) {
-    throw new ValidationError(`File ${ext} phải lớn hơn 0 và không vượt quá 5MB.`, field);
+    throw new ValidationError(`File ${ext} phải lớn hơn 0 và không vượt quá ${maxMbStr}.`, field);
   }
   return { fileName: fileName.normalize('NFC'), size };
 }

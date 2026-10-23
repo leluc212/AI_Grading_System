@@ -42,7 +42,7 @@ tải lại trang.
 | 7 | Bấm "Nộp bài", bấm Nộp khi form trống | Hiện lỗi inline ở tên nhóm, tên/email thành viên, và cả 2 ô file | 2.9 | ☐ |
 | 8 | Thêm 2 thành viên rồi xoá 1 | Dòng bị xoá mất đi, dữ liệu dòng còn lại giữ nguyên; còn 1 thành viên thì không còn nút xoá | 2.3, 2.4 | ☐ |
 | 9 | Chọn file `.txt` cho ô `.md` | Hiện "File phải có phần mở rộng .md.", không nộp được | 2.7 | ☐ |
-| 10 | Chọn file `.md` lớn hơn 5MB | Hiện lỗi vượt kích thước kèm số MB thật | 2.8, 11.3 | ☐ |
+| 10 | Chọn file `.md` lớn hơn 2MB | Hiện lỗi vượt kích thước kèm số MB thật | 2.8, 11.3 | ☐ |
 | 11 | Điền hợp lệ (1 thành viên, 2 file đúng) rồi nộp | Chuyển sang trang "Đã nộp bài thành công", hiện tên nhóm + 2 tên file | 2.9 | ☐ |
 | 12 | Nộp lại lần nữa với CÙNG tên nhóm | Bị chặn: "Nhóm ... đã nộp bài, vui lòng liên hệ Admin nếu cần nộp lại." | 2.12 | ☐ |
 | 13 | Mở thẳng URL `/submit-success` (gõ tay) | Bị đưa về danh sách đợt chấm, KHÔNG hiện "thành công" | 2.10 | ☐ |
