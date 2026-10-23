@@ -21,6 +21,7 @@ export interface SubmitterAuthContextValue {
   isLoading: boolean;
   loginWithGoogle: () => Promise<void>;
   loginWithMockGoogle: (customEmail?: string, customName?: string) => Promise<void>;
+  refreshSession: () => void;
   logout: () => void;
 }
 
@@ -93,6 +94,10 @@ export function SubmitterAuthProvider({ children }: { readonly children: ReactNo
     [],
   );
 
+  const refreshSession = useCallback(() => {
+    setSession(submitterAuthApi.getCurrentSession());
+  }, []);
+
   const logout = useCallback(() => {
     submitterAuthApi.logout();
     setSession(null);
@@ -106,9 +111,10 @@ export function SubmitterAuthProvider({ children }: { readonly children: ReactNo
       isLoading,
       loginWithGoogle,
       loginWithMockGoogle,
+      refreshSession,
       logout,
     }),
-    [session, isLoading, loginWithGoogle, loginWithMockGoogle, logout],
+    [session, isLoading, loginWithGoogle, loginWithMockGoogle, refreshSession, logout],
   );
 
   return (

@@ -13,11 +13,13 @@ import ProgressBar from '@cloudscape-design/components/progress-bar';
 import SpaceBetween from '@cloudscape-design/components/space-between';
 import { useLanguage } from '../i18n/LanguageContext';
 import { submitterAuthApi } from '@quick-grading/api-client';
+import { useSubmitterAuth } from '../auth/SubmitterAuthContext';
 
 export function AuthCallbackPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { refreshSession } = useSubmitterAuth();
 
   const [error, setError] = useState<string | null>(null);
 
@@ -49,6 +51,7 @@ export function AuthCallbackPage() {
           } catch {
             // Không chặn luồng nếu log bị trễ
           }
+          refreshSession();
           navigate('/', { replace: true });
           return;
         }
@@ -75,6 +78,7 @@ export function AuthCallbackPage() {
         }
 
         // Đọc đường dẫn trả về nếu có
+        refreshSession();
         navigate('/', { replace: true });
       } catch (err: unknown) {
         if (isCancelled) return;
@@ -88,7 +92,7 @@ export function AuthCallbackPage() {
     return () => {
       isCancelled = true;
     };
-  }, [navigate, searchParams]);
+  }, [navigate, searchParams, refreshSession]);
 
   if (error) {
     return (
