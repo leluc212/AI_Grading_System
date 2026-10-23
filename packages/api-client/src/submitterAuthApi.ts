@@ -9,26 +9,32 @@ import type {
 } from '@quick-grading/shared-types';
 import { apiFetch } from './http.js';
 
-export interface SubmitterCognitoConfig {
-  userPoolClientId: string;
-  cognitoDomain: string; // e.g. "https://auth.fcajsubmission.com"
-  redirectUri: string; // e.g. "https://fcajsubmission.vercel.app/auth/callback"
+export interface SubmitterAuthConfig {
+  googleClientId?: string;
+  redirectUri?: string;
+  userPoolClientId?: string;
+  cognitoDomain?: string;
   region?: string;
 }
+
+export type SubmitterCognitoConfig = SubmitterAuthConfig;
 
 const SUBMITTER_SESSION_KEY = 'quick-grading-submitter-session';
 const PKCE_VERIFIER_KEY = 'quick-grading-pkce-verifier';
 const PKCE_STATE_KEY = 'quick-grading-pkce-state';
 
-let submitterConfig: SubmitterCognitoConfig | null = null;
+let submitterConfig: SubmitterAuthConfig | null = null;
 
-export function setSubmitterCognitoConfig(config: SubmitterCognitoConfig | null): void {
+export function setSubmitterAuthConfig(config: SubmitterAuthConfig | null): void {
   submitterConfig = config;
 }
 
-export function getSubmitterCognitoConfig(): SubmitterCognitoConfig | null {
+export function getSubmitterAuthConfig(): SubmitterAuthConfig | null {
   return submitterConfig;
 }
+
+export const setSubmitterCognitoConfig = setSubmitterAuthConfig;
+export const getSubmitterCognitoConfig = getSubmitterAuthConfig;
 
 function hasSessionStorage(): boolean {
   return typeof sessionStorage !== 'undefined';
@@ -91,36 +97,99 @@ export function parseJwtPayload(token: string): Record<string, unknown> {
 }
 
 export const submitterAuthApi = {
+  setSubmitterAuthConfig,
+  getSubmitterAuthConfig,
   setSubmitterCognitoConfig,
   getSubmitterCognitoConfig,
 
-  /** Khởi tạo quá trình đăng nhập qua Google IdP trong Cognito */
+  /** Khởi tạo quá trình đăng nhập qua Google OAuth (trực tiếp hoặc Cognito) */
   async prepareGoogleLogin(): Promise<{ authUrl: string; state: string }> {
     const config = submitterConfig;
     const state = generateRandomString(16);
-    const verifier = generateRandomString(64);
-    const challenge = await generateCodeChallenge(verifier);
+    const nonce = generateRandomString(16);
 
     if (hasSessionStorage()) {
-      sessionStorage.setItem(PKCE_VERIFIER_KEY, verifier);
       sessionStorage.setItem(PKCE_STATE_KEY, state);
+      sessionStorage.setItem('quick-grading-oauth-nonce', nonce);
     }
 
-    if (!config?.cognitoDomain || !config?.userPoolClientId) {
-      // Khi chưa cấu hình Cognito thật, trả URL giả định để mock hoặc test
-      return {
-        authUrl: `/auth/callback?mock=true&state=${state}`,
+    const redirectUri =
+      config?.redirectUri ||
+      (typeof window !== 'undefined'
+        ? `${window.location.origin}/auth/callback`
+        : 'http://localhost:5173/auth/callback');
+
+    // 1. Trực tiếp Google OAuth 2.0 (Khuyên dùng)
+    const googleClientId = config?.googleClientId;
+    if (googleClientId) {
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(
+        googleClientId,
+      )}&redirect_uri=${encodeURIComponent(
+        redirectUri,
+      )}&response_type=id_token%20token&scope=openid%20email%20profile&state=${encodeURIComponent(
         state,
-      };
+      )}&nonce=${encodeURIComponent(nonce)}&prompt=select_account`;
+      return { authUrl, state };
     }
 
-    const domain = config.cognitoDomain.replace(/\/$/, '');
-    const redirectUri = encodeURIComponent(config.redirectUri);
-    const clientId = encodeURIComponent(config.userPoolClientId);
+    // 2. AWS Cognito nếu có cấu hình
+    if (config?.cognitoDomain && config?.userPoolClientId) {
+      const verifier = generateRandomString(64);
+      const challenge = await generateCodeChallenge(verifier);
+      if (hasSessionStorage()) {
+        sessionStorage.setItem(PKCE_VERIFIER_KEY, verifier);
+      }
+      const domain = config.cognitoDomain.replace(/\/$/, '');
+      const clientId = encodeURIComponent(config.userPoolClientId);
+      const authUrl = `${domain}/oauth2/authorize?identity_provider=Google&client_id=${clientId}&response_type=code&scope=openid+email+profile&redirect_uri=${encodeURIComponent(
+        redirectUri,
+      )}&state=${encodeURIComponent(state)}&code_challenge=${encodeURIComponent(
+        challenge,
+      )}&code_challenge_method=S256`;
+      return { authUrl, state };
+    }
 
-    const authUrl = `${domain}/oauth2/authorize?identity_provider=Google&client_id=${clientId}&response_type=code&scope=openid+email+profile&redirect_uri=${redirectUri}&state=${encodeURIComponent(state)}&code_challenge=${encodeURIComponent(challenge)}&code_challenge_method=S256`;
+    // 3. Fallback Mock mode nếu chưa cấu hình Google Client ID
+    return {
+      authUrl: `/auth/callback?mock=true&state=${state}`,
+      state,
+    };
+  },
 
-    return { authUrl, state };
+  /** Xử lý ID Token nhận được trực tiếp từ Google OAuth 2.0 OpenID Connect */
+  handleGoogleIdToken(
+    idToken: string,
+    state?: string,
+  ): { token: string; profile: SubmitterIdentity } {
+    if (hasSessionStorage() && state) {
+      const savedState = sessionStorage.getItem(PKCE_STATE_KEY);
+      if (savedState && savedState !== state) {
+        throw new Error('Lỗi bảo mật: CSRF state parameter không khớp.');
+      }
+    }
+
+    const payload = parseJwtPayload(idToken);
+    const email = typeof payload.email === 'string' ? payload.email : '';
+    const name =
+      typeof payload.name === 'string' && payload.name.trim().length > 0
+        ? payload.name
+        : email || 'Google User';
+    const sub = typeof payload.sub === 'string' ? payload.sub : `google-sub-${Date.now()}`;
+
+    if (!email) {
+      throw new Error('Không nhận được thông tin email hợp lệ từ Google.');
+    }
+
+    const profile: SubmitterIdentity = {
+      sub,
+      email,
+      name,
+      provider: 'Google',
+    };
+
+    const session = { token: idToken, profile };
+    this.saveSession(session);
+    return session;
   },
 
   /** Đổi Authorization Code lấy Tokens từ Cognito Token endpoint */
@@ -156,8 +225,8 @@ export const submitterAuthApi = {
 
     const bodyParams = new URLSearchParams({
       grant_type: 'authorization_code',
-      client_id: config.userPoolClientId,
-      redirect_uri: config.redirectUri,
+      client_id: config.userPoolClientId || '',
+      redirect_uri: config.redirectUri || '',
       code,
       code_verifier: verifier,
     });

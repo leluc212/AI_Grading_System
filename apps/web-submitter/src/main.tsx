@@ -20,6 +20,7 @@ import './gpu-acceleration.css';
 import { ThemeProvider } from './theme/ThemeContext';
 import { App } from './App';
 import { setApiBaseUrl } from './services';
+import { submitterAuthApi } from '@quick-grading/api-client';
 
 /**
  * Hiển thị lỗi khởi động (mock server hoặc cấu hình URL) ngay trên trang.
@@ -103,6 +104,14 @@ async function bootstrap(): Promise<void> {
       );
       return;
     }
+  }
+
+  const googleClientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined)?.trim();
+  if (googleClientId) {
+    submitterAuthApi.setSubmitterAuthConfig({
+      googleClientId,
+      redirectUri: `${window.location.origin}/auth/callback`,
+    });
   }
 
   createRoot(container).render(

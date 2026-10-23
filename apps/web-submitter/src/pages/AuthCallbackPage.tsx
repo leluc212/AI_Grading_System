@@ -27,15 +27,24 @@ export function AuthCallbackPage() {
     let isCancelled = false;
 
     async function processAuth() {
+      // 1. Đọc hash params (từ luồng Google OAuth trực tiếp)
+      const rawHash = window.location.hash.startsWith('#')
+        ? window.location.hash.substring(1)
+        : window.location.hash;
+      const hashParams = new URLSearchParams(rawHash);
+      const idToken = hashParams.get('id_token');
+      const hashState = hashParams.get('state');
+
+      // 2. Đọc query params (từ Mock mode hoặc luồng code)
       const code = searchParams.get('code');
-      const state = searchParams.get('state');
+      const queryState = searchParams.get('state');
       const isMock = searchParams.get('mock') === 'true';
 
       try {
-        if (isMock) {
-          const { token, profile } = await submitterAuthApi.handleAuthCallback(
-            'mock-auth-code',
-            state || '',
+        if (idToken) {
+          const { token, profile } = submitterAuthApi.handleGoogleIdToken(
+            idToken,
+            hashState || undefined,
           );
           if (isCancelled) return;
           try {
@@ -56,30 +65,54 @@ export function AuthCallbackPage() {
           return;
         }
 
-        if (!code || !state) {
-          throw new Error('Thiếu tham số xác thực từ dịch vụ Google/Cognito.');
-        }
-
-        const { token, profile } = await submitterAuthApi.handleAuthCallback(code, state);
-        if (isCancelled) return;
-
-        try {
-          await submitterAuthApi.recordLoginAuditLog(
-            {
-              email: profile.email,
-              name: profile.name,
-              userSub: profile.sub,
-              provider: 'Google',
-            },
-            token,
+        if (isMock) {
+          const { token, profile } = await submitterAuthApi.handleAuthCallback(
+            'mock-auth-code',
+            queryState || '',
           );
-        } catch (logErr) {
-          console.warn('[AuthCallback] Ghi log đăng nhập thất bại:', logErr);
+          if (isCancelled) return;
+          try {
+            await submitterAuthApi.recordLoginAuditLog(
+              {
+                email: profile.email,
+                name: profile.name,
+                userSub: profile.sub,
+                provider: 'Google',
+              },
+              token,
+            );
+          } catch {
+            // Không chặn luồng nếu log bị trễ
+          }
+          refreshSession();
+          navigate('/', { replace: true });
+          return;
         }
 
-        // Đọc đường dẫn trả về nếu có
-        refreshSession();
-        navigate('/', { replace: true });
+        if (code && queryState) {
+          const { token, profile } = await submitterAuthApi.handleAuthCallback(code, queryState);
+          if (isCancelled) return;
+
+          try {
+            await submitterAuthApi.recordLoginAuditLog(
+              {
+                email: profile.email,
+                name: profile.name,
+                userSub: profile.sub,
+                provider: 'Google',
+              },
+              token,
+            );
+          } catch (logErr) {
+            console.warn('[AuthCallback] Ghi log đăng nhập thất bại:', logErr);
+          }
+
+          refreshSession();
+          navigate('/', { replace: true });
+          return;
+        }
+
+        throw new Error('Thiếu tham số xác thực từ dịch vụ Google.');
       } catch (err: unknown) {
         if (isCancelled) return;
         const msg = err instanceof Error ? err.message : 'Xác thực tài khoản Google thất bại.';
