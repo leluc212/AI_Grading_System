@@ -141,6 +141,7 @@ export const TRANSLATIONS = {
     receiptFiles: 'Submitted Files',
     btnHistoryBack: 'Back to Assignments',
     viewHistoryBtn: 'View Submission History',
+    btnHistoryCard: 'Submission History',
   },
   vi: {
     // Brand & Top Navigation
@@ -270,6 +271,7 @@ export const TRANSLATIONS = {
     receiptFiles: 'Các tệp đã nộp',
     btnHistoryBack: 'Về danh sách đợt chấm',
     viewHistoryBtn: 'Xem lịch sử nộp bài',
+    btnHistoryCard: 'Lịch sử nộp',
   },
 } as const;
 

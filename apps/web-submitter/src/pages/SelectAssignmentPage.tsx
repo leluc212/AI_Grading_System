@@ -253,9 +253,16 @@ export function SelectAssignmentPage() {
                       </div>
                     </div>
 
-                    {/* Card Action Button */}
+                    {/* Card Action Buttons */}
                     <div
-                      style={{ paddingTop: '16px', borderTop: '1px solid var(--fcaj-card-border)' }}
+                      style={{
+                        paddingTop: '16px',
+                        borderTop: '1px solid var(--fcaj-card-border)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        flexWrap: 'wrap',
+                      }}
                     >
                       <Button
                         variant="primary"
@@ -264,6 +271,13 @@ export function SelectAssignmentPage() {
                         onClick={() => goToSubmitForm(assignment.assignmentId)}
                       >
                         {t('btnSubmit')}
+                      </Button>
+                      <Button
+                        iconName="file"
+                        ariaLabel="Xem lịch sử nộp bài"
+                        onClick={() => navigate('/history')}
+                      >
+                        {t('btnHistoryCard')}
                       </Button>
                     </div>
                   </article>
