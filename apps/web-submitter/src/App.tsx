@@ -35,15 +35,15 @@ function AppContent() {
 
   const breadcrumbItems = useMemo(() => {
     const isEng = language === 'en';
-    const items = [{ text: isEng ? 'FCAJ Community' : 'Cộng đồng FCAJ', href: '/' }];
+    const items = [{ text: isEng ? 'Home' : 'Trang chủ', href: '/' }];
     if (location.pathname.startsWith('/submit/')) {
       items.push({
-        text: isEng ? 'Assignment Submission' : 'Nộp bài tập nhóm',
+        text: isEng ? 'Submit' : 'Nộp bài',
         href: location.pathname,
       });
     } else if (location.pathname === '/submit-success') {
       items.push({
-        text: isEng ? 'Submission Receipt' : 'Xác nhận nộp bài',
+        text: isEng ? 'Submission Successful' : 'Nộp bài thành công',
         href: '/submit-success',
       });
     }
