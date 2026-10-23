@@ -16,7 +16,6 @@ export type Language = 'en' | 'vi';
 export const TRANSLATIONS = {
   en: {
     // Brand & Top Navigation
-    brandTitle: 'AWS First Cloud AI Journey',
     brandSubtitle: 'Student Assignment Submission Portal',
     portalBadge: 'Home',
     navHome: 'Assignments',
@@ -29,7 +28,7 @@ export const TRANSLATIONS = {
     heroHeadlinePart1: 'Assignment',
     heroHeadlinePart2: 'Submission Portal',
     heroTagline:
-      'Submit your team project and architecture files for AWS First Cloud AI Journey. Select an open assignment below to get started.',
+      'Submit your team project and architecture files for AWS First Cloud AI Journey.\nSelect an open assignment below to get started.',
 
     btnJoinCommunity: 'Join Community',
     btnStudyGroup: 'AWS Study Group',
@@ -135,7 +134,7 @@ export const TRANSLATIONS = {
     heroHeadlinePart2: 'Dự Án Nhóm',
 
     heroTagline:
-      'Nộp file dự án và kiến trúc cho AWS First Cloud AI Journey.    Chọn đợt phù hợp đang mở bên dưới để bắt đầu.',
+      'Nộp file dự án và kiến trúc cho AWS First Cloud AI Journey.\nChọn đợt phù hợp đang mở bên dưới để bắt đầu.',
 
     btnJoinCommunity: 'Tham Gia Cộng Đồng',
     btnStudyGroup: 'Nhóm Học Tập AWS',

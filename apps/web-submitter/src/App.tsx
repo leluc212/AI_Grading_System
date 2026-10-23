@@ -65,7 +65,6 @@ function AppContent() {
       <TopNavigation
         identity={{
           href: '/',
-          title: t('brandTitle'),
           logo: {
             src: '/logo-aws-fcaj.png',
             alt: 'AWS First Cloud AI Journey Logo',

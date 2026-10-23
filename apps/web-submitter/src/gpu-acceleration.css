@@ -278,7 +278,8 @@ body.awsui-dark-mode .fcaj-hero-accent {
   line-height: 1.6;
   color: var(--fcaj-hero-sub);
   margin: 0;
-  max-width: 440px;
+  max-width: 580px;
+  white-space: pre-line;
 }
 
 /* ---- Hero Illustration ---- */
