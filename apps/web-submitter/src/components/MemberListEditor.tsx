@@ -41,7 +41,6 @@ export interface MemberListEditorProps {
 
 interface MemberControlProps {
   readonly item: MemberDraft;
-  readonly position: number;
   readonly disabled: boolean;
   readonly placeholder: string;
   readonly ariaLabel: string;
@@ -139,7 +138,6 @@ function buildMemberDefinitions(
         return (
           <MemberNameControl
             item={item}
-            position={pos}
             disabled={disabled}
             placeholder={labels.namePlaceholder}
             ariaLabel={
@@ -165,7 +163,6 @@ function buildMemberDefinitions(
         return (
           <MemberEmailControl
             item={item}
-            position={pos}
             disabled={disabled}
             placeholder={labels.emailPlaceholder}
             ariaLabel={
@@ -185,7 +182,6 @@ function buildMemberDefinitions(
         return (
           <MemberStudentCodeControl
             item={item}
-            position={pos}
             disabled={disabled}
             placeholder={labels.codePlaceholder}
             ariaLabel={

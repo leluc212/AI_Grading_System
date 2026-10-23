@@ -149,7 +149,7 @@ const mockLoginLogs: Array<{
     email: 'cloud.warrior@gmail.com',
     name: 'Cloud Warrior',
     provider: 'Google',
-    ipAddress: '14.161.22.89',
+    ipAddress: '127.0.0.1',
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0',
     timestamp: new Date(Date.now() - 3600000).toISOString(),
     status: 'SUCCESS',

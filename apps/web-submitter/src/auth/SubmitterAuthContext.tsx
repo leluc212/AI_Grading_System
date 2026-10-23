@@ -62,7 +62,7 @@ export function SubmitterAuthProvider({ children }: { readonly children: ReactNo
       setIsLoading(true);
       try {
         const mockProfile: SubmitterIdentity = {
-          sub: 'mock-google-sub-' + Math.random().toString(36).substring(2, 9),
+          sub: `mock-google-sub-${crypto.randomUUID().slice(0, 8)}`,
           email: customEmail,
           name: customName,
           provider: 'Google',

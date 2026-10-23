@@ -44,14 +44,10 @@ export function generateRandomString(length = 48): string {
   const randomValues = new Uint8Array(length);
   if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
     crypto.getRandomValues(randomValues);
-  } else {
-    for (let i = 0; i < length; i++) {
-      randomValues[i] = Math.floor(Math.random() * 256);
-    }
   }
   let result = '';
-  for (let i = 0; i < length; i++) {
-    result += charset[randomValues[i] % charset.length];
+  for (const byte of randomValues) {
+    result += charset[byte % charset.length];
   }
   return result;
 }
@@ -70,10 +66,10 @@ export async function generateCodeChallenge(verifier: string): Promise<string> {
 
 function base64UrlEncode(array: Uint8Array): string {
   let str = '';
-  for (let i = 0; i < array.length; i++) {
-    str += String.fromCharCode(array[i]);
+  for (const byte of array) {
+    str += String.fromCodePoint(byte);
   }
-  return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return btoa(str).replaceAll('+', '-').replaceAll('/', '_').split('=')[0];
 }
 
 /** Giải mã phần payload của JWT an toàn (không cần thư viện bên thứ 3) */
@@ -81,11 +77,11 @@ export function parseJwtPayload(token: string): Record<string, unknown> {
   try {
     const parts = token.split('.');
     if (parts.length < 2) return {};
-    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const base64 = parts[1].replaceAll('-', '+').replaceAll('_', '/');
     const jsonStr = decodeURIComponent(
       atob(base64)
         .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .map((c) => '%' + ('00' + (c.codePointAt(0) ?? 0).toString(16)).slice(-2))
         .join(''),
     );
     return JSON.parse(jsonStr) as Record<string, unknown>;
@@ -110,7 +106,7 @@ export const submitterAuthApi = {
       sessionStorage.setItem(PKCE_STATE_KEY, state);
     }
 
-    if (!config || !config.cognitoDomain || !config.userPoolClientId) {
+    if (!config?.cognitoDomain || !config?.userPoolClientId) {
       // Khi chưa cấu hình Cognito thật, trả URL giả định để mock hoặc test
       return {
         authUrl: `/auth/callback?mock=true&state=${state}`,
@@ -143,7 +139,7 @@ export const submitterAuthApi = {
     const config = submitterConfig;
 
     // Chế độ Mock / Local development
-    if (!config || !config.cognitoDomain || code === 'mock-auth-code') {
+    if (!config?.cognitoDomain || code === 'mock-auth-code') {
       const mockProfile: SubmitterIdentity = {
         sub: 'mock-google-sub-12345',
         email: 'student.fcaj@gmail.com',
@@ -266,7 +262,7 @@ export const submitterAuthApi = {
     if (params?.limit) query.set('limit', String(params.limit));
     if (params?.nextToken) query.set('nextToken', params.nextToken);
     const qs = query.toString();
-    const endpoint = `/api/admin/login-logs${qs ? `?${qs}` : ''}`;
+    const endpoint = qs ? `/api/admin/login-logs?${qs}` : '/api/admin/login-logs';
     return apiFetch<ListLoginLogsResponse>(endpoint);
   },
 };
